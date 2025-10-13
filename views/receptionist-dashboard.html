@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reception Desk</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: #f7f9fc;
+    color: #121212;
+  }
+  .container {
+    display: flex;
+    min-height: 100vh;
+  }
+  
+  /* Side Navigation Styles */
+  nav {
+    width: 240px;
+    background: #fff;
+    border-right: 1px solid #e3e8ee;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 24px 20px;
+    transition: width 0.3s ease;
+    position: relative;
+    z-index: 100;
+  }
+  
+  /* Collapsed Navigation */
+  nav.collapsed {
+    width: 70px;
+  }
+  
+  nav.collapsed .branding,
+  nav.collapsed .nav-text,
+  nav.collapsed .logout-text {
+    display: none;
+  }
+  
+  nav.collapsed ul li a {
+    justify-content: center;
+    padding: 8px;
+  }
+  
+  nav.collapsed ul li a i {
+    margin-right: 0;
+  }
+  
+  nav.collapsed .logout {
+    justify-content: center;
+    padding: 10px;
+  }
+  
+  nav.collapsed .toggle-nav {
+    left: 50%;
+    transform: translateX(-50%) rotate(180deg);
+  }
+  
+  nav .toggle-nav {
+    position: absolute;
+    top: 24px;
+    right: -12px;
+    width: 24px;
+    height: 24px;
+    background: #fff;
+    border: 1px solid #e3e8ee;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 101;
+  }
+  
+  nav .toggle-nav:hover {
+    background: #f1f5f9;
+  }
+  
+  nav .toggle-nav i {
+    font-size: 12px;
+    color: #6b7280;
+  }
+  
+  nav .branding {
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 28px;
+    margin-bottom: 48px;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  nav .branding i {
+    font-size: 24px;
+    color: #2563eb;
+  }
+  
+  nav ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+  
+  nav ul li {
+    margin-bottom: 16px;
+  }
+  
+  nav ul li a {
+    display: flex;
+    align-items: center;
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 20px;
+    text-decoration: none;
+    color: #121212;
+    border-left: 3px solid transparent;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: background-color 0.15s, border-color 0.15s;
+    cursor: pointer;
+  }
+  
+  nav ul li a:hover {
+    background-color: #f1f5f9;
+  }
+  
+  nav ul li.active a {
+    color: #2563eb;
+    border-left-color: #2563eb;
+    background-color: #e6f0ff;
+    font-weight: 600;
+  }
+  
+  nav ul li a i {
+    font-size: 18px;
+    margin-right: 8px;
+    min-width: 18px;
+    color: inherit;
+  }
+  
+  nav .logout {
+    font-weight: 600;
+    font-size: 14px;
+    color: #121212;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    border:none;
+    background:none;
+    padding: 10px 12px;
+    border-radius: 6px;
+    transition: background-color 0.15s;
+    text-decoration: none;
+  }
+  
+  nav .logout i {
+    font-size: 18px;
+    margin-right: 8px;
+  }
+  
+  nav .logout:hover {
+    background-color: #e3e8ee;
+  }
+  
+  main {
+    flex-grow: 1;
+    padding: 32px 40px 40px 40px;
+    transition: margin-left 0.3s ease;
+  }
+  
+  main.expanded {
+    margin-left: 0;
+  }
+  
+  main h1 {
+    font-weight: 600;
+    font-size: 24px;
+    line-height: 32px;
+    margin: 0 0 4px 0;
+  }
+  
+  main small {
+    display: block;
+    color: #6b7280;
+    font-weight: 400;
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+  
+  .card-row {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+  
+  .info-card {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 20px 24px;
+    flex: 1;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .info-card .icon {
+    font-size: 28px;
+    display: inline-flex;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+  }
+  
+  .info-card.total .icon {
+    color: #2563eb;
+  }
+  
+  .info-card.checked .icon {
+    color: #16a34a;
+  }
+  
+  .info-card.completed .icon {
+    color: #6b7280;
+  }
+  
+  .info-card .info-text {
+    font-weight: 400;
+    font-size: 14px;
+    color: #4b5563;
+    flex-shrink: 0;
+  }
+  
+  .info-card .info-num {
+    font-weight: 600;
+    font-size: 20px;
+    color: #121212;
+    margin-left: auto;
+  }
+
+  /* Today's Appointments */
+  .appointments-section {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 24px 24px 32px 24px;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+  }
+  
+  .appointments-section > h2 {
+    font-weight: 600;
+    font-size: 16px;
+    color: #121212;
+    margin: 0 0 16px 0;
+  }
+  
+  .appointment-item {
+    border: 1px solid #e6e8f0;
+    border-radius: 12px;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  
+  .appointment-item:last-child {
+    margin-bottom: 0;
+  }
+  
+  .time-block {
+    flex-shrink: 0;
+    width: 80px;
+    color: #6b7280;
+    font-weight: 400;
+    font-size: 14px;
+  }
+  
+  .detail-block {
+    flex-grow: 1;
+    padding-left: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .detail-block .name {
+    font-weight: 600;
+    font-size: 16px;
+    color: #121212;
+  }
+  
+  .detail-block .desc {
+    font-weight: 400;
+    font-size: 13px;
+    color: #6b7280;
+  }
+  
+  .action-buttons {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .badge {
+    text-transform: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 4px 10px;
+    user-select: none;
+  }
+  
+  .badge.scheduled {
+    background: #dbeafe;
+    color: #2563eb;
+  }
+  
+  .badge.checked-in {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+  
+  button {
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 8px 20px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s;
+  }
+  
+  button.checkin {
+    background-color: #090a19;
+    color: #fff;
+  }
+  
+  button.checkin:hover {
+    background-color: #121324;
+  }
+  
+  button.complete {
+    background-color: #fff;
+    color: #121212;
+    border: 1px solid #cbd5e1;
+  }
+  
+  button.complete:hover {
+    background-color: #f1f5f9;
+  }
+  
+  button.cancel {
+    background-color: #d71037;
+    color: #efe7e9;
+  }
+  
+  button.cancel:hover {
+    background-color: #b80f30;
+  }
+  
+  /* Page Content Styles */
+  .page {
+    display: none;
+  }
+  
+  .page.active {
+    display: block;
+  }
+  
+  /* Search Page Styles */
+  .search-container {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+  }
+  
+  .search-form {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  
+  .search-input {
+    flex-grow: 1;
+    padding: 12px 16px;
+    border: 1px solid #e3e8ee;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  
+  .search-button {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  
+  .search-button:hover {
+    background-color: #1d4ed8;
+  }
+  
+  .search-results {
+    border: 1px solid #e3e8ee;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .patient-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 40px 44px;
+    border-bottom: 1px solid #e3e8ee;
+  }
+  
+  .patient-row:last-child {
+    border-bottom: none;
+  }
+  
+  .patient-info h3 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+  }
+  
+  .patient-info p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 14px;
+  }
+  
+  .patient-actions button {
+    margin-left: 8px;
+  }
+  
+  /* Book Appointment Page Styles */
+  .appointment-form {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    font-size: 14px;
+  }
+  
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e3e8ee;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  
+  .form-row {
+    display: flex;
+    gap: 16px;
+  }
+  
+  .form-row .form-group {
+    flex: 1;
+  }
+  
+  .submit-button {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+  }
+  
+  .submit-button:hover {
+    background-color: #1d4ed8;
+  }
+  
+  /* Mobile Responsive Styles */
+  @media (max-width: 768px) {
+    .container {
+      flex-direction: column;
+    }
+    
+    nav {
+      width: 100%;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid #e3e8ee;
+      padding: 16px 20px;
+    }
+    
+    nav.collapsed {
+      width: 100%;
+      height: 60px;
+      overflow: hidden;
+    }
+    
+    nav.collapsed .branding,
+    nav.collapsed .nav-text,
+    nav.collapsed .logout-text {
+      display: flex;
+    }
+    
+    nav.collapsed ul {
+      display: none;
+    }
+    
+    nav.collapsed .logout {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+    }
+    
+    nav .toggle-nav {
+      display: none;
+    }
+    
+    main {
+      padding: 24px 20px;
+    }
+    
+    .card-row {
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .appointment-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    
+    .action-buttons {
+      width: 100%;
+      justify-content: flex-end;
+    }
+    
+    .form-row {
+      flex-direction: column;
+      gap: 0;
+    }
+    
+    .search-form {
+      flex-direction: column;
+    }
+    
+    .patient-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    
+    .patient-actions {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav id="sideNav">
+    <div class="toggle-nav" id="toggleNav">
+      <i class="fas fa-chevron-left"></i>
+    </div>
+    <div>
+      <div class="branding">
+        <i class="fas fa-hospital-alt"></i>
+        <span class="nav-text">Reception Desk</span>
+      </div>
+      <ul>
+        <li class="active" data-page="dashboard">
+          <a>
+            <i class="fa-regular fa-calendar"></i>
+            <span class="nav-text">Dashboard</span>
+          </a>
+        </li>
+        <li data-page="search">
+          <a>
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span class="nav-text">Search Patients</span>
+          </a>
+        </li>
+        <li data-page="book">
+          <a>
+            <i class="fa-solid fa-plus"></i>
+            <span class="nav-text">Book Appointment</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+    <a href="#" class="logout">
+      <i class="fa-solid fa-arrow-right-from-bracket"></i>
+      <span class="logout-text">Logout</span>
+    </a>
+  </nav>
+
+  <main id="mainContent">
+    <!-- DASHBOARD PAGE -->
+    <section id="dashboard" class="page active">
+      <h1>Today's Schedule</h1>
+      <small>October 7, 2025</small>
+      <div class="card-row">
+        <div class="info-card total" aria-label="Total Appointments">
+          <i class="fa-regular fa-clock icon" aria-hidden="true"></i>
+          <span class="info-text">Total Appointments</span>
+          <span class="info-num">3</span>
+        </div>
+        <div class="info-card checked" aria-label="Checked In">
+          <i class="fa-regular fa-square-check icon" aria-hidden="true"></i>
+          <span class="info-text">Checked In</span>
+          <span class="info-num">1</span>
+        </div>
+        <div class="info-card completed" aria-label="Completed">
+          <i class="fa-solid fa-user-group icon"></i>
+          <span class="info-text">Completed</span>
+          <span class="info-num">0</span>
+        </div>
+      </div>
+      <div class="appointments-section" aria-label="Today's Appointments">
+        <h2>Today's Appointments</h2>
+        <article class="appointment-item" tabindex="0">
+          <div class="time-block">09:00 AM</div>
+          <div class="detail-block">
+            <span class="name">Sarah Johnson</span>
+            <span class="desc">Cleaning</span>
+          </div>
+          <div class="action-buttons">
+            <span class="badge scheduled" aria-label="Scheduled status">Scheduled</span>
+            <button class="checkin" type="button" aria-label="Check In Sarah Johnson">Check In</button>
+            <button class="cancel" type="button" aria-label="Cancel appointment for Sarah Johnson">Cancel</button>
+          </div>
+        </article>
+        <article class="appointment-item" tabindex="0">
+          <div class="time-block">10:30 AM</div>
+          <div class="detail-block">
+            <span class="name">Michael Chen</span>
+            <span class="desc">Consultation</span>
+          </div>
+          <div class="action-buttons">
+            <span class="badge checked-in" aria-label="Checked in status">Checked-in</span>
+            <button class="complete" type="button" aria-label="Complete appointment for Michael Chen">Complete</button>
+            <button class="cancel" type="button" aria-label="Cancel appointment for Michael Chen">Cancel</button>
+          </div>
+        </article>
+        <article class="appointment-item" tabindex="0">
+          <div class="time-block">02:00 PM</div>
+          <div class="detail-block">
+            <span class="name">Emily Rodriguez</span>
+            <span class="desc">Examination</span>
+          </div>
+          <div class="action-buttons">
+            <span class="badge scheduled" aria-label="Scheduled status">Scheduled</span>
+            <button class="checkin" type="button" aria-label="Check In Emily Rodriguez">Check In</button>
+            <button class="cancel" type="button" aria-label="Cancel appointment for Emily Rodriguez">Cancel</button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- SEARCH PATIENTS PAGE -->
+    <section id="search" class="page">
+      <h1>Search Patients</h1>
+      <small>Find and manage patient records</small>
+      
+      <div class="search-container">
+        <div class="search-form">
+          <input type="text" class="search-input" placeholder="Search by patient name, ID, or contact information">
+          <button class="search-button">Search</button>
+        </div>
+        
+        <div class="search-results">
+          <div class="patient-row">
+            <div class="patient-info">
+              <h3>Sarah Johnson</h3>
+              <p>(555) 123-4567 | sarah.j@email.com | DOB:15/03/1985</p>
+            </div>
+            <div class="patient-actions">
+              <button class="checkin">View Records</button>
+              <button class="complete">Check In</button>
+            </div>
+          </div>
+          <div class="patient-row">
+            <div class="patient-info">
+              <h3>Michael Chen</h3>
+              <p>(555) 234-5678 | micheal.chen@email.com | DOB: 22/07/1978</p>
+            </div>
+            <div class="patient-actions">
+              <button class="checkin">View Records</button>
+              <button class="complete">Check In</button>
+            </div>
+          </div>
+          <div class="patient-row">
+            <div class="patient-info">
+              <h3>Emily Rodriguez</h3>
+              <p> (555) 123-6789 | emi.rodi@email.com | DOB: 11/08/1992</p>
+            </div>
+            <div class="patient-actions">
+              <button class="checkin">View Record</button>
+              <button class="complete">Check In</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BOOK APPOINTMENT PAGE -->
+    <section id="book" class="page">
+      <h1>Book Appointment</h1>
+      <small>Schedule a new appointment for a patient</small>
+      
+      <div class="appointment-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="patient-name">Patient Name</label>
+            <input type="text" id="patient-name" placeholder="Enter patient name">
+          </div>
+          <div class="form-group">
+            <label for="patient-id">Patient ID</label>
+            <input type="text" id="patient-id" placeholder="Enter patient ID">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="appointment-date">Date</label>
+            <input type="date" id="appointment-date">
+          </div>
+          <div class="form-group">
+            <label for="appointment-time">Time</label>
+            <input type="time" id="appointment-time">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="appointment-type">Appointment Type</label>
+          <select id="appointment-type">
+            <option value="">Select appointment type</option>
+            <option value="consultation">Consultation</option>
+            <option value="cleaning">Cleaning</option>
+            <option value="examination">Examination</option>
+            <option value="follow-up">Follow-up</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="notes">Notes</label>
+          <input type="text" id="notes" placeholder="Additional notes (optional)">
+        </div>
+        
+        <button class="submit-button">Book Appointment</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const sideNav = document.getElementById('sideNav');
+    const toggleNav = document.getElementById('toggleNav');
+    const mainContent = document.getElementById('mainContent');
+    const navItems = document.querySelectorAll('nav ul li');
+    const pages = document.querySelectorAll('.page');
+    
+    // Toggle navigation collapse/expand
+    toggleNav.addEventListener('click', function() {
+      sideNav.classList.toggle('collapsed');
+      mainContent.classList.toggle('expanded');
+      
+      // Update toggle icon direction
+      const icon = this.querySelector('i');
+      if (sideNav.classList.contains('collapsed')) {
+        icon.classList.remove('fa-chevron-left');
+        icon.classList.add('fa-chevron-right');
+      } else {
+        icon.classList.remove('fa-chevron-right');
+        icon.classList.add('fa-chevron-left');
+      }
+    });
+    
+    // Handle page navigation
+    navItems.forEach(item => {
+      item.addEventListener('click', function() {
+        const pageId = this.getAttribute('data-page');
+        
+        // Update active navigation item
+        navItems.forEach(i => i.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Show the selected page
+        pages.forEach(page => {
+          page.classList.remove('active');
+          if (page.id === pageId) {
+            page.classList.add('active');
+          }
+        });
+      });
+    });
+    
+    // Handle responsive behavior
+    function handleResize() {
+      if (window.innerWidth <= 768) {
+        sideNav.classList.remove('collapsed');
+        mainContent.classList.remove('expanded');
+        const icon = toggleNav.querySelector('i');
+        icon.classList.remove('fa-chevron-right');
+        icon.classList.add('fa-chevron-left');
+      }
+    }
+    
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Check on initial load
+    
+    // Add sample form submission handlers
+    document.querySelector('.search-button').addEventListener('click', function() {
+      alert('Search functionality would be implemented here');
+    });
+    
+    document.querySelector('.submit-button').addEventListener('click', function() {
+      alert('Appointment booking would be implemented here');
+    });
+  });
+</script>
+</body>
+</html>

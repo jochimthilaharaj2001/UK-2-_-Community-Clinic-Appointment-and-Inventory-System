@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Community Clinic — Patient Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 antialiased p-4">
+  <div id="app" class="max-w-6xl mx-auto grid md:grid-cols-[280px_1fr] gap-4" v-cloak>
+    <!-- Sidebar -->
+    <aside class="bg-white rounded-2xl shadow p-4 flex flex-col gap-3 min-h-[500px]">
+      <div class="flex items-center gap-2 font-bold">
+        <span class="w-8 h-8 bg-sky-600 rounded-lg inline-block"></span>
+        <div>
+          <div>Rural Siddha Clinic</div>
+          <div class="text-sm text-gray-500">Patient Portal</div>
+        </div>
+      </div>
+
+      <nav class="flex flex-col gap-2 mt-4">
+        <button v-for="link in navLinks"
+                :key="link.view"
+                @click="currentView = link.view"
+                :class="['w-full text-left px-3 py-2 rounded-lg font-semibold',
+                         currentView === link.view ? 'bg-sky-600 text-white' : 'hover:bg-sky-100']">
+          {{ link.label }}
+        </button>
+        <div class="flex-1"></div>
+        <button @click="logout" class="border px-3 py-2 rounded-md mt-2 hover:bg-gray-100">Log out</button>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <main class="bg-white rounded-2xl shadow p-5 min-h-[500px]">
+      <!-- Dashboard -->
+      <section v-if="currentView==='dashboard'">
+        <h1 class="text-xl font-semibold mb-1">Your Appointments</h1>
+        <p class="text-gray-500 mb-4">Manage upcoming visits and prescriptions here.</p>
+
+        <div class="bg-gray-50 rounded-xl p-4 mb-4 flex justify-between items-center">
+          <div>
+            <span class="text-2xl font-bold">{{ upcomingAppointments.length }}</span>
+            <div class="text-sm text-gray-500">upcoming appointments</div>
+          </div>
+          <button @click="currentView='book'" class="bg-sky-600 text-white px-4 py-2 rounded-lg">Book New</button>
+        </div>
+
+        <div class="bg-gray-50 rounded-xl p-4 mb-4">
+          <h2 class="font-semibold mb-2">Appointments</h2>
+          <div v-if="appointments.length" class="space-y-2">
+            <div v-for="appt in appointments" :key="appt.id"
+                 class="flex justify-between items-center border rounded-lg p-3">
+              <div>
+                <div class="font-semibold">{{ appt.doctor }}</div>
+                <div class="text-sm text-gray-500">{{ appt.date }} • {{ appt.time }}</div>
+              </div>
+              <div>
+                <span :class="['px-2 py-1 rounded text-xs',
+                               appt.status==='booked' ? 'bg-sky-100 text-sky-700' : 'bg-red-100 text-red-700']">
+                  {{ appt.status }}
+                </span>
+                <button v-if="appt.status==='booked'" @click="cancelAppointment(appt.id)" class="ml-2 text-red-600 text-sm">Cancel</button>
+              </div>
+            </div>
+          </div>
+          <p v-else class="text-sm text-gray-500">No appointments yet.</p>
+        </div>
+      </section>
+
+      <!-- Book Appointment -->
+      <section v-if="currentView==='book'">
+        <h1 class="text-xl font-semibold mb-2">Book an Appointment</h1>
+        <form @submit.prevent="bookAppointment" class="bg-gray-50 rounded-xl p-4 space-y-3">
+          <div class="flex flex-col md:flex-row gap-3">
+            <div class="flex-1">
+              <label class="block text-sm font-medium">Doctor</label>
+              <select v-model="newAppointment.doctor" class="w-full border rounded-lg p-2">
+                <option value="">Select doctor</option>
+                <option v-for="doc in doctors" :value="doc">{{ doc }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium">Date</label>
+              <input v-model="newAppointment.date" type="date" class="border rounded-lg p-2 w-full" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Time</label>
+            <input v-model="newAppointment.time" type="time" class="border rounded-lg p-2 w-full" />
+          </div>
+          <div class="flex gap-3 mt-3">
+            <button type="submit" class="bg-sky-600 text-white px-4 py-2 rounded-lg">Confirm</button>
+            <button type="button" @click="currentView='dashboard'" class="border px-4 py-2 rounded-lg">Cancel</button>
+          </div>
+          <p v-if="bookMessage" class="text-sm mt-2" :class="bookMessageType">{{ bookMessage }}</p>
+        </form>
+      </section>
+
+      <!-- Records -->
+      <section v-if="currentView==='records'">
+        <h1 class="text-xl font-semibold mb-3">My Records</h1>
+        <div class="bg-gray-50 rounded-xl p-4 mb-4">
+          <h3 class="font-semibold mb-2">Visit History</h3>
+          <div v-if="appointments.length">
+            <div v-for="appt in appointments" :key="appt.id" class="border rounded-lg p-3 mb-2">
+              <div class="font-semibold">{{ appt.date }} — {{ appt.doctor }}</div>
+              <div class="text-sm text-gray-500">{{ appt.time }} • {{ appt.status }}</div>
+            </div>
+          </div>
+          <p v-else class="text-sm text-gray-500">No visit history yet.</p>
+        </div>
+      </section>
+
+      <!-- Profile -->
+      <section v-if="currentView==='profile'">
+        <h1 class="text-xl font-semibold mb-3">My Profile</h1>
+        <form @submit.prevent="saveProfile" class="bg-gray-50 rounded-xl p-4 space-y-3">
+          <div class="flex gap-3">
+            <div class="flex-1">
+              <label class="block text-sm font-medium">Full name</label>
+              <input v-model="profile.name" type="text" class="border rounded-lg p-2 w-full" />
+            </div>
+            <div class="w-24">
+              <label class="block text-sm font-medium">Age</label>
+              <input v-model="profile.age" type="number" class="border rounded-lg p-2 w-full" />
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="flex-1">
+              <label class="block text-sm font-medium">Contact</label>
+              <input v-model="profile.contact" type="tel" class="border rounded-lg p-2 w-full" />
+            </div>
+            <div class="flex-1">
+              <label class="block text-sm font-medium">Email</label>
+              <input v-model="profile.email" type="email" class="border rounded-lg p-2 w-full" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Address</label>
+            <textarea v-model="profile.address" rows="2" class="border rounded-lg p-2 w-full"></textarea>
+          </div>
+          <div class="flex gap-3">
+            <button type="submit" class="bg-sky-600 text-white px-4 py-2 rounded-lg">Save</button>
+            <button type="button" @click="resetProfile" class="border px-4 py-2 rounded-lg">Reset</button>
+          </div>
+          <p v-if="profileMessage" class="text-sm mt-2 text-green-600">{{ profileMessage }}</p>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          currentView: 'dashboard',
+          navLinks: [
+            { view: 'dashboard', label: 'Dashboard' },
+            { view: 'book', label: 'Book Appointment' },
+            { view: 'records', label: 'My Records' },
+            { view: 'profile', label: 'Profile' },
+          ],
+          appointments: [],
+          doctors: ['Dr. Thileepan (Siddha)', 'Dr. Kannan (General)', 'Dr. Selvi (Pediatrics)'],
+          newAppointment: { doctor: '', date: '', time: '' },
+          bookMessage: '',
+          bookMessageType: 'text-green-600',
+          profile: { name: 'Patient A', age: 30, contact: '', email: '', address: '' },
+          profileMessage: ''
+        }
+      },
+      computed: {
+        upcomingAppointments() {
+          return this.appointments.filter(a => a.status === 'booked');
+        }
+      },
+      methods: {
+        bookAppointment() {
+          if (!this.newAppointment.doctor || !this.newAppointment.date || !this.newAppointment.time) {
+            this.bookMessage = 'Please fill all fields';
+            this.bookMessageType = 'text-red-600';
+            return;
+          }
+          this.appointments.push({
+            id: Date.now(),
+            ...this.newAppointment,
+            status: 'booked'
+          });
+          this.bookMessage = 'Appointment booked successfully!';
+          this.bookMessageType = 'text-green-600';
+          this.newAppointment = { doctor: '', date: '', time: '' };
+          this.currentView = 'dashboard';
+        },
+        cancelAppointment(id) {
+          const appt = this.appointments.find(a => a.id === id);
+          if (appt) appt.status = 'cancelled';
+        },
+        saveProfile() {
+          this.profileMessage = 'Profile updated!';
+        },
+        resetProfile() {
+          this.profile = { name: '', age: '', contact: '', email: '', address: '' };
+          this.profileMessage = '';
+        },
+        logout() {
+          this.appointments = [];
+          this.profileMessage = '';
+          this.currentView = 'dashboard';
+        }
+      }
+    }).mount('#app');
+  </script>
+
+  <style>[v-cloak]{display:none}</style>
+</body>
+</html>

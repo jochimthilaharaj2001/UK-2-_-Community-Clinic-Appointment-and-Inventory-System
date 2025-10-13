@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare System - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        'primary-dark': '#1d4ed8',
+                        secondary: '#10b981',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white shadow-md">
+            <div class="p-6 border-b">
+                <h1 class="text-xl font-bold text-primary">Healthcare System</h1>
+                <p class="text-sm text-gray-500">Admin Panel</p>
+            </div>
+            <nav class="mt-6">
+                <a href="#" class="flex items-center px-6 py-3 text-gray-700 bg-blue-50 border-r-4 border-primary">
+                    <i class="fas fa-tachometer-alt mr-3"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-users mr-3"></i>
+                    <span>User Management</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-user-md mr-3"></i>
+                    <span>Doctor Management</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-clipboard-list mr-3"></i>
+                    <span>Audit Logs</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-database mr-3"></i>
+                    <span>Backup & Restore</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-chart-bar mr-3"></i>
+                    <span>Reports & Analytics</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100 mt-20">
+                    <i class="fas fa-sign-out-alt mr-3"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-y-auto">
+            <!-- Top Navigation -->
+            <header class="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-gray-800" id="page-title">Admin Dashboard</h2>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <input type="text" placeholder="Search..." class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                    <div class="flex items-center">
+                        <img src="https://ui-avatars.com/api/?name=Admin+User&background=2563eb&color=fff" alt="Admin" class="w-10 h-10 rounded-full">
+                        <span class="ml-2 text-gray-700">Admin User</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="p-6">
+                <!-- Dashboard View -->
+                <div id="dashboard-view">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6">System Overview</h3>
+                    
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-xl shadow p-6">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Total Users</p>
+                                    <h4 class="text-3xl font-bold text-gray-800 mt-2">2,847</h4>
+                                    <p class="text-green-500 text-sm mt-1">+12% from last month</p>
+                                </div>
+                                <div class="bg-blue-100 p-3 rounded-lg">
+                                    <i class="fas fa-users text-primary text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow p-6">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Appointments Today</p>
+                                    <h4 class="text-3xl font-bold text-gray-800 mt-2">156</h4>
+                                    <p class="text-green-500 text-sm mt-1">+8% from last month</p>
+                                </div>
+                                <div class="bg-green-100 p-3 rounded-lg">
+                                    <i class="fas fa-calendar-check text-secondary text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow p-6">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Stock Items</p>
+                                    <h4 class="text-3xl font-bold text-gray-800 mt-2">1,234</h4>
+                                    <p class="text-red-500 text-sm mt-1">-3% from last month</p>
+                                </div>
+                                <div class="bg-yellow-100 p-3 rounded-lg">
+                                    <i class="fas fa-boxes text-warning text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow p-6">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Low Stock Alerts</p>
+                                    <h4 class="text-3xl font-bold text-gray-800 mt-2">23</h4>
+                                    <p class="text-red-500 text-sm mt-1">+5 from last month</p>
+                                </div>
+                                <div class="bg-red-100 p-3 rounded-lg">
+                                    <i class="fas fa-exclamation-triangle text-danger text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts Section -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-white rounded-xl shadow p-6">
+                            <h4 class="text-lg font-semibold text-gray-800 mb-4">Weekly Appointments</h4>
+                            <div class="h-64 flex items-end space-x-2">
+                                <div class="flex flex-col items-center flex-1">
+                                    <div class="bg-primary w-10 rounded-t-lg" style="height: 80%;"></div>
+                                    <span class="mt-2 text-sm text-gray-600">Mon</span>
+                                </div>
+                                <div class="flex flex-col items-center flex-1">
+                                    <div class="bg-primary w-10 rounded-t-lg" style="height: 60%;"></div>
+                                    <span class="mt-2 text-sm text-gray-600">Tue</span>
+                                </div>
+                                <div class="flex flex-col items-center flex-1">
+                                    <div class="bg-primary w-10 rounded-t-lg" style="height: 90%;"></div>
+                                    <span class="mt-2 text-sm text-gray-600">Wed</span>
+                                </div>
+                                <div class="flex flex-col items-center flex-1">
+                                    <div class="bg-primary w-10 rounded-t-lg" style="height: 70%;"></div>
+                                    <span class="mt-2 text-sm text-gray-600">Thu</span>
+                                </div>
+                                <div class="flex flex-col items-center flex-1">
+                                    <div class="bg-primary w-10 rounded-t-lg" style="height: 85%;"></div>
+                                    <span class="mt-2 text-sm text-gray-600">Fri</span>
+                                </div>
+                                <div class="flex flex-col items-center flex-1">
+                                    <div class="bg-primary w-10 rounded-t-lg" style="height: 50%;"></div>
+                                    <span class="mt-2 text-sm text-gray-600">Sat</span>
+                                </div>
+                                <div class="flex flex-col items-center flex-1">
+                                    <div class="bg-primary w-10 rounded-t-lg" style="height: 30%;"></div>
+                                    <span class="mt-2 text-sm text-gray-600">Sun</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow p-6">
+                            <h4 class="text-lg font-semibold text-gray-800 mb-4">User Distribution</h4>
+                            <div class="h-64 flex items-center justify-center">
+                                <div class="relative w-40 h-40 rounded-full bg-gradient-to-r from-blue-500 to-green-500 flex items-center justify-center">
+                                    <div class="absolute w-32 h-32 bg-white rounded-full"></div>
+                                    <div class="absolute text-center">
+                                        <p class="text-sm text-gray-600">Patients</p>
+                                        <p class="text-xl font-bold">65%</p>
+                                    </div>
+                                </div>
+                                <div class="ml-8">
+                                    <div class="flex items-center mb-2">
+                                        <div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>
+                                        <span class="text-sm">Patients (65%)</span>
+                                    </div>
+                                    <div class="flex items-center mb-2">
+                                        <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
+                                        <span class="text-sm">Doctors (20%)</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
+                                        <span class="text-sm">Staff (15%)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- User Management View (Hidden by default) -->
+                <div id="user-management-view" class="hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-bold text-gray-800">User Management</h3>
+                        <button class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center">
+                            <i class="fas fa-plus mr-2"></i> Add User
+                        </button>
+                    </div>
+                    
+                    <p class="text-gray-600 mb-6">Manage patients, doctors, and staff members</p>
+                    
+                    <div class="bg-white rounded-xl shadow overflow-hidden">
+                        <div class="p-4 border-b">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                                <h4 class="text-lg font-semibold text-gray-800 mb-2 md:mb-0">Users</h4>
+                                <div class="flex space-x-4">
+                                    <div class="relative">
+                                        <input type="text" placeholder="Search users..." class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent w-full md:w-64">
+                                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                                    </div>
+                                    <select class="border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <option>All Types</option>
+                                        <option>Patient</option>
+                                        <option>Doctor</option>
+                                        <option>Staff</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Login</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10">
+                                                    <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name=John+Smith&background=2563eb&color=fff" alt="">
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">John Smith</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">john.smith@example.com</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Patient</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2024-01-15</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-primary hover:text-primary-dark mr-3"><i class="fas fa-edit"></i></button>
+                                            <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <!-- More user rows would go here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                            <div class="flex-1 flex justify-between items-center">
+                                <div>
+                                    <p class="text-sm text-gray-700">
+                                        Showing <span class="font-medium">1</span> to <span class="font-medium">8</span> of <span class="font-medium">2,847</span> results
+                                    </p>
+                                </div>
+                                <div>
+                                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                        <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                            <span class="sr-only">Previous</span>
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
+                                        <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">1</a>
+                                        <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">2</a>
+                                        <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">3</a>
+                                        <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                            <span class="sr-only">Next</span>
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Doctor Management View (Hidden by default) -->
+                <div id="doctor-management-view" class="hidden">
+                    <!-- Doctor management content would go here -->
+                </div>
+                
+                <!-- Reports & Analytics View (Hidden by default) -->
+                <div id="reports-view" class="hidden">
+                    <!-- Reports content would go here -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Simple navigation functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('nav a');
+            const views = document.querySelectorAll('main > div');
+            const pageTitle = document.getElementById('page-title');
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all links
+                    navLinks.forEach(l => {
+                        l.classList.remove('bg-blue-50', 'border-r-4', 'border-primary');
+                        l.classList.add('hover:bg-gray-100');
+                    });
+                    
+                    // Add active class to clicked link
+                    this.classList.add('bg-blue-50', 'border-r-4', 'border-primary');
+                    this.classList.remove('hover:bg-gray-100');
+                    
+                    // Hide all views
+                    views.forEach(view => view.classList.add('hidden'));
+                    
+                    // Show the corresponding view
+                    const target = this.textContent.trim();
+                    if (target === 'Dashboard') {
+                        document.getElementById('dashboard-view').classList.remove('hidden');
+                        pageTitle.textContent = 'Admin Dashboard';
+                    } else if (target === 'User Management') {
+                        document.getElementById('user-management-view').classList.remove('hidden');
+                        pageTitle.textContent = 'User Management';
+                    } else if (target === 'Doctor Management') {
+                        document.getElementById('doctor-management-view').classList.remove('hidden');
+                        pageTitle.textContent = 'Doctor Management';
+                    } else if (target === 'Reports & Analytics') {
+                        document.getElementById('reports-view').classList.remove('hidden');
+                        pageTitle.textContent = 'Reports & Analytics';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
