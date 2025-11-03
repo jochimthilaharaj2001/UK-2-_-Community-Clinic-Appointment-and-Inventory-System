@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pharmacist Dashboard | Community Clinic System</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 font-sans">
+  <!-- Sidebar -->
+  <div class="flex h-screen">
+    <aside class="w-64 bg-green-800 text-white flex flex-col">
+      <div class="p-5 text-center border-b border-green-600">
+        <h1 class="text-2xl font-bold">Pharmacist</h1>
+        <p class="text-sm text-green-200">Community Clinic System</p>
+      </div>
+
+      <nav class="flex-1 px-4 py-6 space-y-3">
+        <a href="#" class="block py-2 px-3 rounded-md bg-green-700">Dashboard</a>
+        <a href="#" class="block py-2 px-3 hover:bg-green-700 rounded-md">Manage Inventory</a>
+        <a href="#" class="block py-2 px-3 hover:bg-green-700 rounded-md">Dispense Medicine</a>
+        <a href="#" class="block py-2 px-3 hover:bg-green-700 rounded-md">Reports</a>
+        <a href="#" class="block py-2 px-3 hover:bg-green-700 rounded-md">Logout</a>
+      </nav>
+
+      <footer class="p-4 border-t border-green-700 text-center text-sm text-green-300">
+        © 2025 Clinic System
+      </footer>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 overflow-y-auto">
+      <!-- Header -->
+      <header class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-700">Pharmacist Dashboard</h2>
+        <div class="flex items-center space-x-4">
+          <span class="text-gray-600">👩‍⚕️ F.M. Fasan</span>
+          <button class="bg-green-700 text-white px-4 py-2 rounded-md hover:bg-green-800">Logout</button>
+        </div>
+      </header>
+
+      <!-- Dashboard Cards -->
+      <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white shadow rounded-lg p-5">
+          <h3 class="text-lg font-semibold text-gray-600">Total Medicines</h3>
+          <p class="text-3xl font-bold text-green-700 mt-2">320</p>
+        </div>
+        <div class="bg-white shadow rounded-lg p-5">
+          <h3 class="text-lg font-semibold text-gray-600">Low Stock Alerts</h3>
+          <p class="text-3xl font-bold text-yellow-600 mt-2">8</p>
+        </div>
+        <div class="bg-white shadow rounded-lg p-5">
+          <h3 class="text-lg font-semibold text-gray-600">Expiring Soon</h3>
+          <p class="text-3xl font-bold text-red-600 mt-2">5</p>
+        </div>
+      </section>
+
+      <!-- Inventory Table -->
+      <section class="bg-white shadow rounded-lg p-5 mb-8">
+        <h3 class="text-xl font-semibold text-gray-700 mb-4">Inventory Overview</h3>
+        <table class="min-w-full border border-gray-200">
+          <thead class="bg-green-700 text-white">
+            <tr>
+              <th class="py-2 px-3 text-left">Medicine Name</th>
+              <th class="py-2 px-3 text-left">Batch No</th>
+              <th class="py-2 px-3 text-left">Quantity</th>
+              <th class="py-2 px-3 text-left">Expiry Date</th>
+              <th class="py-2 px-3 text-left">Status</th>
+              <th class="py-2 px-3 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            <tr>
+              <td class="py-2 px-3">Paracetamol</td>
+              <td class="py-2 px-3">BCH1092</td>
+              <td class="py-2 px-3">150</td>
+              <td class="py-2 px-3">2026-03-14</td>
+              <td class="py-2 px-3 text-green-600 font-semibold">Available</td>
+              <td class="py-2 px-3 text-center">
+                <button class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">Edit</button>
+              </td>
+            </tr>
+            <tr>
+              <td class="py-2 px-3">Amoxicillin</td>
+              <td class="py-2 px-3">BCH2230</td>
+              <td class="py-2 px-3">20</td>
+              <td class="py-2 px-3">2025-02-10</td>
+              <td class="py-2 px-3 text-yellow-600 font-semibold">Low Stock</td>
+              <td class="py-2 px-3 text-center">
+                <button class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">Edit</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Alerts Section -->
+      <section class="bg-white shadow rounded-lg p-5">
+        <h3 class="text-xl font-semibold text-gray-700 mb-3">Alerts & Notifications</h3>
+        <ul class="list-disc pl-6 text-gray-600">
+          <li>⚠️ 8 items are below reorder level.</li>
+          <li>❗ 5 medicines expiring within 30 days.</li>
+          <li>✅ Inventory last updated: <span class="font-semibold">3 hours ago</span>.</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
