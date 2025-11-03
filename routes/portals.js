@@ -28,4 +28,9 @@ router.get("/receptionist", (req, res) => {
   res.sendFile(path.join(__dirname, "../views/receptionist-dashboard.html"));
 });
 
+// Pharmacist Dashboard
+router.get("/receptionist", (req, res) => {
+  res.sendFile(path.join(__dirname, "../views/pharmacist_dashboard.html"));
+});
+
 module.exports = router;
