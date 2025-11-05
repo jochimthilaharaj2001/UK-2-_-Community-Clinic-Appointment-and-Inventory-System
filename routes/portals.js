@@ -29,7 +29,7 @@ router.get("/receptionist", (req, res) => {
 });
 
 // Pharmacist Dashboard
-router.get("/receptionist", (req, res) => {
+router.get("/pharmacist", (req, res) => {
   res.sendFile(path.join(__dirname, "../views/pharmacist_dashboard.html"));
 });
 
