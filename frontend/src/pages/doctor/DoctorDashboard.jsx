@@ -1,12 +1,7 @@
 import Sidebar from "../../components/Sidebar";
 
 export default function DoctorDashboard() {
-  const links = [
-    { to: "/doctor/schedule", label: "My Schedule" },
-    { to: "/doctor/patients", label: "My Patients" },
-    { to: "/doctor/prescriptions", label: "Prescriptions" },
-    { to: "/doctor/profile", label: "Profile" },
-  ];
+
 
   return (
     <div className="flex">

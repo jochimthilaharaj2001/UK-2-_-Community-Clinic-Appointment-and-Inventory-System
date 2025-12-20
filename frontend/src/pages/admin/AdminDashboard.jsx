@@ -21,9 +21,7 @@ export default function AdminDashboard() {
       <Sidebar title="Admin" links={links} />
       <div className="p-6">
         <h1 className="text-2xl mb-4">Dashboard</h1>
-        <p>Appointments: {data.appointments}</p>
-        <p>Patients: {data.patients}</p>
-        <p>Inventory Items: {data.inventory}</p>
+
       </div>
     </div>
   );
