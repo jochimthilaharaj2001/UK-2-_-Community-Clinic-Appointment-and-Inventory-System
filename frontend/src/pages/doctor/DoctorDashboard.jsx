@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import { FaCalendarAlt, FaUserFriends, FaPills } from "react-icons/fa";
@@ -94,3 +95,5 @@ export default function DoctorDashboard() {
     </div>
   );
 }
+=======
+>>>>>>> cf080b707a51ee05c8aff4d91222845aa4dccc09

@@ -13,6 +13,10 @@
     "axios": "^1.13.2",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
+<<<<<<< HEAD
+=======
+    "react-hot-toast": "^2.6.0",
+>>>>>>> cf080b707a51ee05c8aff4d91222845aa4dccc09
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.11.0"
   },
