@@ -1,119 +1,170 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../api/api";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FaUser, FaLock, FaHospital } from 'react-icons/fa';
+import toast from 'react-hot-toast';
 
-export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+const Login = () => {
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e) => {
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
-    
+
     try {
-      // Mock login for testing if API is not ready
-      // Remove this when your backend is ready
-      if (!api || !api.post) {
-        // Simulate login for testing
-        setTimeout(() => {
-          const mockUser = {
-            id: 1,
-            email: email,
-            role: email.includes("admin") ? "admin" : 
-                  email.includes("doctor") ? "doctor" : "pharmacist",
-            name: "Test User"
-          };
-          
-          localStorage.setItem("token", "mock-token-12345");
-          localStorage.setItem("user", JSON.stringify(mockUser));
-          navigate(`/${mockUser.role}`);
-          setLoading(false);
-        }, 500);
-        return;
-      }
+      // Demo login - only admin for now
+      const userData = {
+        id: '1',
+        email: formData.email,
+        role: 'admin',
+        name: 'Admin User',
+      };
+
+      localStorage.setItem('token', 'demo-token-' + Date.now());
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      toast.success('Welcome back, Admin!');
       
-      const res = await api.post("/auth/login", { email, password });
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      navigate(`/${res.data.user.role}`);
-    } catch (err) {
-      console.error("Login error:", err);
-      setError(err.response?.data?.message || "Login failed. Please try again.");
+      setTimeout(() => {
+        navigate('/admin');
+      }, 1000);
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('Login failed. Use admin@clinic.com');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDemoLogin = () => {
+    setFormData({
+      email: 'admin@clinic.com',
+      password: 'password123',
+    });
+    
+    setTimeout(() => {
+      document.getElementById('loginForm').dispatchEvent(
+        new Event('submit', { bubbles: true, cancelable: true })
+      );
+    }, 100);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg">
-        <div>
-          <h2 className="text-center text-3xl font-extrabold text-gray-900">
-            Community Clinic System
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in to your account
-          </p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50 p-4">
+      <div className="max-w-md w-full">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-block p-4 bg-white rounded-2xl shadow-lg mb-4">
+            <FaHospital className="text-5xl text-blue-600" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900">Admin Login</h1>
+          <p className="text-gray-600 mt-2">Sign in to clinic admin portal</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
+
+        {/* Login Form */}
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <form id="loginForm" onSubmit={handleSubmit}>
+            <div className="space-y-6">
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FaUser className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    placeholder="Enter admin email"
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FaLock className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    placeholder="Enter password"
+                  />
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Signing in...
+                  </span>
+                ) : (
+                  'Sign In'
+                )}
+              </button>
             </div>
-          )}
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">Email address</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+          </form>
+
+          {/* Demo Login Button */}
+          <div className="mt-6">
+            <button
+              onClick={handleDemoLogin}
+              className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition"
+            >
+              Use Demo Admin Account
+            </button>
+            <p className="text-center text-gray-600 text-sm mt-2">
+              Email: admin@clinic.com
+            </p>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+          {/* Back to Portal */}
+          <div className="mt-6 text-center">
+            <a
+              href="/"
+              className="inline-flex items-center text-blue-600 hover:text-blue-800 hover:underline font-medium"
             >
-              {loading ? "Signing in..." : "Sign in"}
-            </button>
+              ← Back to Portal Selection
+            </a>
           </div>
-          
-          <div className="text-sm text-gray-600 mt-4">
-            <p>Test credentials:</p>
-            <p>• admin@clinic.com (Admin)</p>
-            <p>• doctor@clinic.com (Doctor)</p>
-            <p>• pharmacist@clinic.com (Pharmacist)</p>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default Login;

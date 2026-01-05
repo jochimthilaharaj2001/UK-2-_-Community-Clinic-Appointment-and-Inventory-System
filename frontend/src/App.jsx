@@ -1,18 +1,10 @@
-import React from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Login from './pages/Login/';
-import DoctorDashboard from './pages/doctor/DoctorDashboard';
-import InventoryPage from './pages/pharmacist/InventoryPage';
-
-
+// src/App.jsx - SIMPLE TEST VERSION
 export default function App() {
   return (
-    <BrowserRouter>
-    <div className="p-6">
-   <Routes>
-    <Route path ="./doctor" element = {<DoctorDashboard/>}/>
-   </Routes>
-   </div>
-   </BrowserRouter>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <h1 className="text-4xl font-bold text-blue-600">
+        React is working! 🎉
+      </h1>
+    </div>
   )
 }
