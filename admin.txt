@@ -1,2 +1,0 @@
-email: 'admin@clinic.com',
-      password: 'password123'

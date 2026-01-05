@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
-// 1. Portal Access Page
+// Portal Access Page
 function PortalAccess() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-4">
@@ -77,7 +77,7 @@ function PortalAccess() {
   );
 }
 
-// 2. Login Page
+// Login Page
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -165,7 +165,7 @@ function Login() {
   );
 }
 
-// 3. Protected Route Component
+// Protected Route Component
 function ProtectedRoute({ children, role }) {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
 
@@ -208,7 +208,7 @@ function ProtectedRoute({ children, role }) {
   return children;
 }
 
-// 4. Admin Dashboard
+// Admin Dashboard
 function AdminDashboard() {
   const handleLogout = () => {
     localStorage.clear();
