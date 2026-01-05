@@ -13,10 +13,7 @@
     "axios": "^1.13.2",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-<<<<<<< HEAD
-=======
     "react-hot-toast": "^2.6.0",
->>>>>>> cf080b707a51ee05c8aff4d91222845aa4dccc09
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.11.0"
   },
@@ -32,6 +29,6 @@
     "globals": "^16.5.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",
-    "vite": "^7.3.0"
+    "vite": "^7.2.4"
   }
 }
