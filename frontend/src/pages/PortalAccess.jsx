@@ -46,7 +46,6 @@ const PortalAccess = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-      {/* Header */}
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
           <div className="inline-block p-4 bg-white rounded-2xl shadow-lg mb-6">
@@ -62,7 +61,6 @@ const PortalAccess = () => {
           </p>
         </div>
 
-        {/* Portals Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {portals.map((portal, index) => (
             portal.disabled ? (
@@ -95,7 +93,6 @@ const PortalAccess = () => {
           ))}
         </div>
 
-        {/* Footer */}
         <div className="mt-16 text-center">
           <p className="text-gray-500 text-sm">
             © {new Date().getFullYear()} Community Clinic System. All rights reserved.

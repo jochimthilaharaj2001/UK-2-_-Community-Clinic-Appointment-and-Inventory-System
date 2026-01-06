@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUser, FaLock, FaHospital } from 'react-icons/fa';
-import toast from 'react-hot-toast';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -34,14 +33,12 @@ const Login = () => {
       localStorage.setItem('token', 'demo-token-' + Date.now());
       localStorage.setItem('user', JSON.stringify(userData));
 
-      toast.success('Welcome back, Admin!');
-      
       setTimeout(() => {
         navigate('/admin');
       }, 1000);
     } catch (error) {
       console.error('Login error:', error);
-      toast.error('Login failed. Use admin@clinic.com');
+      alert('Login failed. Use admin@clinic.com');
     } finally {
       setLoading(false);
     }
@@ -63,7 +60,6 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50 p-4">
       <div className="max-w-md w-full">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-block p-4 bg-white rounded-2xl shadow-lg mb-4">
             <FaHospital className="text-5xl text-blue-600" />
@@ -72,11 +68,9 @@ const Login = () => {
           <p className="text-gray-600 mt-2">Sign in to clinic admin portal</p>
         </div>
 
-        {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <form id="loginForm" onSubmit={handleSubmit}>
             <div className="space-y-6">
-              {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Email Address
@@ -97,7 +91,6 @@ const Login = () => {
                 </div>
               </div>
 
-              {/* Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Password
@@ -118,7 +111,6 @@ const Login = () => {
                 </div>
               </div>
 
-              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={loading}
@@ -139,7 +131,6 @@ const Login = () => {
             </div>
           </form>
 
-          {/* Demo Login Button */}
           <div className="mt-6">
             <button
               onClick={handleDemoLogin}
@@ -152,7 +143,6 @@ const Login = () => {
             </p>
           </div>
 
-          {/* Back to Portal */}
           <div className="mt-6 text-center">
             <a
               href="/"

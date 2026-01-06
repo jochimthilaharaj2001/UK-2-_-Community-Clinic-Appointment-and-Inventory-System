@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Sidebar from '../../components/Sidebar';
 import StatsCard from '../../components/StatsCard';
 import { 
   FaUsers, FaUserMd, FaCalendarAlt, FaPills, 
-  FaChartLine, FaMoneyBillWave, FaStar 
+  FaMoneyBillWave, FaStar 
 } from 'react-icons/fa';
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState({
+  const [stats] = useState({
     totalPatients: 2847,
     totalDoctors: 42,
     todayAppointments: 156,
@@ -16,7 +16,7 @@ const AdminDashboard = () => {
     satisfactionRate: 4.7
   });
 
-  const [recentActivities, setRecentActivities] = useState([
+  const [recentActivities] = useState([
     { id: 1, user: 'Dr. Sarah Wilson', action: 'Completed appointment', time: '10:30 AM', type: 'appointment' },
     { id: 2, user: 'John Doe', action: 'New patient registration', time: '9:45 AM', type: 'registration' },
     { id: 3, user: 'Pharmacist', action: 'Restocked inventory', time: '9:15 AM', type: 'inventory' },
@@ -91,22 +91,18 @@ const AdminDashboard = () => {
       <Sidebar />
       
       <div className="flex-1 p-6 ml-64">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="text-gray-600">Welcome back! Here's what's happening with your clinic today.</p>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {statCards.map((stat, index) => (
             <StatsCard key={index} {...stat} />
           ))}
         </div>
 
-        {/* Recent Activities and Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Activities */}
           <div className="bg-white rounded-2xl shadow p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-gray-900">Recent Activities</h2>
@@ -132,7 +128,6 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* Quick Actions */}
           <div className="bg-white rounded-2xl shadow p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-4">
@@ -154,7 +149,6 @@ const AdminDashboard = () => {
               </a>
             </div>
 
-            {/* System Status */}
             <div className="mt-8 pt-6 border-t border-gray-200">
               <h3 className="font-medium text-gray-900 mb-3">System Status</h3>
               <div className="space-y-2">
