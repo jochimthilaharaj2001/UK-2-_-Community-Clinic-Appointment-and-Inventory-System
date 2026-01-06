@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
+
 // 1. Portal Access Page
 function PortalAccess() {
   return (
@@ -71,12 +72,28 @@ function PortalAccess() {
               Coming Soon
             </div>
           </div>
+       
+         {/* Patient Portal (Coming Soon) */}
+        <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-8 text-center opacity-60">
+          <div className="w-16 h-16 mx-auto mb-6 bg-gray-200 rounded-full flex items-center justify-center">
+            <span className="text-2xl">🧑‍🦱</span>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-3">
+            Patient Portal
+          </h3>
+            <p className="text-gray-600 mb-6">
+            Book appointments and view medical records
+          </p>
+          <div className="text-gray-400 font-semibold">
+            Coming Soon
+          </div>
         </div>
+         </div>
       </div>
     </div>
-  );
-}
-
+  
+   );
+  }
 // 2. Login Page
 function Login() {
   const [email, setEmail] = useState('');
