@@ -6,10 +6,8 @@ import {
   FaCalendarAlt, 
   FaPills, 
   FaChartBar,
-  FaSignOutAlt,
-  FaCog
+  FaSignOutAlt
 } from 'react-icons/fa';
-import toast from 'react-hot-toast';
 
 const Sidebar = () => {
   const location = useLocation();
@@ -17,7 +15,6 @@ const Sidebar = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    toast.success('Logged out successfully');
     window.location.href = '/login';
   };
 
