@@ -71,9 +71,14 @@ function App() {
             </ProtectedRoute>
           } 
         />
+
+        {/* Pharmacist Protected Routes */}
+        
         
         {/* Catch all route */}
         <Route path="*" element={<Navigate to="/" replace />} />
+
+
       </Routes>
     </Router>
   );
