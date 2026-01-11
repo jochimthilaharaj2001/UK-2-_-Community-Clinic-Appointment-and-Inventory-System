@@ -22,9 +22,9 @@ const PortalAccess = () => {
       title: 'Pharmacist Portal',
       description: 'Manage inventory, process orders, and handle prescriptions',
       icon: <FaPills className="text-4xl text-purple-600" />,
-      path: '#',
+      path: '/login',
       color: 'bg-purple-50 border-purple-200 hover:bg-purple-100',
-      disabled: true
+      disabled: false
     },
     {
       title: 'Patient Portal',
