@@ -9,6 +9,12 @@ import InventoryManagement from './pages/admin/InventoryManagement';
 import Reports from './pages/admin/Reports';
 import AppointmentManagement from './pages/admin/AppointmentManagement';
 
+import PharmacistDashboard from './pages/pharmacist/PharmacistDashboard';
+import DispenseMedicine from './pages/pharmacist/DispenseMedicine';
+import InventoryManagement from './pages/pharmacist/InventoryManagement';
+import Reports from './pages/pharmacist/Reports';
+
+
 function App() {
   return (
     <Router>
@@ -71,6 +77,45 @@ function App() {
             </ProtectedRoute>
           } 
         />
+
+        {/* Pharmacist Protected Routes */}
+        
+        <Route 
+          path="/pharmacist/dashboard" 
+          element={
+            <ProtectedRoute role="pharmacist">
+              <PharmacistDashboard />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/pharmacist/dispense" 
+          element={
+            <ProtectedRoute role="pharmacist">
+              <DispenseMedicine />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/pharmacist/inventory" 
+          element={
+            <ProtectedRoute role="pharmacist">
+              <PharmacistInventory />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/pharmacist/reports" 
+          element={
+            <ProtectedRoute role="pharmacist">
+              <PharmacistReports />
+            </ProtectedRoute>
+          } 
+        />
+
         
         {/* Catch all route */}
         <Route path="*" element={<Navigate to="/" replace />} />
