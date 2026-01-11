@@ -13,8 +13,7 @@ import PharmacistDashboard from './pages/pharmacist/PharmacistDashboard';
 import DispenseMedicine from './pages/pharmacist/DispenseMedicine';
 import PharmacistInventoryManagement from './pages/pharmacist/InventoryManagement';
 import PharmacistReports from './pages/pharmacist/Reports';
-
-
+import PharmacistLogin from './pages/pharmacist/PharmacistLogin.jsx';
 function App() {
   return (
     <Router>
@@ -114,6 +113,12 @@ function App() {
               <PharmacistReports />
             </ProtectedRoute>
           } 
+        />
+
+        <Route 
+          path="/pharmacist/login" 
+          element={<PharmacistLogin />
+        } 
         />
         
         {/* Catch all route */}
