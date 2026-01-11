@@ -11,8 +11,8 @@ import AppointmentManagement from './pages/admin/AppointmentManagement';
 
 import PharmacistDashboard from './pages/pharmacist/PharmacistDashboard';
 import DispenseMedicine from './pages/pharmacist/DispenseMedicine';
-import InventoryManagement from './pages/pharmacist/InventoryManagement';
-import Reports from './pages/pharmacist/Reports';
+import PharmacistInventoryManagement from './pages/pharmacist/InventoryManagement';
+import PharmacistReports from './pages/pharmacist/Reports';
 
 
 function App() {
@@ -102,7 +102,7 @@ function App() {
           path="/pharmacist/inventory" 
           element={
             <ProtectedRoute role="pharmacist">
-              <PharmacistInventory />
+              <PharmacistInventoryManagement />
             </ProtectedRoute>
           } 
         />
