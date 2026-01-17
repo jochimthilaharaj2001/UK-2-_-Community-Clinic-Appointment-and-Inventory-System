@@ -90,7 +90,12 @@ const PharmacistLogin = () => {
             Login
           </button>
         </form>
-
+        <div className="text-center mt-5">
+          <p className="text-gray-500">
+            Contact Administrator for Pharmacist Account creation.
+          </p>
+        </div>
+          
         {/* Footer */}
         <div className="text-center mt-5">
           <Link to="/" className="text-sm text-green-600 hover:underline">

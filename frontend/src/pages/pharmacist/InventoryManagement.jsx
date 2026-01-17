@@ -1,156 +1,184 @@
-import Sidebar from '../../components/Sidebar';
-import { FaPlus, FaEdit, FaBox, FaCalendarAlt } from 'react-icons/fa';
+import { useState } from "react";
+import Sidebar from "../../components/Sidebar";
+import { FaSearch, FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 
 const InventoryManagement = () => {
-  const medicines = [
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const inventoryData = [
     {
       id: 1,
-      name: 'Paracetamol 500mg',
-      category: 'Analgesic',
-      stock: '150 tablets',
-      expiry: '2025-06-15',
-      status: 'expired',
-      batch: 'PCM001',
-      supplier: 'MedSupply Co',
-      cost: '$0.15',
-      sell: '$0.25',
+      genericName: "Paracetamol",
+      brandName: "Panadol",
+      strength: "500 mg",
+      batchNo: "BCH-1023",
+      manufacturer: "GSK",
+      expiryDate: "2026-05-20",
+      quantity: 120,
+      price: 15.0,
     },
     {
       id: 2,
-      name: 'Ibuprofen 400mg',
-      category: 'Anti-inflammatory',
-      stock: '25 tablets',
-      expiry: '2024-03-20',
-      status: 'expired',
-      batch: 'IBU002',
-      supplier: 'HealthCorp',
-      cost: '$0.20',
-      sell: '$0.35',
+      genericName: "Amoxicillin",
+      brandName: "Amoxil",
+      strength: "250 mg",
+      batchNo: "BCH-2045",
+      manufacturer: "Pfizer",
+      expiryDate: "2025-02-10",
+      quantity: 8,
+      price: 45.0,
     },
     {
       id: 3,
-      name: 'Amoxicillin 250mg',
-      category: 'Antibiotic',
-      stock: '80 capsules',
-      expiry: '2024-12-10',
-      status: 'expired',
-      batch: 'AMX003',
-      supplier: 'PharmaTech',
-      cost: '$0.45',
-      sell: '$0.75',
+      genericName: "Cetirizine",
+      brandName: "Cetzine",
+      strength: "10 mg",
+      batchNo: "BCH-3099",
+      manufacturer: "Sun Pharma",
+      expiryDate: "2024-01-15",
+      quantity: 20,
+      price: 10.0,
+    },
+    {
+      id: 4,
+      genericName: "Ibuprofen",
+      brandName: "Brufen",
+      strength: "400 mg",
+      batchNo: "BCH-7781",
+      manufacturer: "Abbott",
+      expiryDate: "2026-03-01",
+      quantity: 0,
+      price: 18.0,
     },
   ];
 
+  const today = new Date();
+
+  const getStatus = (item) => {
+    const expiry = new Date(item.expiryDate);
+
+    if (expiry < today) return "Expired";
+    if (item.quantity === 0) return "Out of Stock";
+    if (item.quantity < 10) return "Low Stock";
+    return "In Stock";
+  };
+
+  const filteredInventory = inventoryData.filter(
+    (item) =>
+      item.genericName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.brandName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.batchNo.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const statusBadge = (status) => {
+    switch (status) {
+      case "Expired":
+        return "bg-gray-300 text-gray-800";
+      case "Low Stock":
+        return "bg-red-100 text-red-700";
+      case "Out of Stock":
+        return "bg-orange-100 text-orange-700";
+      default:
+        return "bg-green-100 text-green-700";
+    }
+  };
+
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
+    <div className="min-h-screen bg-gray-100">
       <Sidebar role="pharmacist" />
 
-      {/* Main Content */}
-      <main className="ml-64 flex-1 p-6">
-        
-        {/* Page Header */}
+      <div className="ml-64 p-6">
+        {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">Inventory Management</h1>
-            <p className="text-gray-500">
-              Manage medicine stock, track expiry dates, and update inventory
-            </p>
-          </div>
-
-          <button className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800">
-            <FaPlus />
-            Add Medicine
+          <h1 className="text-3xl font-bold text-gray-800">
+            Inventory Management
+          </h1>
+          <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            <FaPlus /> Add Medicine
           </button>
         </div>
 
-        {/* Inventory Card */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-lg font-semibold mb-1">Medicine Inventory</h2>
-          <p className="text-gray-500 mb-4">
-            Complete list of medicines with stock levels and expiry tracking
-          </p>
-
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="text-left text-gray-500 border-b">
-                  <th className="pb-3">Medicine</th>
-                  <th className="pb-3">Category</th>
-                  <th className="pb-3">Stock</th>
-                  <th className="pb-3">Expiry</th>
-                  <th className="pb-3">Batch</th>
-                  <th className="pb-3">Supplier</th>
-                  <th className="pb-3">Price</th>
-                  <th className="pb-3">Actions</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {medicines.map((med) => (
-                  <tr key={med.id} className="border-b last:border-none">
-                    
-                    {/* Medicine */}
-                    <td className="py-4">
-                      <p className="font-medium text-gray-800">{med.name}</p>
-                      <p className="text-sm text-gray-400">ID: {med.id}</p>
-                    </td>
-
-                    {/* Category */}
-                    <td>
-                      <span className="px-3 py-1 text-sm bg-gray-100 rounded-full">
-                        {med.category}
-                      </span>
-                    </td>
-
-                    {/* Stock */}
-                    <td>
-                      <div className="flex items-center gap-2 text-gray-700">
-                        <FaBox />
-                        {med.stock}
-                      </div>
-                    </td>
-
-                    {/* Expiry */}
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <FaCalendarAlt className="text-gray-400" />
-                        <span>{med.expiry}</span>
-                        <span className="ml-2 px-2 py-1 text-xs text-white bg-red-500 rounded-full">
-                          expired
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Batch */}
-                    <td>{med.batch}</td>
-
-                    {/* Supplier */}
-                    <td>{med.supplier}</td>
-
-                    {/* Price */}
-                    <td>
-                      <p className="text-sm">Cost: {med.cost}</p>
-                      <p className="text-sm">Sell: {med.sell}</p>
-                    </td>
-
-                    {/* Actions */}
-                    <td>
-                      <button className="flex items-center gap-2 px-3 py-2 border rounded-lg hover:bg-gray-100">
-                        <FaEdit />
-                        Edit
-                      </button>
-                    </td>
-
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        {/* Search */}
+        <div className="bg-white p-4 rounded-lg shadow mb-6 flex items-center gap-3">
+          <FaSearch className="text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by generic, brand or batch number..."
+            className="w-full outline-none"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
 
-      </main>
+        {/* Table */}
+        <div className="bg-white rounded-xl shadow overflow-x-auto">
+          <table className="min-w-full text-sm text-left">
+            <thead className="bg-gray-100 uppercase text-gray-700">
+              <tr>
+                <th className="px-4 py-3">Generic</th>
+                <th className="px-4 py-3">Brand</th>
+                <th className="px-4 py-3">Strength</th>
+                <th className="px-4 py-3">Batch</th>
+                <th className="px-4 py-3">Manufacturer</th>
+                <th className="px-4 py-3">Expiry</th>
+                <th className="px-4 py-3">Qty</th>
+                <th className="px-4 py-3">Price (LKR)</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredInventory.length === 0 ? (
+                <tr>
+                  <td colSpan="10" className="text-center py-6 text-gray-500">
+                    No inventory records found
+                  </td>
+                </tr>
+              ) : (
+                filteredInventory.map((item) => {
+                  const status = getStatus(item);
+                  return (
+                    <tr
+                      key={item.id}
+                      className="border-t hover:bg-gray-50"
+                    >
+                      <td className="px-4 py-3 font-medium">
+                        {item.genericName}
+                      </td>
+                      <td className="px-4 py-3">{item.brandName}</td>
+                      <td className="px-4 py-3">{item.strength}</td>
+                      <td className="px-4 py-3">{item.batchNo}</td>
+                      <td className="px-4 py-3">{item.manufacturer}</td>
+                      <td className="px-4 py-3">{item.expiryDate}</td>
+                      <td className="px-4 py-3">{item.quantity}</td>
+                      <td className="px-4 py-3">
+                        {item.price.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadge(
+                            status
+                          )}`}
+                        >
+                          {status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 flex justify-center gap-3">
+                        <button className="text-blue-600 hover:text-blue-800">
+                          <FaEdit />
+                        </button>
+                        <button className="text-red-600 hover:text-red-800">
+                          <FaTrash />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };
