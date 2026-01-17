@@ -22,7 +22,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Demo login - only admin for now
+      // Demo login
       const userData = {
         id: '1',
         email: formData.email,
