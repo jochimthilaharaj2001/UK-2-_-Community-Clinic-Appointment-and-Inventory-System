@@ -1,7 +1,20 @@
 import Sidebar from '../../components/Sidebar';
 import { FaFilePdf, FaPrint, FaBoxes, FaPills, FaExclamationTriangle } from 'react-icons/fa';
+import { useState, useEffect } from "react";
+import API_BASE_URL from "../../services/api";
+
 
 const Report = () => {
+
+const [reportData, setReportData] = useState([]);
+
+useEffect(() => {
+  fetch(`${API_BASE_URL}/reports/inventory`)
+    .then((res) => res.json())
+    .then((data) => setReportData(data))
+    .catch(() => alert("Failed to load report"));
+}, []);
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
@@ -9,7 +22,7 @@ const Report = () => {
 
       {/* Main Content */}
       <main className="ml-64 flex-1 p-6">
-
+        
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Pharmacy Reports</h1>
@@ -106,5 +119,8 @@ const Report = () => {
     </div>
   );
 };
+
+
+
 
 export default Report;

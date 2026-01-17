@@ -1,61 +1,119 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import { FaSearch, FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import API_BASE_URL from "../../services/api";
 
 const InventoryManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [inventoryData, setInventoryData] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({
+    generic_name: "",
+    brand_name: "",
+    strength: "",
+    batch_number: "",
+    manufacturer: "",
+    expiry_date: "",
+    quantity: "",
+    selling_price: "",
+  });
 
-  const inventoryData = [
-    {
-      id: 1,
-      genericName: "Paracetamol",
-      brandName: "Panadol",
-      strength: "500 mg",
-      batchNo: "BCH-1023",
-      manufacturer: "GSK",
-      expiryDate: "2026-05-20",
-      quantity: 120,
-      price: 15.0,
-    },
-    {
-      id: 2,
-      genericName: "Amoxicillin",
-      brandName: "Amoxil",
-      strength: "250 mg",
-      batchNo: "BCH-2045",
-      manufacturer: "Pfizer",
-      expiryDate: "2025-02-10",
-      quantity: 8,
-      price: 45.0,
-    },
-    {
-      id: 3,
-      genericName: "Cetirizine",
-      brandName: "Cetzine",
-      strength: "10 mg",
-      batchNo: "BCH-3099",
-      manufacturer: "Sun Pharma",
-      expiryDate: "2024-01-15",
-      quantity: 20,
-      price: 10.0,
-    },
-    {
-      id: 4,
-      genericName: "Ibuprofen",
-      brandName: "Brufen",
-      strength: "400 mg",
-      batchNo: "BCH-7781",
-      manufacturer: "Abbott",
-      expiryDate: "2026-03-01",
-      quantity: 0,
-      price: 18.0,
-    },
-  ];
+  useEffect(() => {
+    fetchInventory();
+  }, []);
+
+  const fetchInventory = () => {
+    fetch(`${API_BASE_URL}/inventory`)
+      .then((res) => res.json())
+      .then((data) => setInventoryData(data))
+      .catch(() => alert("Failed to load inventory"));
+  };
+
+  
+  const handleAddClick = () => {
+    setEditingId(null);
+    setFormData({
+      generic_name: "",
+      brand_name: "",
+      strength: "",
+      batch_number: "",
+      manufacturer: "",
+      expiry_date: "",
+      quantity: "",
+      selling_price: "",
+    });
+    setShowModal(true);
+  };
+
+  const handleEditClick = (item) => {
+    setEditingId(item.id);
+    setFormData(item);
+    setShowModal(true);
+  };
+
+  const handleDeleteClick = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this medicine?")) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/inventory/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        alert("Failed to delete medicine");
+        return;
+      }
+
+      alert("Medicine deleted successfully");
+      fetchInventory();
+    } catch (error) {
+      console.error(error);
+      alert("Error deleting medicine");
+    }
+  };
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSave = async () => {
+    if (!formData.generic_name || !formData.quantity) {
+      alert("Please fill in required fields");
+      return;
+    }
+
+    try {
+      const url = editingId
+        ? `${API_BASE_URL}/inventory/${editingId}`
+        : `${API_BASE_URL}/inventory`;
+      const method = editingId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!res.ok) {
+        alert("Failed to save medicine");
+        return;
+      }
+
+      alert(editingId ? "Medicine updated successfully" : "Medicine added successfully");
+      setShowModal(false);
+      fetchInventory();
+    } catch (error) {
+      console.error(error);
+      alert("Error saving medicine");
+    }
+  };
 
   const today = new Date();
 
   const getStatus = (item) => {
-    const expiry = new Date(item.expiryDate);
+    const expiry = new Date(item.expiry_date);
 
     if (expiry < today) return "Expired";
     if (item.quantity === 0) return "Out of Stock";
@@ -65,9 +123,9 @@ const InventoryManagement = () => {
 
   const filteredInventory = inventoryData.filter(
     (item) =>
-      item.genericName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.brandName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.batchNo.toLowerCase().includes(searchTerm.toLowerCase())
+      item.generic_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.brand_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.batch_number.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const statusBadge = (status) => {
@@ -93,7 +151,9 @@ const InventoryManagement = () => {
           <h1 className="text-3xl font-bold text-gray-800">
             Inventory Management
           </h1>
-          <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          <button 
+            onClick={handleAddClick}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
             <FaPlus /> Add Medicine
           </button>
         </div>
@@ -143,16 +203,16 @@ const InventoryManagement = () => {
                       className="border-t hover:bg-gray-50"
                     >
                       <td className="px-4 py-3 font-medium">
-                        {item.genericName}
+                        {item.generic_name}
                       </td>
-                      <td className="px-4 py-3">{item.brandName}</td>
+                      <td className="px-4 py-3">{item.brand_name}</td>
                       <td className="px-4 py-3">{item.strength}</td>
-                      <td className="px-4 py-3">{item.batchNo}</td>
+                      <td className="px-4 py-3">{item.batch_number}</td>
                       <td className="px-4 py-3">{item.manufacturer}</td>
-                      <td className="px-4 py-3">{item.expiryDate}</td>
+                      <td className="px-4 py-3">{item.expiry_date}</td>
                       <td className="px-4 py-3">{item.quantity}</td>
                       <td className="px-4 py-3">
-                        {item.price.toFixed(2)}
+                        {item.selling_price ? Number(item.selling_price).toFixed(2) : "N/A"}
                       </td>
                       <td className="px-4 py-3">
                         <span
@@ -164,10 +224,14 @@ const InventoryManagement = () => {
                         </span>
                       </td>
                       <td className="px-4 py-3 flex justify-center gap-3">
-                        <button className="text-blue-600 hover:text-blue-800">
+                        <button 
+                          onClick={() => handleEditClick(item)}
+                          className="text-blue-600 hover:text-blue-800">
                           <FaEdit />
                         </button>
-                        <button className="text-red-600 hover:text-red-800">
+                        <button 
+                          onClick={() => handleDeleteClick(item.id)}
+                          className="text-red-600 hover:text-red-800">
                           <FaTrash />
                         </button>
                       </td>
@@ -178,6 +242,123 @@ const InventoryManagement = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Add/Edit Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <h2 className="text-2xl font-bold mb-6">
+                {editingId ? "Update Medicine" : "Add New Medicine"}
+              </h2>
+
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Generic Name *</label>
+                  <input
+                    type="text"
+                    name="generic_name"
+                    value={formData.generic_name}
+                    onChange={handleFormChange}
+                    className="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Paracetamol"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Brand Name</label>
+                  <input
+                    type="text"
+                    name="brand_name"
+                    value={formData.brand_name}
+                    onChange={handleFormChange}
+                    className="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Panadol"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Strength</label>
+                  <input
+                    type="text"
+                    name="strength"
+                    value={formData.strength}
+                    onChange={handleFormChange}
+                    className="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., 500mg"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Batch Number</label>
+                  <input
+                    type="text"
+                    name="batch_number"
+                    value={formData.batch_number}
+                    onChange={handleFormChange}
+                    className="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., BATCH001"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Manufacturer</label>
+                  <input
+                    type="text"
+                    name="manufacturer"
+                    value={formData.manufacturer}
+                    onChange={handleFormChange}
+                    className="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., GSK"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Expiry Date</label>
+                  <input
+                    type="date"
+                    name="expiry_date"
+                    value={formData.expiry_date}
+                    onChange={handleFormChange}
+                    className="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Quantity *</label>
+                  <input
+                    type="number"
+                    name="quantity"
+                    value={formData.quantity}
+                    onChange={handleFormChange}
+                    className="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Selling Price</label>
+                  <input
+                    type="number"
+                    name="selling_price"
+                    value={formData.selling_price}
+                    onChange={handleFormChange}
+                    className="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0.00"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  {editingId ? "Update" : "Add"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

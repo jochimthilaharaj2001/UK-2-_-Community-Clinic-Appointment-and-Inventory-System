@@ -1,39 +1,52 @@
 import { useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import { FaSearch, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import API_BASE_URL from "../../services/api";
 
 const DispenseMedicine = () => {
   const [prescriptionId, setPrescriptionId] = useState("");
   const [prescription, setPrescription] = useState(null);
   const [error, setError] = useState("");
 
-  // Mock prescription data (later from backend)
-  const mockPrescription = {
-    patientName: "John Doe",
-    medicine: "Paracetamol",
-    strength: "500 mg",
-    quantity: 5,
-    availableStock: 20,
-  };
+ const handleRetrieve = async () => {
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/prescriptions/${prescriptionId}`
+    );
+    const data = await res.json();
 
-  const handleRetrieve = () => {
-    setError("");
-    if (!prescriptionId) {
-      setError("Please enter Prescription ID");
+    if (!res.ok || !data) {
+      setError("Prescription not found");
       return;
     }
-    setPrescription(mockPrescription);
-  };
 
-  const handleDispense = () => {
-    if (prescription.quantity > prescription.availableStock) {
-      setError("Insufficient stock to dispense medicine");
+    setPrescription(data);
+  } catch {
+    setError("Server error");
+  }
+};
+
+
+  const handleDispense = async () => {
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/prescriptions/dispense/${prescription.id}`,
+      { method: "POST" }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(data.message);
       return;
     }
-    alert("Medicine dispensed successfully & inventory updated");
+
+    alert("Medicine dispensed successfully");
     setPrescription(null);
-    setPrescriptionId("");
-  };
+  } catch {
+    setError("Failed to dispense medicine");
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-100">

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaUserMd, FaLock } from 'react-icons/fa';
+import API_BASE_URL from "../../services/api";
 
 const PharmacistLogin = () => {
   const navigate = useNavigate();
@@ -9,24 +10,40 @@ const PharmacistLogin = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleLogin = (e) => {
-    e.preventDefault();
+  const handleLogin = async (e) => {
+    e.preventDefault(); // Prevent form refresh
 
+    // Validate fields before sending API request
     if (!email || !password) {
       setError('Please enter all fields');
       return;
     }
 
-    // 🔹 Temporary Frontend Authentication
-    const pharmacist = {
-      email,
-      role: 'pharmacist',
-    };
+    try {
+      const res = await fetch(`${API_BASE_URL}/pharmacist/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    localStorage.setItem('token', 'pharmacist-demo-token');
-    localStorage.setItem('user', JSON.stringify(pharmacist));
+      const data = await res.json();
 
-    navigate('/pharmacist/dashboard');
+      if (!res.ok) {
+        alert(data.message || "Login failed");
+        return;
+      }
+
+      // Store token and user correctly
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.pharmacist));
+
+      // Redirect to dashboard
+      navigate("/pharmacist/dashboard");
+
+    } catch (error) {
+      console.error(error);
+      alert("Server error. Try again later.");
+    }
   };
 
   return (
