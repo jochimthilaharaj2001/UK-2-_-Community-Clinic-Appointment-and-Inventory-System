@@ -1,44 +1,128 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaUser, FaLock, FaHospital } from 'react-icons/fa';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { FaUser, FaLock, FaHospital, FaPills, FaUserMd, FaUserShield } from 'react-icons/fa';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const role = queryParams.get('role') || 'admin'; // Default to admin
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const roleConfigs = {
+    admin: {
+      title: 'Admin Login',
+      icon: <FaUserShield className="text-5xl text-blue-600" />,
+      color: 'from-blue-600 to-blue-700',
+      hoverColor: 'from-blue-700 to-blue-800',
+      demoEmail: 'admin@clinic.com',
+      demoPassword: 'admin123',
+      redirectPath: '/admin',
+      description: 'Sign in to clinic admin portal'
+    },
+    pharmacist: {
+      title: 'Pharmacist Login',
+      icon: <FaPills className="text-5xl text-purple-600" />,
+      color: 'from-purple-600 to-purple-700',
+      hoverColor: 'from-purple-700 to-purple-800',
+      demoEmail: 'pharmacist@clinic.com',
+      demoPassword: 'pharma123',
+      redirectPath: '/pharmacist/dashboard',
+      description: 'Sign in to pharmacy management portal'
+    },
+    doctor: {
+      title: 'Doctor Login',
+      icon: <FaUserMd className="text-5xl text-green-600" />,
+      color: 'from-green-600 to-green-700',
+      hoverColor: 'from-green-700 to-green-800',
+      demoEmail: 'doctor@clinic.com',
+      demoPassword: 'doctor123',
+      redirectPath: '/doctor/dashboard',
+      description: 'Sign in to doctor portal'
+    }
+  };
+
+  const config = roleConfigs[role] || roleConfigs.admin;
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
+
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     try {
-      // Demo login
-      const userData = {
-        id: '1',
-        email: formData.email,
-        role: 'admin',
-        name: 'Admin User',
-      };
+      // Mock authentication - In production, this would be an API call
+      let authenticated = false;
+      let userData = null;
 
-      localStorage.setItem('token', 'demo-token-' + Date.now());
-      localStorage.setItem('user', JSON.stringify(userData));
+      // Admin credentials
+      if (role === 'admin' && formData.email === config.demoEmail && formData.password === config.demoPassword) {
+        authenticated = true;
+        userData = {
+          id: '1',
+          email: formData.email,
+          role: 'admin',
+          name: 'Admin User',
+          department: 'Administration'
+        };
+      }
+      // Pharmacist credentials
+      else if (role === 'pharmacist' && formData.email === config.demoEmail && formData.password === config.demoPassword) {
+        authenticated = true;
+        userData = {
+          id: '2',
+          email: formData.email,
+          role: 'pharmacist',
+          name: 'John Pharmacist',
+          department: 'Pharmacy',
+          licenseNumber: 'PHARM12345'
+        };
+      }
+      // Doctor credentials
+      else if (role === 'doctor' && formData.email === config.demoEmail && formData.password === config.demoPassword) {
+        authenticated = true;
+        userData = {
+          id: '3',
+          email: formData.email,
+          role: 'doctor',
+          name: 'Dr. Jane Smith',
+          department: 'General Medicine',
+          specialization: 'General Practitioner'
+        };
+      }
 
-      setTimeout(() => {
-        navigate('/admin');
-      }, 1000);
-    } catch (error) {
-      console.error('Login error:', error);
-      alert('Login failed. Use admin@clinic.com');
+      if (authenticated && userData) {
+        // Store authentication data
+        localStorage.setItem('token', `demo-token-${role}-${Date.now()}`);
+        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('role', role);
+
+        // Redirect based on role
+        setTimeout(() => {
+          navigate(config.redirectPath);
+        }, 500);
+      } else {
+        setError('Invalid email or password');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -46,10 +130,11 @@ const Login = () => {
 
   const handleDemoLogin = () => {
     setFormData({
-      email: 'admin@clinic.com',
-      password: 'password123',
+      email: config.demoEmail,
+      password: config.demoPassword,
     });
     
+    // Auto-submit after setting demo credentials
     setTimeout(() => {
       document.getElementById('loginForm').dispatchEvent(
         new Event('submit', { bubbles: true, cancelable: true })
@@ -57,15 +142,43 @@ const Login = () => {
     }, 100);
   };
 
+  const switchRole = (newRole) => {
+    navigate(`/login?role=${newRole}`);
+    setFormData({ email: '', password: '' });
+    setError('');
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <div className="inline-block p-4 bg-white rounded-2xl shadow-lg mb-4">
-            <FaHospital className="text-5xl text-blue-600" />
+            {config.icon}
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Login</h1>
-          <p className="text-gray-600 mt-2">Sign in to clinic admin portal</p>
+          <h1 className="text-3xl font-bold text-gray-900">{config.title}</h1>
+          <p className="text-gray-600 mt-2">{config.description}</p>
+        </div>
+
+        {/* Role Selector */}
+        <div className="flex justify-center gap-4 mb-6">
+          <button
+            onClick={() => switchRole('admin')}
+            className={`px-4 py-2 rounded-lg transition ${role === 'admin' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+          >
+            Admin
+          </button>
+          <button
+            onClick={() => switchRole('pharmacist')}
+            className={`px-4 py-2 rounded-lg transition ${role === 'pharmacist' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+          >
+            Pharmacist
+          </button>
+          <button
+            onClick={() => switchRole('doctor')}
+            className={`px-4 py-2 rounded-lg transition ${role === 'doctor' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+          >
+            Doctor
+          </button>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
@@ -86,7 +199,7 @@ const Login = () => {
                     onChange={handleChange}
                     required
                     className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                    placeholder="Enter admin email"
+                    placeholder={`Enter ${role} email`}
                   />
                 </div>
               </div>
@@ -111,10 +224,16 @@ const Login = () => {
                 </div>
               </div>
 
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                  {error}
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className={`w-full py-3 px-4 bg-gradient-to-r ${config.color} text-white font-semibold rounded-lg hover:bg-gradient-to-r ${config.hoverColor} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200`}
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
@@ -136,10 +255,10 @@ const Login = () => {
               onClick={handleDemoLogin}
               className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition"
             >
-              Use Demo Admin Account
+              Use Demo {role.charAt(0).toUpperCase() + role.slice(1)} Account
             </button>
             <p className="text-center text-gray-600 text-sm mt-2">
-              Email: admin@clinic.com
+              Email: {config.demoEmail} | Password: {config.demoPassword}
             </p>
           </div>
 
