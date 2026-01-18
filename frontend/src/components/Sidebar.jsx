@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import {
-  FaHome,
+ FaHome,
   FaUsers,
   FaUserMd,
   FaCalendarAlt,
@@ -10,8 +10,10 @@ import {
   FaBoxes,
   FaStethoscope,
   FaClipboardList,
-  FaUserInjured
-} from 'react-icons/fa';
+  FaUserInjured,
+  FaCalendarCheck,
+  FaMoneyBillWave
+  } from 'react-icons/fa';
 
 const Sidebar = () => {
   const location = useLocation();
@@ -50,6 +52,15 @@ const Sidebar = () => {
     { path: '/doctor/prescriptions', label: 'Prescriptions', icon: <FaClipboardList /> },
     { path: '/doctor/teleconsult', label: 'Teleconsult', icon: <FaStethoscope /> },
   ];
+  
+  // 🔹 ReceptionistR MENU
+   const receptionistMenu = [
+    { path: '/receptionist/dashboard', label: 'Dashboard', icon: <FaHome /> },
+    { path: '/receptionist/appointments', label: 'Appointments', icon: <FaCalendarCheck /> },
+    { path: '/receptionist/patients', label: 'Patients', icon: <FaUserInjured /> },
+    { path: '/receptionist/billing', label: 'Billing', icon: <FaMoneyBillWave /> },
+  
+  ];
 
   // Get menu based on role
   const getMenuItems = () => {
@@ -57,6 +68,7 @@ const Sidebar = () => {
       case 'admin': return adminMenu;
       case 'pharmacist': return pharmacistMenu;
       case 'doctor': return doctorMenu;
+      case 'receptionist': return receptionistMenu;
       default: return [];
     }
   };
@@ -69,6 +81,7 @@ const Sidebar = () => {
       case 'admin': return 'Admin Portal';
       case 'pharmacist': return 'Pharmacy Portal';
       case 'doctor': return 'Doctor Portal';
+      case 'receptionist': return 'Receptionist Portal';
       default: return 'Portal';
     }
   };
@@ -84,6 +97,8 @@ const Sidebar = () => {
         return `Welcome, ${user.name || 'Pharmacist'}`;
       case 'doctor':
         return `Welcome, ${user.name || 'Doctor'}`;
+      case 'receptionist':
+        return `Welcome, ${user.name || 'Receptionist'}`;
       default:
         return 'Welcome';
     }

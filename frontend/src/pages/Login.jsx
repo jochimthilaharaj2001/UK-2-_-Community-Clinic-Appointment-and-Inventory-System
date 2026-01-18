@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaUser, FaLock, FaHospital, FaPills, FaUserMd, FaUserShield } from 'react-icons/fa';
+import { FaUser, FaLock, FaHospital, FaPills, FaUserMd, FaUserShield, FaIdCard } from 'react-icons/fa';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -45,6 +45,16 @@ const Login = () => {
       demoPassword: 'doctor123',
       redirectPath: '/doctor/dashboard',
       description: 'Sign in to doctor portal'
+    },
+    receptionist: {
+      title: 'Receptionist Login',
+      icon: <FaIdCard className="text-5xl text-amber-600" />,
+      color: 'from-amber-600 to-amber-700',
+      hoverColor: 'from-amber-700 to-amber-800',
+      demoEmail: 'receptionist@clinic.com',
+      demoPassword: 'reception123',
+      redirectPath: '/receptionist/dashboard',
+      description: 'Sign in to receptionist portal'
     }
   };
 
@@ -106,6 +116,18 @@ const Login = () => {
           specialization: 'General Practitioner'
         };
       }
+      // Receptionist credentials
+      else if (role === 'receptionist' && formData.email === config.demoEmail && formData.password === config.demoPassword) {
+        authenticated = true;
+        userData = {
+          id: '4',
+          email: formData.email,
+          role: 'receptionist',
+          name: 'Sarah Johnson',
+          department: 'Reception',
+          employeeId: 'REC001'
+        };
+      }
 
       if (authenticated && userData) {
         // Store authentication data
@@ -160,7 +182,7 @@ const Login = () => {
         </div>
 
         {/* Role Selector */}
-        <div className="flex justify-center gap-4 mb-6">
+        <div className="flex flex-wrap justify-center gap-2 mb-6">
           <button
             onClick={() => switchRole('admin')}
             className={`px-4 py-2 rounded-lg transition ${role === 'admin' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
@@ -178,6 +200,12 @@ const Login = () => {
             className={`px-4 py-2 rounded-lg transition ${role === 'doctor' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
           >
             Doctor
+          </button>
+          <button
+            onClick={() => switchRole('receptionist')}
+            className={`px-4 py-2 rounded-lg transition ${role === 'receptionist' ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+          >
+            Receptionist
           </button>
         </div>
 
@@ -263,12 +291,33 @@ const Login = () => {
           </div>
 
           <div className="mt-6 text-center">
-            <a
-              href="/"
-              className="inline-flex items-center text-blue-600 hover:text-blue-800 hover:underline font-medium"
-            >
-              ← Back to Portal Selection
-            </a>
+            <p className="text-gray-600 text-sm mb-2">Need to access a different portal?</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              <button
+                onClick={() => switchRole('admin')}
+                className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg text-sm"
+              >
+                Admin Portal
+              </button>
+              <button
+                onClick={() => switchRole('pharmacist')}
+                className="px-3 py-1 bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-lg text-sm"
+              >
+                Pharmacy Portal
+              </button>
+              <button
+                onClick={() => switchRole('doctor')}
+                className="px-3 py-1 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg text-sm"
+              >
+                Doctor Portal
+              </button>
+              <button
+                onClick={() => switchRole('receptionist')}
+                className="px-3 py-1 bg-amber-100 text-amber-700 hover:bg-amber-200 rounded-lg text-sm"
+              >
+                Receptionist Portal
+              </button>
+            </div>
           </div>
         </div>
       </div>
