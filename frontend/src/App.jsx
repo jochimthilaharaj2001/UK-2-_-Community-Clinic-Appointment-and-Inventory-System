@@ -19,12 +19,6 @@ import DoctorPatients from './pages/doctor/DoctorPatients';
 import DoctorPrescriptions from './pages/doctor/DoctorPrescriptions';
 import DoctorSchedule from './pages/doctor/DoctorSchedule';
 
-// Receptionist Pages
-import ReceptionistDashboard from './pages/receptionist/ReceptionistDashboard';
-import ReceptionistAppointments from './pages/receptionist/ReceptionistAppointment';
-import ReceptionistPatients from './pages/receptionist/ReceptionistPatients';
-import ReceptionistBilling from './pages/receptionist/ReceptionistBilling';
-
 function App() {
   return (
     <Router>
@@ -148,41 +142,6 @@ function App() {
           element={
             <ProtectedRoute role="doctor">
               <DoctorSchedule />
-            </ProtectedRoute>
-          } 
-        />
-
-        
-        {/* Receptionist Protected Routes */}
-       <Route 
-          path="/receptionist/dashboard" 
-          element={
-            <ProtectedRoute role="receptionist">
-              <ReceptionistDashboard />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/receptionist/appointments" 
-          element={
-            <ProtectedRoute role="receptionist">
-              <ReceptionistAppointments />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/receptionist/patients" 
-          element={
-            <ProtectedRoute role="receptionist">
-              <ReceptionistPatients />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/receptionist/billing" 
-          element={
-            <ProtectedRoute role="receptionist">
-              <ReceptionistBilling />
             </ProtectedRoute>
           } 
         />

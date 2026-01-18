@@ -10,10 +10,8 @@ import {
   FaBoxes,
   FaStethoscope,
   FaClipboardList,
-  FaUserInjured,
-  FaCalendarCheck,
-  FaMoneyBillWave
-  } from 'react-icons/fa';
+  FaUserInjured
+} from 'react-icons/fa';
 
 const Sidebar = () => {
   const location = useLocation();
@@ -47,6 +45,7 @@ const Sidebar = () => {
   // 🔹 DOCTOR MENU
   const doctorMenu = [
     { path: '/doctor/dashboard', label: 'Dashboard', icon: <FaHome /> },
+    { path: '/doctor/profile', label: 'My Profile', icon: <FaUserCircle /> },
     { path: '/doctor/schedule', label: 'My Schedule', icon: <FaCalendarAlt /> },
     { path: '/doctor/patients', label: 'Patients', icon: <FaUserInjured /> },
     { path: '/doctor/prescriptions', label: 'Prescriptions', icon: <FaClipboardList /> },
