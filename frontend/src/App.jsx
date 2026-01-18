@@ -18,6 +18,7 @@ import DoctorDashboard from './pages/doctor/DoctorDashboard';
 import DoctorPatients from './pages/doctor/DoctorPatients';
 import DoctorPrescriptions from './pages/doctor/DoctorPrescriptions';
 import DoctorSchedule from './pages/doctor/DoctorSchedule';
+<<<<<<< HEAD
 import DoctorProfile from './pages/doctor/DoctorProfile';
 
 // Receptionist Pages
@@ -28,6 +29,8 @@ import PatientRegistration from './pages/receptionist/PatientRegistration';
 import AppointmentsCalendar from './pages/receptionist/AppointmentsCalendar';
 import Billing from './pages/receptionist/Billing';
 
+=======
+>>>>>>> e7aebc6bd1f7e0f8486f6305bac29d2bda55e6fd
 
 function App() {
   return (
@@ -155,6 +158,7 @@ function App() {
             </ProtectedRoute>
           } 
         />
+<<<<<<< HEAD
         <Route 
          path="/doctor/profile" 
          element={
@@ -214,6 +218,9 @@ function App() {
           } 
         />
 
+=======
+        
+>>>>>>> e7aebc6bd1f7e0f8486f6305bac29d2bda55e6fd
         {/* Catch all route */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import {
-  FaHome,
+ FaHome,
   FaUsers,
   FaUserMd,
   FaCalendarAlt,
@@ -67,6 +67,15 @@ const Sidebar = () => {
     { path: '/receptionist/calendar', label: 'Appointments Calendar', icon: <FaCalendarAlt /> },
     { path: '/receptionist/billing', label: 'Billing & Payments', icon: <FaFileInvoiceDollar /> },
   ];
+  
+  // 🔹 ReceptionistR MENU
+   const receptionistMenu = [
+    { path: '/receptionist/dashboard', label: 'Dashboard', icon: <FaHome /> },
+    { path: '/receptionist/appointments', label: 'Appointments', icon: <FaCalendarCheck /> },
+    { path: '/receptionist/patients', label: 'Patients', icon: <FaUserInjured /> },
+    { path: '/receptionist/billing', label: 'Billing', icon: <FaMoneyBillWave /> },
+  
+  ];
 
   // Get menu based on role
   const getMenuItems = () => {
@@ -87,7 +96,11 @@ const Sidebar = () => {
       case 'admin': return 'Admin Portal';
       case 'pharmacist': return 'Pharmacy Portal';
       case 'doctor': return 'Doctor Portal';
+<<<<<<< HEAD
       case 'receptionist': return 'Reception Desk';
+=======
+      case 'receptionist': return 'Receptionist Portal';
+>>>>>>> e7aebc6bd1f7e0f8486f6305bac29d2bda55e6fd
       default: return 'Portal';
     }
   };
