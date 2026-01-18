@@ -37,7 +37,6 @@ const DoctorSchedule = () => {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
-
   const getTypeColor = (type) => {
     switch(type) {
       case 'Follow-up': return 'bg-blue-100 text-blue-800';

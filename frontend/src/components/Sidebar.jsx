@@ -10,9 +10,15 @@ import {
   FaBoxes,
   FaStethoscope,
   FaClipboardList,
-  FaUserInjured
+  FaUserInjured,
+  FaUserCircle,
+  FaSearch,
+  FaUserPlus,
+  FaCalendarCheck,
+  FaFileInvoiceDollar,
+  FaPhone,
+  FaClock
 } from 'react-icons/fa';
-import { FaUserCircle } from 'react-icons/fa';
 
 const Sidebar = () => {
   const location = useLocation();
@@ -50,7 +56,16 @@ const Sidebar = () => {
     { path: '/doctor/schedule', label: 'My Schedule', icon: <FaCalendarAlt /> },
     { path: '/doctor/patients', label: 'Patients', icon: <FaUserInjured /> },
     { path: '/doctor/prescriptions', label: 'Prescriptions', icon: <FaClipboardList /> },
-    { path: '/doctor/teleconsult', label: 'Teleconsult', icon: <FaStethoscope /> },
+  ];
+
+  // 🔹 RECEPTIONIST MENU
+  const receptionistMenu = [
+    { path: '/receptionist/dashboard', label: 'Dashboard', icon: <FaHome /> },
+    { path: '/receptionist/patient-search', label: 'Search Patients', icon: <FaSearch /> },
+    { path: '/receptionist/patient-registration', label: 'New Patient', icon: <FaUserPlus /> },
+    { path: '/receptionist/book-appointment', label: 'Book Appointment', icon: <FaCalendarCheck /> },
+    { path: '/receptionist/calendar', label: 'Appointments Calendar', icon: <FaCalendarAlt /> },
+    { path: '/receptionist/billing', label: 'Billing & Payments', icon: <FaFileInvoiceDollar /> },
   ];
 
   // Get menu based on role
@@ -59,6 +74,7 @@ const Sidebar = () => {
       case 'admin': return adminMenu;
       case 'pharmacist': return pharmacistMenu;
       case 'doctor': return doctorMenu;
+      case 'receptionist': return receptionistMenu;
       default: return [];
     }
   };
@@ -71,6 +87,7 @@ const Sidebar = () => {
       case 'admin': return 'Admin Portal';
       case 'pharmacist': return 'Pharmacy Portal';
       case 'doctor': return 'Doctor Portal';
+      case 'receptionist': return 'Reception Desk';
       default: return 'Portal';
     }
   };
@@ -86,8 +103,32 @@ const Sidebar = () => {
         return `Welcome, ${user.name || 'Pharmacist'}`;
       case 'doctor':
         return `Welcome, ${user.name || 'Doctor'}`;
+      case 'receptionist':
+        return `Welcome, ${user.name || 'Receptionist'}`;
       default:
         return 'Welcome';
+    }
+  };
+
+  // Get icon color based on role
+  const getIconColor = () => {
+    switch(role) {
+      case 'admin': return 'from-blue-500 to-blue-600';
+      case 'pharmacist': return 'from-purple-500 to-purple-600';
+      case 'doctor': return 'from-green-500 to-green-600';
+      case 'receptionist': return 'from-teal-500 to-teal-600';
+      default: return 'from-blue-500 to-blue-600';
+    }
+  };
+
+  // Get active menu gradient based on role
+  const getActiveGradient = () => {
+    switch(role) {
+      case 'admin': return 'from-blue-600 to-blue-500';
+      case 'pharmacist': return 'from-purple-600 to-purple-500';
+      case 'doctor': return 'from-green-600 to-green-500';
+      case 'receptionist': return 'from-teal-600 to-teal-500';
+      default: return 'from-blue-600 to-blue-500';
     }
   };
 
@@ -97,7 +138,7 @@ const Sidebar = () => {
       {/* Logo & User Info */}
       <div className="p-6 border-b border-gray-700">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
+          <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${getIconColor()} flex items-center justify-center`}>
             <span className="font-bold text-lg">
               {user?.name?.charAt(0) || role?.charAt(0).toUpperCase()}
             </span>
@@ -119,6 +160,9 @@ const Sidebar = () => {
           {user?.specialization && (
             <p className="text-xs text-blue-300 mt-1">{user.specialization}</p>
           )}
+          {user?.location && (
+            <p className="text-xs text-teal-300 mt-1">{user.location}</p>
+          )}
         </div>
       </div>
 
@@ -134,7 +178,7 @@ const Sidebar = () => {
               to={item.path}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                 isActive
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg'
+                  ? `bg-gradient-to-r ${getActiveGradient()} text-white shadow-lg`
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white hover:shadow-md'
               }`}
             >
@@ -157,6 +201,20 @@ const Sidebar = () => {
           <FaSignOutAlt />
           <span className="font-medium">Logout</span>
         </button>
+        
+        {/* Quick Stats for Receptionist */}
+        {role === 'receptionist' && (
+          <div className="mt-4 p-3 bg-gray-800 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-gray-400">Today's Appointments</span>
+              <span className="text-sm font-medium">24</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-400">Patients Waiting</span>
+              <span className="text-sm font-medium text-yellow-400">3</span>
+            </div>
+          </div>
+        )}
         
         {/* Role indicator */}
         <div className="mt-4 pt-4 border-t border-gray-700">

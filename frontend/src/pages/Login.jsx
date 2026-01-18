@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaUser, FaLock, FaHospital, FaPills, FaUserMd, FaUserShield } from 'react-icons/fa';
+import { 
+  FaUser, 
+  FaLock, 
+  FaUserShield, 
+  FaUserMd, 
+  FaPills, 
+  FaUserTie // Add this import
+} from 'react-icons/fa';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -45,6 +52,16 @@ const Login = () => {
       demoPassword: 'doctor123',
       redirectPath: '/doctor/dashboard',
       description: 'Sign in to doctor portal'
+    },
+    receptionist: {
+      title: 'Receptionist Login',
+      icon: <FaUserTie className="text-5xl text-teal-600" />, // Fixed: Using FaUserTie
+      color: 'from-teal-600 to-teal-700',
+      hoverColor: 'from-teal-700 to-teal-800',
+      demoEmail: 'reception@clinic.com',
+      demoPassword: 'reception123',
+      redirectPath: '/receptionist/dashboard',
+      description: 'Sign in to reception desk portal'
     }
   };
 
@@ -106,6 +123,18 @@ const Login = () => {
           specialization: 'General Practitioner'
         };
       }
+      // Receptionist credentials - ADD THIS SECTION
+      else if (role === 'receptionist' && formData.email === config.demoEmail && formData.password === config.demoPassword) {
+        authenticated = true;
+        userData = {
+          id: '4',
+          email: formData.email,
+          role: 'receptionist',
+          name: 'Jessica Reception',
+          department: 'Front Desk',
+          location: 'Main Reception'
+        };
+      }
 
       if (authenticated && userData) {
         // Store authentication data
@@ -159,25 +188,31 @@ const Login = () => {
           <p className="text-gray-600 mt-2">{config.description}</p>
         </div>
 
-        {/* Role Selector */}
-        <div className="flex justify-center gap-4 mb-6">
+        {/* Role Selector - Add Receptionist Button */}
+        <div className="flex justify-center gap-2 mb-6 flex-wrap">
           <button
             onClick={() => switchRole('admin')}
-            className={`px-4 py-2 rounded-lg transition ${role === 'admin' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            className={`px-3 py-2 rounded-lg transition ${role === 'admin' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
           >
             Admin
           </button>
           <button
             onClick={() => switchRole('pharmacist')}
-            className={`px-4 py-2 rounded-lg transition ${role === 'pharmacist' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            className={`px-3 py-2 rounded-lg transition ${role === 'pharmacist' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
           >
             Pharmacist
           </button>
           <button
             onClick={() => switchRole('doctor')}
-            className={`px-4 py-2 rounded-lg transition ${role === 'doctor' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            className={`px-3 py-2 rounded-lg transition ${role === 'doctor' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
           >
             Doctor
+          </button>
+          <button
+            onClick={() => switchRole('receptionist')}
+            className={`px-3 py-2 rounded-lg transition ${role === 'receptionist' ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+          >
+            Receptionist
           </button>
         </div>
 

@@ -19,6 +19,16 @@ import DoctorPatients from './pages/doctor/DoctorPatients';
 import DoctorPrescriptions from './pages/doctor/DoctorPrescriptions';
 import DoctorSchedule from './pages/doctor/DoctorSchedule';
 import DoctorProfile from './pages/doctor/DoctorProfile';
+
+// Receptionist Pages
+import ReceptionistDashboard from './pages/receptionist/ReceptionistDashboard';
+import PatientSearch from './pages/receptionist/PatientSearch';
+import BookAppointment from './pages/receptionist/BookAppointment';
+import PatientRegistration from './pages/receptionist/PatientRegistration';
+import AppointmentsCalendar from './pages/receptionist/AppointmentsCalendar';
+import Billing from './pages/receptionist/Billing';
+
+
 function App() {
   return (
     <Router>
@@ -153,7 +163,57 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        
+
+        {/* Receptionist Protected Routes */}
+        <Route 
+          path="/receptionist/dashboard" 
+          element={
+            <ProtectedRoute role="receptionist">
+              <ReceptionistDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/receptionist/patient-search" 
+          element={
+            <ProtectedRoute role="receptionist">
+              <PatientSearch />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/receptionist/book-appointment" 
+          element={
+            <ProtectedRoute role="receptionist">
+              <BookAppointment />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/receptionist/patient-registration" 
+          element={
+            <ProtectedRoute role="receptionist">
+              <PatientRegistration />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/receptionist/appointments-calendar" 
+          element={
+            <ProtectedRoute role="receptionist">
+              <AppointmentsCalendar />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/receptionist/billing" 
+          element={
+            <ProtectedRoute role="receptionist">
+              <Billing />
+            </ProtectedRoute>
+          } 
+        />
+
         {/* Catch all route */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
