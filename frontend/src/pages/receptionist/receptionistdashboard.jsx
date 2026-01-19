@@ -1,6 +1,7 @@
 // pages/receptionist/ReceptionistDashboard.jsx
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import Sidebar from '../../components/Sidebar';
 import { 
   FaSearch, 
   FaCalendarPlus, 
@@ -141,8 +142,9 @@ const ReceptionistDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="p-6">
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar />
+      <div className="flex-1 p-6 ml-64">
         {/* Welcome Section */}
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900">Welcome back!</h2>

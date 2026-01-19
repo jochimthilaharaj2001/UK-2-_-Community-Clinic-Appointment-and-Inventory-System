@@ -8,9 +8,7 @@ import {
   FaStethoscope, 
   FaNotesMedical,
   FaArrowLeft,
-  FaCalendarPlus,
-  FaPhone,
-  FaEnvelope
+  FaCalendarPlus
 } from 'react-icons/fa';
 
 const BookAppointment = () => {

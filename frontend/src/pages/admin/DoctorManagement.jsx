@@ -240,7 +240,7 @@ const DoctorManagement = () => {
     }
   };
 
-  const SortIcon = ({ column }) => {
+  const getSortIcon = (column) => {
     if (sortBy !== column) return <FaSort className="text-gray-400 ml-1" />;
     return sortOrder === 'asc' 
       ? <FaSortUp className="text-blue-600 ml-1" /> 

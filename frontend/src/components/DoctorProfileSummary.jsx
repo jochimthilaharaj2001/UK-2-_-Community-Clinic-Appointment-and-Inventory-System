@@ -1,30 +1,27 @@
 // components/DoctorProfileSummary.jsx
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { FaUserMd, FaEdit, FaEnvelope, FaPhone, FaStethoscope } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 const DoctorProfileSummary = () => {
-  const [profile, setProfile] = useState(null);
-
-  useEffect(() => {
+  const [profile, setProfile] = useState(() => {
     const storedProfile = localStorage.getItem('doctorProfile');
     if (storedProfile) {
-      setProfile(JSON.parse(storedProfile));
+      return JSON.parse(storedProfile);
     } else {
-      // Load from user data
       const user = JSON.parse(localStorage.getItem('user'));
       if (user) {
-        const defaultProfile = {
+        return {
           name: user.name || 'Dr. Sarah Wilson',
           specialization: user.specialization || 'Cardiology',
           email: user.email || 'doctor@clinic.com',
           phone: '+1 (555) 123-4567',
           consultationFee: '$200'
         };
-        setProfile(defaultProfile);
       }
     }
-  }, []);
+    return null;
+  });
 
   if (!profile) {
     return (

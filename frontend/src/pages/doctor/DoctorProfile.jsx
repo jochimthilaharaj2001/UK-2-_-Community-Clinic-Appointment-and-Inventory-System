@@ -28,29 +28,28 @@ const DoctorProfile = () => {
   // Initial doctor profile data
   const initialProfileData = {
     id: '3',
-    name: 'Dr. Sarah Wilson',
-    email: 'doctor@clinic.com',
-    phone: '+1 (555) 123-4567',
-    specialization: 'Cardiology',
-    department: 'Cardiology Department',
-    qualifications: ['MD - Cardiology', 'Board Certified Cardiologist'],
-    experience: '15 years',
-    licenseNumber: 'MED123456',
-    hospital: 'City Medical Center',
-    address: '123 Medical Street, Suite 500, New York, NY 10001',
-    consultationFee: '$200',
+    name: 'Dr. S.Murugesan',
+    email: 'dr.murugesan@siddhahospital.com',
+    phone: '+94 77 123 4567',
+    specialization: 'Siddha Medicine',
+    department: 'Department of Siddha & Indigenous Medicine',
+    qualifications: ['BSMS - Bachelor of Siddha Medicine and Surgery'],
+    experience: '11 years',
+    licenseNumber: 'SL-SMC/BSMS/23456',
+    hospital: 'Government Siddha Teaching Hospital, Jaffna',
+    address: 'No.45, Hospital Road, Jaffna,Sri Lanka',
+    consultationFee: 'LKR 1,500',
     availability: 'Mon-Fri: 9 AM - 5 PM',
-    bio: 'Specialized in cardiology with 15+ years of experience. Expert in heart-related conditions and preventive cardiology.',
+    bio: 'Experienced Siddha Medical Practitioner with over 11 years of clinical experience in treating chronic and lifestyle-related diseases using traditional Siddha medicine. Specialized in Varmam therapy, herbal and mineral-based formulations, and holistic patient care.Dedicated to preserving and practicing authentic Siddha medical traditions.',
     education: [
-      { degree: 'MD', institution: 'Harvard Medical School', year: '2009' },
-      { degree: 'Residency in Cardiology', institution: 'Johns Hopkins Hospital', year: '2013' },
+      { degree: 'BSMS', institution: 'University of Jaffna', year: '2011' },
+      
     ],
     certifications: [
-      'American Board of Internal Medicine - Cardiology',
-      'Advanced Cardiac Life Support (ACLS)',
-      'Board Certified Cardiologist'
+      'Registered Siddha Medical Practitioner - Sri Lanka Siddha Medical Council',
+      'Certificate in Varmam Therapy - National Institute of Siddha'
     ],
-    languages: ['English', 'Spanish'],
+    languages: ['Tamil','English', 'Sinhala'],
     joinDate: '2015-06-01'
   };
 
@@ -74,6 +73,13 @@ const DoctorProfile = () => {
       localStorage.setItem('doctorProfile', JSON.stringify(mergedProfile));
     }
   }, []);
+
+  // Ensure formData is always initialized when profileData changes
+  useEffect(() => {
+    if (profileData && Object.keys(formData).length === 0) {
+      setFormData(profileData);
+    }
+  }, [profileData]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

@@ -106,8 +106,7 @@ const ReceptionistAppointments = () => {
   };
 
   const handleStatusUpdate = (id, newStatus) => {
-    // In a real app, this would update the appointment status via API
-    alert(`Appointment ${id} status updated to ${newStatus}`);
+        alert(`Appointment ${id} status updated to ${newStatus}`);
   };
 
   return (
