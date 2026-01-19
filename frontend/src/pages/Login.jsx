@@ -1,17 +1,13 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-<<<<<<< HEAD
 import { 
   FaUser, 
   FaLock, 
   FaUserShield, 
   FaUserMd, 
   FaPills, 
-  FaUserTie // Add this import
+  FaUserTie
 } from 'react-icons/fa';
-=======
-import { FaUser, FaLock, FaHospital, FaPills, FaUserMd, FaUserShield, FaIdCard } from 'react-icons/fa';
->>>>>>> e7aebc6bd1f7e0f8486f6305bac29d2bda55e6fd
 
 const Login = () => {
   const navigate = useNavigate();
@@ -59,23 +55,13 @@ const Login = () => {
     },
     receptionist: {
       title: 'Receptionist Login',
-<<<<<<< HEAD
-      icon: <FaUserTie className="text-5xl text-teal-600" />, // Fixed: Using FaUserTie
+      icon: <FaUserTie className="text-5xl text-teal-600" />,
       color: 'from-teal-600 to-teal-700',
       hoverColor: 'from-teal-700 to-teal-800',
       demoEmail: 'reception@clinic.com',
       demoPassword: 'reception123',
       redirectPath: '/receptionist/dashboard',
       description: 'Sign in to reception desk portal'
-=======
-      icon: <FaIdCard className="text-5xl text-amber-600" />,
-      color: 'from-amber-600 to-amber-700',
-      hoverColor: 'from-amber-700 to-amber-800',
-      demoEmail: 'receptionist@clinic.com',
-      demoPassword: 'reception123',
-      redirectPath: '/receptionist/dashboard',
-      description: 'Sign in to receptionist portal'
->>>>>>> e7aebc6bd1f7e0f8486f6305bac29d2bda55e6fd
     }
   };
 
@@ -137,26 +123,16 @@ const Login = () => {
           specialization: 'General Practitioner'
         };
       }
-<<<<<<< HEAD
-      // Receptionist credentials - ADD THIS SECTION
-=======
       // Receptionist credentials
->>>>>>> e7aebc6bd1f7e0f8486f6305bac29d2bda55e6fd
       else if (role === 'receptionist' && formData.email === config.demoEmail && formData.password === config.demoPassword) {
         authenticated = true;
         userData = {
           id: '4',
           email: formData.email,
           role: 'receptionist',
-<<<<<<< HEAD
           name: 'Jessica Reception',
           department: 'Front Desk',
           location: 'Main Reception'
-=======
-          name: 'Sarah Johnson',
-          department: 'Reception',
-          employeeId: 'REC001'
->>>>>>> e7aebc6bd1f7e0f8486f6305bac29d2bda55e6fd
         };
       }
 
@@ -212,13 +188,8 @@ const Login = () => {
           <p className="text-gray-600 mt-2">{config.description}</p>
         </div>
 
-<<<<<<< HEAD
-        {/* Role Selector - Add Receptionist Button */}
-        <div className="flex justify-center gap-2 mb-6 flex-wrap">
-=======
         {/* Role Selector */}
-        <div className="flex flex-wrap justify-center gap-2 mb-6">
->>>>>>> e7aebc6bd1f7e0f8486f6305bac29d2bda55e6fd
+        <div className="flex justify-center gap-2 mb-6 flex-wrap">
           <button
             onClick={() => switchRole('admin')}
             className={`px-3 py-2 rounded-lg transition ${role === 'admin' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
@@ -239,11 +210,7 @@ const Login = () => {
           </button>
           <button
             onClick={() => switchRole('receptionist')}
-<<<<<<< HEAD
             className={`px-3 py-2 rounded-lg transition ${role === 'receptionist' ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-=======
-            className={`px-4 py-2 rounded-lg transition ${role === 'receptionist' ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
->>>>>>> e7aebc6bd1f7e0f8486f6305bac29d2bda55e6fd
           >
             Receptionist
           </button>
