@@ -4,6 +4,7 @@ import {
   FaUsers,
   FaUserMd,
   FaCalendarAlt,
+  FaCalendarCheck,
   FaPills,
   FaChartBar,
   FaSignOutAlt,
@@ -50,13 +51,14 @@ const Sidebar = () => {
     { path: '/doctor/schedule', label: 'My Schedule', icon: <FaCalendarAlt /> },
     { path: '/doctor/patients', label: 'Patients', icon: <FaUserInjured /> },
     { path: '/doctor/prescriptions', label: 'Prescriptions', icon: <FaClipboardList /> },
+  
   ];
 
-  // RECEPTIONIST MENU (matches App.jsx)
+  // RECEPTIONIST MENU
   const receptionistMenu = [
     { path: '/receptionist/dashboard', label: 'Dashboard', icon: <FaHome /> },
     { path: '/receptionist/profile', label: 'Receptionist Desk', icon: <FaUserCircle /> },
-    { path: '/receptionist/appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
+    { path: '/receptionist/appointments', label: 'Appointments', icon: <FaCalendarCheck /> },
     { path: '/receptionist/patients', label: 'Patients', icon: <FaUserInjured /> },
     { path: '/receptionist/billing', label: 'Billing', icon: <FaMoneyBillWave /> },
   ];

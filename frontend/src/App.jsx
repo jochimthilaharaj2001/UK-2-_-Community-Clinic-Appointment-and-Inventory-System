@@ -24,13 +24,13 @@ import DoctorPrescriptions from './pages/doctor/DoctorPrescriptions';
 import DoctorSchedule from './pages/doctor/DoctorSchedule';
 import DoctorProfile from './pages/doctor/DoctorProfile';
 
+
 // Receptionist Pages
 import ReceptionistDashboard from './pages/receptionist/ReceptionistDashboard';
 import ReceptionistAppointments from './pages/receptionist/ReceptionistAppointments';
 import ReceptionistPatients from './pages/receptionist/ReceptionistPatients';
 import ReceptionistBilling from './pages/receptionist/ReceptionistBilling';
-import ReceptionistProfile from "./pages/receptionist/ReceptionistProfile";
-
+import ReceptionistProfile from './pages/receptionist/ReceptionistProfile';
 
 function App() {
   return (
@@ -61,6 +61,7 @@ function App() {
         <Route path="/doctor/patients" element={<ProtectedRoute role="doctor"><DoctorPatients /></ProtectedRoute>} />
         <Route path="/doctor/prescriptions" element={<ProtectedRoute role="doctor"><DoctorPrescriptions /></ProtectedRoute>} />
         <Route path="/doctor/schedule" element={<ProtectedRoute role="doctor"><DoctorSchedule /></ProtectedRoute>} />
+        
 
         {/* Receptionist Protected Routes */}
         <Route path="/receptionist/dashboard" element={<ProtectedRoute role="receptionist"><ReceptionistDashboard /></ProtectedRoute>} />

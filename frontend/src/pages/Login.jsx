@@ -28,7 +28,7 @@ const Login = () => {
       redirectPath: '/admin',
       description: 'Sign in to clinic admin portal',
     },
-    Pharmacist: {
+    pharmacist: {
       title: 'Pharmacist Login',
       icon: <FaPills className="text-5xl text-purple-600" />,
       color: 'from-purple-600 to-purple-700',
@@ -37,7 +37,7 @@ const Login = () => {
       redirectPath: '/pharmacist/dashboard',
       description: 'Sign in to pharmacy management portal',
     },
-    Doctor: {
+    doctor: {
       title: 'Doctor Login',
       icon: <FaUserMd className="text-5xl text-green-600" />,
       color: 'from-green-600 to-green-700',
@@ -46,7 +46,7 @@ const Login = () => {
       redirectPath: '/doctor/dashboard',
       description: 'Sign in to doctor portal',
     },
-    Receptionist: {
+    receptionist: {
       title: 'Receptionist Login',
       icon: <FaUserTie className="text-5xl text-amber-600" />,
       color: 'from-amber-600 to-amber-700',
