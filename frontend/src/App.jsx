@@ -29,6 +29,8 @@ import ReceptionistDashboard from './pages/receptionist/ReceptionistDashboard';
 import ReceptionistAppointments from './pages/receptionist/ReceptionistAppointments';
 import ReceptionistPatients from './pages/receptionist/ReceptionistPatients';
 import ReceptionistBilling from './pages/receptionist/ReceptionistBilling';
+import ReceptionistProfile from "./pages/receptionist/ReceptionistProfile";
+
 
 function App() {
   return (
@@ -65,6 +67,7 @@ function App() {
         <Route path="/receptionist/appointments" element={<ProtectedRoute role="receptionist"><ReceptionistAppointments /></ProtectedRoute>} />
         <Route path="/receptionist/patients" element={<ProtectedRoute role="receptionist"><ReceptionistPatients /></ProtectedRoute>} />
         <Route path="/receptionist/billing" element={<ProtectedRoute role="receptionist"><ReceptionistBilling /></ProtectedRoute>} />
+        <Route path="/receptionist/profile" element={<ProtectedRoute role="receptionist"><ReceptionistProfile /></ProtectedRoute>} />
 
         {/* Catch all */}
         <Route path="*" element={<Navigate to="/login" replace />} />

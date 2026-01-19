@@ -55,6 +55,7 @@ const Sidebar = () => {
   // RECEPTIONIST MENU (matches App.jsx)
   const receptionistMenu = [
     { path: '/receptionist/dashboard', label: 'Dashboard', icon: <FaHome /> },
+    { path: '/receptionist/profile', label: 'Receptionist Desk', icon: <FaUserCircle /> },
     { path: '/receptionist/appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
     { path: '/receptionist/patients', label: 'Patients', icon: <FaUserInjured /> },
     { path: '/receptionist/billing', label: 'Billing', icon: <FaMoneyBillWave /> },
