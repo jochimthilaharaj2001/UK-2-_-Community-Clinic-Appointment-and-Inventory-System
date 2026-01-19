@@ -54,24 +54,24 @@ const DoctorProfile = () => {
   };
 
   useEffect(() => {
-    // Load profile from localStorage or use initial data
+    // Always use initial data as base, merged with any stored changes
     const storedProfile = localStorage.getItem('doctorProfile');
     const user = JSON.parse(localStorage.getItem('user'));
     
+    // Use initialProfileData as the base
+    let profileToUse = {
+      ...initialProfileData,
+      ...(user && { name: user.name, email: user.email })
+    };
+    
+    // Merge with stored profile if it exists (only merged fields, not replacing)
     if (storedProfile) {
       const parsedProfile = JSON.parse(storedProfile);
-      setProfileData(parsedProfile);
-      setFormData(parsedProfile);
-    } else {
-      // Merge with user data if available
-      const mergedProfile = {
-        ...initialProfileData,
-        ...(user && { name: user.name, email: user.email })
-      };
-      setProfileData(mergedProfile);
-      setFormData(mergedProfile);
-      localStorage.setItem('doctorProfile', JSON.stringify(mergedProfile));
+      profileToUse = { ...profileToUse, ...parsedProfile };
     }
+    
+    setProfileData(profileToUse);
+    setFormData(profileToUse);
   }, []);
 
   // Ensure formData is always initialized when profileData changes
