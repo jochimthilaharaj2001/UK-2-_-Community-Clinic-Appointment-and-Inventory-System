@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  FaUser, 
-  FaLock, 
-  FaUserShield, 
-  FaUserMd, 
-  FaPills, 
+import {
+  FaUser,
+  FaLock,
+  FaUserShield,
+  FaUserMd,
+  FaPills,
   FaUserTie
 } from 'react-icons/fa';
 
@@ -13,7 +13,13 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const role = queryParams.get('role') || 'admin'; // Default to admin
+  const role = queryParams.get('role');
+
+  // If no role specified, redirect back to portal selection
+  if (!role) {
+    navigate('/');
+    return null;
+  }
 
   const [formData, setFormData] = useState({
     email: '',
@@ -162,7 +168,7 @@ const Login = () => {
       email: config.demoEmail,
       password: config.demoPassword,
     });
-    
+
     // Auto-submit after setting demo credentials
     setTimeout(() => {
       document.getElementById('loginForm').dispatchEvent(
@@ -186,6 +192,12 @@ const Login = () => {
           </div>
           <h1 className="text-3xl font-bold text-gray-900">{config.title}</h1>
           <p className="text-gray-600 mt-2">{config.description}</p>
+          <button
+            onClick={() => navigate('/')}
+            className="mt-4 text-blue-600 hover:text-blue-800 text-sm font-bold flex items-center justify-center gap-1 mx-auto"
+          >
+            ← Back to Portal Selection
+          </button>
         </div>
 
         {/* Role Selector */}
