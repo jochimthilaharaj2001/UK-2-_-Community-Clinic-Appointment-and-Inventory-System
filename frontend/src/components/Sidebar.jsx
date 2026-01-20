@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import {
- FaHome,
+  FaHome,
   FaUsers,
   FaUserMd,
   FaCalendarAlt,
@@ -64,7 +64,7 @@ const Sidebar = () => {
     { path: '/receptionist/patient-search', label: 'Search Patients', icon: <FaSearch /> },
     { path: '/receptionist/patient-registration', label: 'New Patient', icon: <FaUserPlus /> },
     { path: '/receptionist/book-appointment', label: 'Book Appointment', icon: <FaCalendarCheck /> },
-    { path: '/receptionist/calendar', label: 'Appointments Calendar', icon: <FaCalendarAlt /> },
+    { path: '/receptionist/appointments-calendar', label: 'Appointments Calendar', icon: <FaCalendarAlt /> },
     { path: '/receptionist/billing', label: 'Billing & Payments', icon: <FaFileInvoiceDollar /> },
   ];
 
