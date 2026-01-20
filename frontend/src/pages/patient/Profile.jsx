@@ -19,7 +19,7 @@ const Profile = () => {
     const handleSave = (e) => {
         e.preventDefault();
         // Simulate API update
-        toast.success("Profile updated successfully!");
+        toast.success("Changes saved successfully!");
     };
 
     return (
