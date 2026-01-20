@@ -13,6 +13,9 @@ const PharmacistLogin = () => {
   const handleLogin = async (e) => {
     e.preventDefault(); // Prevent form refresh
 
+  console.log("LOGIN CLICKED");
+  console.log("API URL:", `${API_BASE_URL}/pharmacist/login`);
+
     // Validate fields before sending API request
     if (!email || !password) {
       setError('Please enter all fields');
@@ -35,7 +38,11 @@ const PharmacistLogin = () => {
 
       // Store token and user correctly
       localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.pharmacist));
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ ...data.pharmacist, role: "pharmacist" })
+);
+
 
       // Redirect to dashboard
       navigate("/pharmacist/dashboard");

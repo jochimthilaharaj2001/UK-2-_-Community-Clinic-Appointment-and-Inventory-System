@@ -24,7 +24,7 @@ const InventoryManagement = () => {
   }, []);
 
   const fetchInventory = () => {
-    fetch(`${API_BASE_URL}/inventory`)
+    fetch(`${API_BASE_URL}/pharmacist/inventory`)
       .then((res) => res.json())
       .then((data) => setInventoryData(data))
       .catch(() => alert("Failed to load inventory"));
@@ -56,7 +56,7 @@ const InventoryManagement = () => {
     if (!window.confirm("Are you sure you want to delete this medicine?")) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/inventory/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/pharmacist/inventory/${id}`, {
         method: "DELETE",
       });
 
@@ -86,8 +86,8 @@ const InventoryManagement = () => {
 
     try {
       const url = editingId
-        ? `${API_BASE_URL}/inventory/${editingId}`
-        : `${API_BASE_URL}/inventory`;
+        ? `${API_BASE_URL}/pharmacist/inventory/${editingId}`
+        : `${API_BASE_URL}/pharmacist/inventory`;
       const method = editingId ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -145,7 +145,7 @@ const InventoryManagement = () => {
     <div className="min-h-screen bg-gray-100">
       <Sidebar role="pharmacist" />
 
-      <div className="ml-64 p-6">
+      <div className="ml-64 p-6 relative z-10">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">

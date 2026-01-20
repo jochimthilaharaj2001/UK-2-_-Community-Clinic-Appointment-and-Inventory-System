@@ -30,7 +30,7 @@ const DispenseMedicine = () => {
   const handleDispense = async () => {
   try {
     const res = await fetch(
-      `${API_BASE_URL}/prescriptions/dispense/${prescription.id}`,
+      `${API_BASE_URL}/prescriptions/${prescription.id}`,
       { method: "POST" }
     );
 
@@ -52,7 +52,7 @@ const DispenseMedicine = () => {
     <div className="min-h-screen bg-gray-100">
       <Sidebar role="pharmacist" />
 
-      <div className="ml-64 p-6">
+      <div className="ml-64 p-6 relative z-10">
         <h1 className="text-3xl font-bold text-gray-800 mb-6">
           Dispense Medicine
         </h1>

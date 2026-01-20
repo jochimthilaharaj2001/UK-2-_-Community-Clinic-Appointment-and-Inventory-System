@@ -2,18 +2,72 @@ import Sidebar from '../../components/Sidebar';
 import { FaFilePdf, FaPrint, FaBoxes, FaPills, FaExclamationTriangle } from 'react-icons/fa';
 import { useState, useEffect } from "react";
 import API_BASE_URL from "../../services/api";
-
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const Report = () => {
 
-const [reportData, setReportData] = useState([]);
+const [reportData, setReportData] = useState({
+  inventory: [],
+  lowStock: [],
+  dispensed: []   
+});
+
 
 useEffect(() => {
-  fetch(`${API_BASE_URL}/reports/inventory`)
-    .then((res) => res.json())
-    .then((data) => setReportData(data))
-    .catch(() => alert("Failed to load report"));
+  const token = localStorage.getItem("token");
+
+  Promise.all([
+    fetch(`${API_BASE_URL}/reports/inventory`, {
+      headers: { Authorization: `Bearer ${token}` ,
+    "Cache-Control": "no-cache"}
+    }).then(res => res.json()),
+
+    fetch(`${API_BASE_URL}/reports/low-stock`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(res => res.json()),
+
+    fetch(`${API_BASE_URL}/reports/dispensed`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(res => res.json()),
+  ])
+    .then(([inventory, lowStock, dispensed]) => {
+      setReportData({
+        inventory,
+        lowStock,
+        dispensed
+      });
+    })
+    .catch(() => alert("Failed to load report data"));
 }, []);
+
+const generatePDF = (title, columns, rows) => {
+  const doc = new jsPDF();
+
+  doc.setFontSize(16);
+  doc.text("Community Clinic Management System", 14, 15);
+
+  doc.setFontSize(12);
+  doc.text(title, 14, 25);
+
+  doc.autoTable({
+    startY: 35,
+    head: [columns],
+    body: rows,
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [22, 160, 133] },
+  });
+
+  doc.setFontSize(8);
+  doc.text(
+  `Generated on: ${new Date().toLocaleString()}`,
+  14,
+  doc.internal.pageSize.height - 10
+);
+
+  doc.save(`${title}.pdf`);
+};
+
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -21,7 +75,7 @@ useEffect(() => {
       <Sidebar />
 
       {/* Main Content */}
-      <main className="ml-64 flex-1 p-6">
+      <main className="ml-64 flex-1 p-6 relative z-10">
         
         {/* Header */}
         <div className="mb-6">
@@ -49,9 +103,34 @@ useEffect(() => {
               <li>Out-of-stock items</li>
             </ul>
             <div className="flex gap-3">
-              <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                <FaFilePdf /> Export PDF
-              </button>
+              <button 
+                  onClick={() => {
+                    const columns = [
+                      "Generic Name",
+                      "Brand",
+                      "Strength",
+                      "Batch",
+                      "Quantity",
+                      "Expiry Date",
+                      "Status"
+                    ];
+
+                    const rows = reportData.inventory.map(item => [
+                      item.generic_name,
+                      item.brand_name,
+                      item.strength,
+                      item.batch_number,
+                      item.quantity,
+                      item.expiry_date,
+                      item.status
+                    ]);
+
+                    generatePDF("Inventory Status Report", columns, rows);
+                  }}
+                  className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg"
+                >
+                  <FaFilePdf /> Export PDF
+                </button>
               <button className="flex items-center gap-2 border px-4 py-2 rounded-lg hover:bg-gray-100">
                 <FaPrint /> Print
               </button>
@@ -73,8 +152,29 @@ useEffect(() => {
               <li>Prescription reference numbers</li>
             </ul>
             <div className="flex gap-3">
-              <button className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-                <FaFilePdf /> Export PDF
+              <button
+                  onClick={() => {
+                    const columns = [
+                      "Prescription ID",
+                      "Patient ID",
+                      "Medicine",
+                      "Quantity",
+                      "Date"
+                    ];
+
+                    const rows = reportData.dispensed.map(item => [
+                      item.id,
+                      item.patient_id,
+                      item.medicine_name,
+                      item.quantity,
+                      item.dispensed_date
+                    ]);
+
+                    generatePDF("Prescription Dispense Report", columns, rows);
+                  }}
+                  className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg"
+                >
+                  <FaFilePdf /> Export PDF
               </button>
               <button className="flex items-center gap-2 border px-4 py-2 rounded-lg hover:bg-gray-100">
                 <FaPrint /> Print
@@ -97,7 +197,30 @@ useEffect(() => {
               <li>Batch-wise expiry details</li>
             </ul>
             <div className="flex gap-3">
-              <button className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
+              <button
+                onClick={() => {
+                  const columns = [
+                    "Medicine Generic Name",
+                    "Medicine Brand Name",
+                    "Batch",
+                    "Quantity",
+                    "Expiry Date",
+                    "Status"
+                  ];
+
+                  const rows = reportData.lowStock.map(item => [
+                    item.generic_name,
+                    item.brand_name,
+                    item.batch_number,
+                    item.quantity,
+                    item.expiry_date,
+                    item.status
+                  ]);
+
+                  generatePDF("Low Stock & Expiry Alert Report", columns, rows);
+                }}
+                className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg"
+              >
                 <FaFilePdf /> Export PDF
               </button>
               <button className="flex items-center gap-2 border px-4 py-2 rounded-lg hover:bg-gray-100">

@@ -48,7 +48,7 @@ const PharmacistDashboard = () => {
       <Sidebar role="pharmacist" />
 
       {/* Main Content */}
-      <div className="ml-64 p-6">
+      <div className="ml-64 p-6 relative z-10">
         {/* Header */}
         <h1 className="text-3xl font-bold text-gray-800 mb-6">
           Pharmacist Dashboard
