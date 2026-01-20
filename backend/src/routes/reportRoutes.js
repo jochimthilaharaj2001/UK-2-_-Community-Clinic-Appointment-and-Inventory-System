@@ -3,7 +3,7 @@ import {
   inventoryReport,
   lowStockReport,
   dispensedReport
-} from '../controllers/reportController.js';
+} from '../controllers/Pharmacist/reportController.js';
 
 const router = express.Router();
 

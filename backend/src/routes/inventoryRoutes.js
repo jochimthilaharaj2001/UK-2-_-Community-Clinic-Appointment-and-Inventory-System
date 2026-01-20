@@ -4,7 +4,7 @@ import {
   addMedicine,
   updateStock,
   deleteMedicine
-} from '../controllers/inventoryController.js';
+} from '../controllers/Pharmacist/inventoryController.js';
 
 const router = express.Router();
 

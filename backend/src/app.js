@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/pharmacist', pharmacistRoutes);
-app.use('/api/inventory', inventoryRoutes);
+app.use('/api/pharmacist/inventory', inventoryRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/reports', reportRoutes);
 

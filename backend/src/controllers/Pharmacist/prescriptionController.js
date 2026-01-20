@@ -1,12 +1,47 @@
 import db from '../../config/db.js';
 
-// Get pending prescriptions
-export const getPrescriptions = async (req, res) => {
-  const [rows] = await db.query(
-    "SELECT * FROM prescriptions WHERE status='Pending'"
-  );
-  res.json(rows);
+export const getPrescriptionById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1️⃣ Get prescription header
+    const [prescriptions] = await db.query(
+      `SELECT id, patient_id, doctor_name, notes, created_at
+       FROM prescriptions
+       WHERE id = ?`,
+      [id]
+    );
+
+    if (prescriptions.length === 0) {
+      return res.status(404).json({ message: "Prescription not found" });
+    }
+
+    // 2️⃣ Get prescription items + medicine details
+    const [items] = await db.query(
+      `SELECT 
+          pi.id,
+          pi.quantity,
+          pi.dosage,
+          m.generic_name,
+          m.brand_name,
+          m.strength
+       FROM prescription_items pi
+       JOIN inventory m ON pi.medicine_id = m.id
+       WHERE pi.prescription_id = ?`,
+      [id]
+    );
+
+    res.json({
+      prescription: prescriptions[0],
+      items
+    });
+
+  } catch (error) {
+    console.error("Prescription retrieval error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };
+
 
 // Dispense medicine
 export const dispenseMedicine = async (req, res) => {

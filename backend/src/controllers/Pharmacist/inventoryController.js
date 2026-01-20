@@ -1,43 +1,77 @@
 import db from '../../config/db.js';
 
-// Get all medicines
+/**
+ * GET all inventory
+ */
 export const getInventory = async (req, res) => {
-  const [rows] = await db.query('SELECT * FROM inventory');
-  res.json(rows);
+  try {
+    const [rows] = await db.query(
+      'SELECT * FROM inventory ORDER BY created_at DESC'
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("GET INVENTORY ERROR:", error);
+    res.status(500).json({ message: 'Failed to load inventory' });
+  }
 };
 
-// Add medicine
+/**
+ * ADD new medicine
+ */
 export const addMedicine = async (req, res) => {
-  const { medicine_name, category, quantity, unit_price, expiry_date } = req.body;
-
-  await db.query(
-    `INSERT INTO inventory 
-     (medicine_name, category, quantity, unit_price, expiry_date, status)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [
-      medicine_name,
-      category,
-      quantity,
-      unit_price,
+  try {
+    const {
+      generic_name,
+      brand_name,
+      strength,
+      batch_number,
+      manufacturer,
       expiry_date,
-      quantity <= 10 ? 'Low Stock' : 'Available'
-    ]
-  );
+      selling_price,
+      quantity
+    } = req.body;
 
-  res.json({ message: 'Medicine added successfully' });
+    await db.query(
+      `INSERT INTO inventory 
+      (generic_name, brand_name, strength, batch_number, manufacturer, expiry_date, selling_price, quantity)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        generic_name,
+        brand_name,
+        strength,
+        batch_number,
+        manufacturer,
+        expiry_date,
+        selling_price,
+        quantity
+      ]
+    );
+
+    res.status(201).json({ message: 'Medicine added successfully' });
+  } catch (error) {
+    console.error("ADD MEDICINE ERROR:", error);
+    res.status(500).json({ message: 'Failed to add medicine' });
+  }
 };
 
-// Update medicine stock
+/**
+ * UPDATE stock
+ */
 export const updateStock = async (req, res) => {
-  const { id } = req.params;
-  const { quantity } = req.body;
+  try {
+    const { id } = req.params;
+    const { quantity } = req.body;
 
-  await db.query(
-    'UPDATE inventory SET quantity=?, status=? WHERE id=?',
-    [quantity, quantity <= 10 ? 'Low Stock' : 'Available', id]
-  );
+    await db.query(
+      'UPDATE inventory SET quantity = ? WHERE id = ?',
+      [quantity, id]
+    );
 
-  res.json({ message: 'Inventory updated' });
+    res.json({ message: 'Stock updated successfully' });
+  } catch (error) {
+    console.error("UPDATE STOCK ERROR:", error);
+    res.status(500).json({ message: 'Failed to update stock' });
+  }
 };
 
 // Delete medicine
