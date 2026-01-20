@@ -43,7 +43,7 @@ const Sidebar = () => {
   const menuItems = role === 'pharmacist' ? pharmacistMenu : adminMenu;
 
   return (
-    <div className="w-64 bg-gray-900 text-white h-screen fixed flex flex-col">
+    <div className="w-64 bg-gray-900 text-white h-screen fixed flex flex-col fixed z-50">
       
       {/* Logo */}
       <div className="p-6 border-b border-gray-800">
