@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Sidebar from '../../components/Sidebar';
 import { 
   FaSearch, 
@@ -22,7 +22,7 @@ import {
   FaSortUp,
   FaSortDown
 } from 'react-icons/fa';
-import { format, addDays, parseISO, isToday, isTomorrow } from 'date-fns';
+import { format, addDays } from 'date-fns';
 
 const AppointmentManagement = () => {
   const [appointments, setAppointments] = useState([
@@ -164,7 +164,7 @@ const AppointmentManagement = () => {
   const [showForm, setShowForm] = useState(false);
   const [viewingAppointment, setViewingAppointment] = useState(null);
   const [editingAppointment, setEditingAppointment] = useState(null);
-  const [formData, setFormData] = useState({
+  const defaultFormData = {
     patientName: '',
     patientId: '',
     patientAge: '',
@@ -181,7 +181,8 @@ const AppointmentManagement = () => {
     contact: '',
     email: '',
     room: ''
-  });
+  };
+  const [formData, setFormData] = useState(defaultFormData);
 
   const doctors = [
     { id: 'D001', name: 'Dr. Sarah Wilson', specialization: 'Cardiology' },
@@ -208,29 +209,28 @@ const AppointmentManagement = () => {
     { value: 'no-show', label: 'No Show', color: 'bg-gray-100 text-gray-800' }
   ];
 
-  useEffect(() => {
-    if (editingAppointment) {
-      setFormData({
-        patientName: editingAppointment.patientName,
-        patientId: editingAppointment.patientId,
-        patientAge: editingAppointment.patientAge,
-        patientGender: editingAppointment.patientGender,
-        doctorName: editingAppointment.doctorName,
-        doctorId: editingAppointment.doctorId,
-        doctorSpecialization: editingAppointment.doctorSpecialization,
-        date: editingAppointment.date,
-        time: editingAppointment.time,
-        duration: editingAppointment.duration,
-        type: editingAppointment.type,
-        reason: editingAppointment.reason || '',
-        notes: editingAppointment.notes || '',
-        contact: editingAppointment.contact,
-        email: editingAppointment.email,
-        room: editingAppointment.room || ''
-      });
-      setShowForm(true);
-    }
-  }, [editingAppointment]);
+  const startEditing = (appointment) => {
+    setEditingAppointment(appointment);
+    setFormData({
+      patientName: appointment.patientName,
+      patientId: appointment.patientId,
+      patientAge: appointment.patientAge,
+      patientGender: appointment.patientGender,
+      doctorName: appointment.doctorName,
+      doctorId: appointment.doctorId,
+      doctorSpecialization: appointment.doctorSpecialization,
+      date: appointment.date,
+      time: appointment.time,
+      duration: appointment.duration,
+      type: appointment.type,
+      reason: appointment.reason || '',
+      notes: appointment.notes || '',
+      contact: appointment.contact,
+      email: appointment.email,
+      room: appointment.room || ''
+    });
+    setShowForm(true);
+  };
 
   const filteredAppointments = appointments
     .filter(app => {
@@ -295,7 +295,7 @@ const AppointmentManagement = () => {
     }
   };
 
-  const SortIcon = ({ column }) => {
+  const getSortIcon = (column) => {
     if (sortBy !== column) return <FaSort className="text-gray-400 ml-1" />;
     return sortOrder === 'asc' 
       ? <FaSortUp className="text-blue-600 ml-1" /> 
@@ -355,24 +355,7 @@ const AppointmentManagement = () => {
     
     setShowForm(false);
     setEditingAppointment(null);
-    setFormData({
-      patientName: '',
-      patientId: '',
-      patientAge: '',
-      patientGender: 'Male',
-      doctorName: '',
-      doctorId: '',
-      doctorSpecialization: '',
-      date: format(new Date(), 'yyyy-MM-dd'),
-      time: '',
-      duration: '30 mins',
-      type: 'regular',
-      reason: '',
-      notes: '',
-      contact: '',
-      email: '',
-      room: ''
-    });
+    setFormData(defaultFormData);
   };
 
   const handleDelete = (appointmentId) => {
@@ -986,7 +969,7 @@ const AppointmentManagement = () => {
               <div className="flex gap-3 mt-8">
                 <button
                   onClick={() => {
-                    setEditingAppointment(viewingAppointment);
+                    startEditing(viewingAppointment);
                     setViewingAppointment(null);
                   }}
                   className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
@@ -1087,7 +1070,7 @@ const AppointmentManagement = () => {
                   >
                     <div className="flex items-center">
                       Patient
-                      <SortIcon column="patientName" />
+                      {getSortIcon('patientName')}
                     </div>
                   </th>
                   <th 
@@ -1096,7 +1079,7 @@ const AppointmentManagement = () => {
                   >
                     <div className="flex items-center">
                       Doctor
-                      <SortIcon column="doctorName" />
+                      {getSortIcon('doctorName')}
                     </div>
                   </th>
                   <th 
@@ -1105,7 +1088,7 @@ const AppointmentManagement = () => {
                   >
                     <div className="flex items-center">
                       Date & Time
-                      <SortIcon column="date" />
+                      {getSortIcon('date')}
                     </div>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1168,7 +1151,7 @@ const AppointmentManagement = () => {
                           <FaEye />
                         </button>
                         <button
-                          onClick={() => setEditingAppointment(appointment)}
+                          onClick={() => startEditing(appointment)}
                           className="text-green-600 hover:text-green-900 p-2 rounded-full hover:bg-green-50"
                           title="Edit"
                         >

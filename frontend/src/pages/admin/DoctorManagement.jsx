@@ -240,7 +240,7 @@ const DoctorManagement = () => {
     }
   };
 
-  const SortIcon = ({ column }) => {
+  const getSortIcon = (column) => {
     if (sortBy !== column) return <FaSort className="text-gray-400 ml-1" />;
     return sortOrder === 'asc' 
       ? <FaSortUp className="text-blue-600 ml-1" /> 
@@ -914,7 +914,7 @@ const DoctorManagement = () => {
                   >
                     <div className="flex items-center">
                       Doctor
-                      <SortIcon column="name" />
+                      {getSortIcon('name')}
                     </div>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -932,7 +932,7 @@ const DoctorManagement = () => {
                   >
                     <div className="flex items-center">
                       Appointments
-                      <SortIcon column="appointments" />
+                      {getSortIcon('appointments')}
                     </div>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">

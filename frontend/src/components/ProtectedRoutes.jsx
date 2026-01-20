@@ -6,36 +6,22 @@ const ProtectedRoute = ({ children, role }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
 
   useEffect(() => {
+    let auth = false;
     const token = localStorage.getItem("token");
     const userStr = localStorage.getItem("user");
 
-    // No token → not authenticated
-    if (!token || !userStr) {
-      setIsAuthenticated(false);
-      return;
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.role && (!role || user.role === role)) {
+          auth = true;
+        }
+      } catch (error) {
+        console.error("Invalid user data in localStorage:", error);
+      }
     }
 
-    try {
-      const user = JSON.parse(userStr);
-
-      // Validate role existence
-      if (!user.role) {
-        setIsAuthenticated(false);
-        return;
-      }
-
-      // If role prop is provided, enforce role-based access
-      if (role && user.role !== role) {
-        setIsAuthenticated(false);
-        return;
-      }
-
-      // All checks passed
-      setIsAuthenticated(true);
-    } catch (error) {
-      console.error("Invalid user data in localStorage:", error);
-      setIsAuthenticated(false);
-    }
+    setIsAuthenticated(auth);
   }, [role]);
 
   // While checking auth
