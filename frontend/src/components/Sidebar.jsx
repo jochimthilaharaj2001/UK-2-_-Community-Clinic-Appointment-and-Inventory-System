@@ -68,13 +68,23 @@ const Sidebar = () => {
     { path: '/receptionist/billing', label: 'Billing & Payments', icon: <FaFileInvoiceDollar /> },
   ];
 
+  // 🔹 PATIENT MENU
+  const patientMenu = [
+    { path: '/patient/dashboard', label: 'Dashboard', icon: <FaHome /> },
+    { path: '/patient/appointments', label: 'My Appointments', icon: <FaCalendarAlt /> },
+    { path: '/patient/book-appointment', label: 'Book Appointment', icon: <FaCalendarCheck /> },
+    { path: '/patient/medical-records', label: 'Medical Records', icon: <FaClipboardList /> },
+    { path: '/patient/profile', label: 'My Profile', icon: <FaUserCircle /> },
+  ];
+
   // Get menu based on role
   const getMenuItems = () => {
-    switch(role) {
+    switch (role) {
       case 'admin': return adminMenu;
       case 'pharmacist': return pharmacistMenu;
       case 'doctor': return doctorMenu;
       case 'receptionist': return receptionistMenu;
+      case 'patient': return patientMenu;
       default: return [];
     }
   };
@@ -83,11 +93,12 @@ const Sidebar = () => {
 
   // Get portal name based on role
   const getPortalName = () => {
-    switch(role) {
+    switch (role) {
       case 'admin': return 'Admin Portal';
       case 'pharmacist': return 'Pharmacy Portal';
       case 'doctor': return 'Doctor Portal';
       case 'receptionist': return 'Reception Desk';
+      case 'patient': return 'Patient Portal';
       default: return 'Portal';
     }
   };
@@ -95,9 +106,9 @@ const Sidebar = () => {
   // Get welcome message based on role
   const getWelcomeMessage = () => {
     if (!user) return '';
-    
-    switch(role) {
-      case 'admin': 
+
+    switch (role) {
+      case 'admin':
         return `Welcome, ${user.name || 'Admin'}`;
       case 'pharmacist':
         return `Welcome, ${user.name || 'Pharmacist'}`;
@@ -105,6 +116,8 @@ const Sidebar = () => {
         return `Welcome, ${user.name || 'Doctor'}`;
       case 'receptionist':
         return `Welcome, ${user.name || 'Receptionist'}`;
+      case 'patient':
+        return `Hello, ${user.name || 'Patient'}`;
       default:
         return 'Welcome';
     }
@@ -112,29 +125,32 @@ const Sidebar = () => {
 
   // Get icon color based on role
   const getIconColor = () => {
-    switch(role) {
+    switch (role) {
       case 'admin': return 'from-blue-500 to-blue-600';
       case 'pharmacist': return 'from-purple-500 to-purple-600';
       case 'doctor': return 'from-green-500 to-green-600';
       case 'receptionist': return 'from-teal-500 to-teal-600';
+      case 'patient': return 'from-indigo-500 to-indigo-600';
       default: return 'from-blue-500 to-blue-600';
     }
   };
 
   // Get active menu gradient based on role
   const getActiveGradient = () => {
-    switch(role) {
+    switch (role) {
       case 'admin': return 'from-blue-600 to-blue-500';
       case 'pharmacist': return 'from-purple-600 to-purple-500';
       case 'doctor': return 'from-green-600 to-green-500';
       case 'receptionist': return 'from-teal-600 to-teal-500';
+      case 'patient': return 'from-indigo-600 to-indigo-500';
       default: return 'from-blue-600 to-blue-500';
     }
   };
 
   return (
-    <div className="w-64 bg-gray-900 text-white h-screen fixed flex flex-col">
-      
+    <div className="w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white h-screen fixed flex flex-col shadow-xl">
+
+
       {/* Logo & User Info */}
       <div className="p-6 border-b border-gray-700">
         <div className="flex items-center gap-3 mb-3">
@@ -150,7 +166,7 @@ const Sidebar = () => {
             </p>
           </div>
         </div>
-        
+
         {/* Welcome Message */}
         <div className="mt-2 p-3 bg-gray-800 rounded-lg">
           <p className="text-sm font-medium">{getWelcomeMessage()}</p>
@@ -169,18 +185,17 @@ const Sidebar = () => {
       {/* Menu */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {menuItems.map((item) => {
-          const isActive = location.pathname === item.path || 
-                          location.pathname.startsWith(item.path + '/');
-          
+          const isActive = location.pathname === item.path ||
+            location.pathname.startsWith(item.path + '/');
+
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                isActive
-                  ? `bg-gradient-to-r ${getActiveGradient()} text-white shadow-lg`
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white hover:shadow-md'
-              }`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
+                ? `bg-gradient-to-r ${getActiveGradient()} text-white shadow-lg`
+                : 'text-gray-300 hover:bg-gray-700 hover:text-white hover:shadow-md'
+                }`}
             >
               <span className="text-lg opacity-90">{item.icon}</span>
               <span className="font-medium">{item.label}</span>
@@ -201,7 +216,7 @@ const Sidebar = () => {
           <FaSignOutAlt />
           <span className="font-medium">Logout</span>
         </button>
-        
+
         {/* Quick Stats for Receptionist */}
         {role === 'receptionist' && (
           <div className="mt-4 p-3 bg-gray-800 rounded-lg">
@@ -215,7 +230,7 @@ const Sidebar = () => {
             </div>
           </div>
         )}
-        
+
         {/* Role indicator */}
         <div className="mt-4 pt-4 border-t border-gray-700">
           <div className="flex items-center justify-between text-xs text-gray-400">

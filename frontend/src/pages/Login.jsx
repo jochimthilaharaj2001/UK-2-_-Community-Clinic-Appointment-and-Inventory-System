@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  FaUser, 
-  FaLock, 
-  FaUserShield, 
-  FaUserMd, 
-  FaPills, 
+import {
+  FaUser,
+  FaLock,
+  FaUserShield,
+  FaUserMd,
+  FaPills,
   FaUserTie
 } from 'react-icons/fa';
 
@@ -62,6 +62,16 @@ const Login = () => {
       demoPassword: 'reception123',
       redirectPath: '/receptionist/dashboard',
       description: 'Sign in to reception desk portal'
+    },
+    patient: {
+      title: 'Patient Login',
+      icon: <FaUser className="text-5xl text-indigo-600" />,
+      color: 'from-indigo-600 to-indigo-700',
+      hoverColor: 'from-indigo-700 to-indigo-800',
+      demoEmail: 'patient@example.com',
+      demoPassword: 'patient123',
+      redirectPath: '/patient/dashboard',
+      description: 'Sign in to access your health records and appointments'
     }
   };
 
@@ -135,6 +145,18 @@ const Login = () => {
           location: 'Main Reception'
         };
       }
+      // Patient credentials
+      else if (role === 'patient' && formData.email === config.demoEmail && formData.password === config.demoPassword) {
+        authenticated = true;
+        userData = {
+          id: '5',
+          email: formData.email,
+          role: 'patient',
+          name: 'John Doe',
+          contact: '1234567890',
+          address: '123 Main St, Candy City'
+        };
+      }
 
       if (authenticated && userData) {
         // Store authentication data
@@ -162,7 +184,7 @@ const Login = () => {
       email: config.demoEmail,
       password: config.demoPassword,
     });
-    
+
     // Auto-submit after setting demo credentials
     setTimeout(() => {
       document.getElementById('loginForm').dispatchEvent(
@@ -213,6 +235,12 @@ const Login = () => {
             className={`px-3 py-2 rounded-lg transition ${role === 'receptionist' ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
           >
             Receptionist
+          </button>
+          <button
+            onClick={() => switchRole('patient')}
+            className={`px-3 py-2 rounded-lg transition ${role === 'patient' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+          >
+            Patient
           </button>
         </div>
 
@@ -323,6 +351,12 @@ const Login = () => {
                 className="px-3 py-1 bg-amber-100 text-amber-700 hover:bg-amber-200 rounded-lg text-sm"
               >
                 Receptionist Portal
+              </button>
+              <button
+                onClick={() => switchRole('patient')}
+                className="px-3 py-1 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-lg text-sm"
+              >
+                Patient Portal
               </button>
             </div>
           </div>

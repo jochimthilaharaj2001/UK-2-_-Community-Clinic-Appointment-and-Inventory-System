@@ -33,6 +33,14 @@ import PatientRegistration from './pages/receptionist/PatientRegistration';
 import AppointmentsCalendar from './pages/receptionist/AppointmentsCalendar';
 import ReceptionistBilling from './pages/receptionist/ReceptionistBilling';
 
+// Patient Pages
+import PatientDashboard from './pages/patient/PatientDashboard';
+import BookPatientAppointment from './pages/patient/BookAppointment';
+import MedicalRecords from './pages/patient/MedicalRecords';
+import PatientProfile from './pages/patient/PatientProfile';
+import PatientAppointments from './pages/patient/Appointments';
+import Notifications from './pages/patient/Notifications';
+
 function App() {
   return (
     <Router>
@@ -57,95 +65,145 @@ function App() {
         <Route path="/pharmacist/reports" element={<ProtectedRoute role="pharmacist"><PharmacistReports /></ProtectedRoute>} />
 
         {/* Doctor Protected Routes */}
-        <Route 
-          path="/doctor/dashboard" 
+        <Route
+          path="/doctor/dashboard"
           element={
             <ProtectedRoute role="doctor">
               <DoctorDashboard />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/doctor/patients" 
+        <Route
+          path="/doctor/patients"
           element={
             <ProtectedRoute role="doctor">
               <DoctorPatients />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/doctor/prescriptions" 
+        <Route
+          path="/doctor/prescriptions"
           element={
             <ProtectedRoute role="doctor">
               <DoctorPrescriptions />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/doctor/schedule" 
+        <Route
+          path="/doctor/schedule"
           element={
             <ProtectedRoute role="doctor">
               <DoctorSchedule />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/doctor/profile" 
+        <Route
+          path="/doctor/profile"
           element={
             <ProtectedRoute role="doctor">
               <DoctorProfile />
             </ProtectedRoute>
-          } 
+          }
         />
 
         {/* Receptionist Protected Routes */}
-        <Route 
-          path="/receptionist/dashboard" 
+        <Route
+          path="/receptionist/dashboard"
           element={
             <ProtectedRoute role="receptionist">
               <ReceptionistDashboard />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/receptionist/patient-search" 
+        <Route
+          path="/receptionist/patient-search"
           element={
             <ProtectedRoute role="receptionist">
               <PatientSearch />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/receptionist/book-appointment" 
+        <Route
+          path="/receptionist/book-appointment"
           element={
             <ProtectedRoute role="receptionist">
               <BookAppointment />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/receptionist/patient-registration" 
+        <Route
+          path="/receptionist/patient-registration"
           element={
             <ProtectedRoute role="receptionist">
               <PatientRegistration />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/receptionist/appointments-calendar" 
+        <Route
+          path="/receptionist/appointments-calendar"
           element={
             <ProtectedRoute role="receptionist">
               <AppointmentsCalendar />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/receptionist/billing" 
+        <Route
+          path="/receptionist/billing"
           element={
             <ProtectedRoute role="receptionist">
               <ReceptionistBilling />
             </ProtectedRoute>
-          } 
+          }
+        />
+
+        {/* Patient Protected Routes */}
+        <Route
+          path="/patient/dashboard"
+          element={
+            <ProtectedRoute role="patient">
+              <PatientDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/patient/appointments"
+          element={
+            <ProtectedRoute role="patient">
+              <PatientAppointments />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/patient/book-appointment"
+          element={
+            <ProtectedRoute role="patient">
+              <BookPatientAppointment />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/patient/medical-records"
+          element={
+            <ProtectedRoute role="patient">
+              <MedicalRecords />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/patient/profile"
+          element={
+            <ProtectedRoute role="patient">
+              <PatientProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/patient/notifications"
+          element={
+            <ProtectedRoute role="patient">
+              <Notifications />
+            </ProtectedRoute>
+          }
         />
 
         {/* Catch all route */}
