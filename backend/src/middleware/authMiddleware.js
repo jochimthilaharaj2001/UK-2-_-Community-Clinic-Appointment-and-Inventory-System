@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import jwt from 'jsonwebtoken';
 
 export const verifyToken = (req, res, next) => {
@@ -25,5 +24,3 @@ export const checkRole = (role) => {
     next();
   };
 };
-=======
->>>>>>> 0ce93e92c77ec96bfa4e7ed2cb5b2839629b8b52
