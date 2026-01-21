@@ -124,22 +124,6 @@ CREATE TABLE order_requests (
     FOREIGN KEY (inventory_id) REFERENCES inventory(id)
 );
 
--- =========================================
--- VIEWS (OPTIONAL BUT USEFUL FOR REPORTS)
--- =========================================
-
--- Low stock medicines
-CREATE VIEW low_stock_medicines AS
-SELECT *
-FROM inventory
-WHERE quantity < 100;
-
--- Expired medicines
-CREATE VIEW expired_medicines AS
-SELECT *
-FROM inventory
-WHERE expiry_date < CURDATE();
-
 
 
 -- PHARMACIST MODULE END 
