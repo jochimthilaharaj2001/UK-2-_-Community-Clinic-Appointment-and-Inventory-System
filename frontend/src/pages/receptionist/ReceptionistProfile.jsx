@@ -2,8 +2,8 @@ import Sidebar from '../../components/Sidebar';
 
 const receptionists = [
   {
-    initials: 'SJ',
-    name: 'Sarah Johnson',
+    initials: 'J',
+    name: 'Jesicca',
     employeeId: 'REC001',
     department: 'Front Desk',
     email: 'receptionist@clinic.com',
