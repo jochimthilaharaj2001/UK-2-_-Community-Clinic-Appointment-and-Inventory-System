@@ -31,25 +31,25 @@ const ReceptionistDashboard = () => {
 
   // Appointments data
   const [appointments] = useState([
-    { id: 1, patient: 'John Doe', doctor: 'Dr. Smith', time: '09:00 AM', status: 'Confirmed' },
-    { id: 2, patient: 'Jane Smith', doctor: 'Dr. Johnson', time: '10:30 AM', status: 'Waiting' },
-    { id: 3, patient: 'Robert Brown', doctor: 'Dr. Williams', time: '11:15 AM', status: 'Confirmed' },
-    { id: 4, patient: 'Emily Davis', doctor: 'Dr. Miller', time: '02:00 PM', status: 'Pending' },
-    { id: 5, patient: 'Michael Wilson', doctor: 'Dr. Taylor', time: '03:30 PM', status: 'Confirmed' },
+    { id: 1, patient: 'Raja', doctor: 'Dr. Karthikayani', time: '09:00 AM', status: 'Confirmed' },
+    { id: 2, patient: 'Sivakumar', doctor: 'Dr. Anbu', time: '10:30 AM', status: 'Waiting' },
+    { id: 3, patient: 'Karthikeyan', doctor: 'Dr. Vignesh', time: '11:15 AM', status: 'Confirmed' },
+    { id: 4, patient: 'Vijayalakshmi', doctor: 'Dr. Priya', time: '02:00 PM', status: 'Pending' },
+    { id: 5, patient: 'Kanagarajah', doctor: 'Dr. Harini', time: '03:30 PM', status: 'Confirmed' },
   ]);
 
   // Waiting room patients
   const [waitingPatients] = useState([
-    { id: 1, name: 'Sarah Johnson', checkIn: '08:45 AM', waitTime: '15 min', priority: 'Routine' },
-    { id: 2, name: 'David Lee', checkIn: '09:15 AM', waitTime: '45 min', priority: 'Urgent' },
-    { id: 3, name: 'Lisa Wang', checkIn: '09:30 AM', waitTime: '30 min', priority: 'Routine' },
+    { id: 1, name: 'Vimalan', checkIn: '08:45 AM', waitTime: '15 min', priority: 'Routine' },
+    { id: 2, name: 'David ', checkIn: '09:15 AM', waitTime: '45 min', priority: 'Urgent' },
+    { id: 3, name: 'Sathish Kumar', checkIn: '09:30 AM', waitTime: '30 min', priority: 'Routine' },
   ]);
 
   // Pending payments
   const [pendingPayments] = useState([
-    { id: 1, patient: 'Thomas Reed', amount: 150, dueDate: '2024-01-20', status: 'Overdue' },
-    { id: 2, patient: 'Maria Garcia', amount: 85, dueDate: '2024-01-22', status: 'Pending' },
-    { id: 3, patient: 'James Wilson', amount: 200, dueDate: '2024-01-25', status: 'Pending' },
+    { id: 1, patient: 'Aravind', amount: 150, dueDate: '2024-01-20', status: 'Overdue' },
+    { id: 2, patient: 'Priya Nadarajah', amount: 85, dueDate: '2024-01-22', status: 'Pending' },
+    { id: 3, patient: 'Kumaravel', amount: 200, dueDate: '2024-01-25', status: 'Pending' },
   ]);
 
   

@@ -7,13 +7,13 @@ const ReceptionistPatients = () => {
     { 
       id: 1, 
       patientId: 'PAT001',
-      name: 'John Smith', 
+      name: 'Raja', 
       age: 45, 
       gender: 'Male',
-      phone: '+1 (234) 567-8901',
-      email: 'john.smith@email.com',
-      address: '123 Main St, City',
-      bloodGroup: 'O+',
+      phone: '+94 76 235 4568',
+      email: 'raja58@email.com',
+      address: 'Jaffna',
+      consultation: 'Herbal Medicine Dispensing',
       lastVisit: '2024-01-15',
       nextAppointment: '2024-02-15',
       registeredDate: '2023-05-10',
@@ -22,13 +22,13 @@ const ReceptionistPatients = () => {
     { 
       id: 2, 
       patientId: 'PAT002',
-      name: 'Emily Johnson', 
+      name: 'Sivakumar', 
       age: 32, 
       gender: 'Female',
-      phone: '+1 (234) 567-8902',
-      email: 'emily.j@email.com',
-      address: '456 Oak Ave, Town',
-      bloodGroup: 'A+',
+      phone: '+94 75 245 3654',
+      email: 'siva56.j@email.com',
+      address: 'Kilinochchi',
+      consultation: 'Varmam Therapy',
       lastVisit: '2024-01-14',
       nextAppointment: '2024-02-14',
       registeredDate: '2023-06-15',
@@ -37,13 +37,13 @@ const ReceptionistPatients = () => {
     { 
       id: 3, 
       patientId: 'PAT003',
-      name: 'Michael Brown', 
+      name: 'Karthikeyan', 
       age: 58, 
       gender: 'Male',
-      phone: '+1 (234) 567-8903',
-      email: 'm.brown@email.com',
-      address: '789 Pine Rd, Village',
-      bloodGroup: 'B+',
+      phone: '+94 75 245 3654',
+      email: 'Karthi89@email.com',
+      address: 'Point Pedro',
+      consultation: 'Thokkanam (Massage Therapy)',
       lastVisit: '2024-01-12',
       nextAppointment: '2024-02-12',
       registeredDate: '2023-07-20',
@@ -52,13 +52,13 @@ const ReceptionistPatients = () => {
     { 
       id: 4, 
       patientId: 'PAT004',
-      name: 'Sarah Miller', 
+      name: 'Vijayalakshmi', 
       age: 29, 
       gender: 'Female',
-      phone: '+1 (234) 567-8904',
+      phone: '+94 78 568 7521',
       email: 'sarah.m@email.com',
-      address: '101 Maple Dr, Suburb',
-      bloodGroup: 'AB+',
+      address: 'Jaffna',
+      consultation: 'External Oil Application',
       lastVisit: '2023-12-20',
       nextAppointment: '2024-02-10',
       registeredDate: '2023-08-05',
@@ -77,7 +77,7 @@ const ReceptionistPatients = () => {
     phone: '',
     email: '',
     address: '',
-    bloodGroup: '',
+    consultation: '',
     emergencyContact: ''
   });
 
@@ -219,8 +219,8 @@ const ReceptionistPatients = () => {
                     <td className="py-4 px-4">
                       <div className="space-y-2">
                         <div>
-                          <p className="text-xs text-gray-500">Blood Group</p>
-                          <p className="font-medium text-red-600">{patient.bloodGroup}</p>
+                          <p className="text-xs text-gray-500">Consultation</p>
+                          <p className="font-medium text-red-600">{patient.consultation}</p>
                         </div>
                         <div className="flex gap-2">
                           <div>
@@ -336,8 +336,8 @@ const ReceptionistPatients = () => {
                   <h3 className="font-bold text-gray-900 mb-4 pb-2 border-b">Medical Information</h3>
                   <div className="space-y-4">
                     <div>
-                      <p className="text-sm text-gray-500">Blood Group</p>
-                      <p className="font-medium text-red-600">{viewingPatient.bloodGroup}</p>
+                      <p className="text-sm text-gray-500">Consultation</p>
+                      <p className="font-medium text-red-600">{viewingPatient.consultation}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -437,14 +437,14 @@ const ReceptionistPatients = () => {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Blood Group
+                      Consultation
                     </label>
                     <select
-                      value={newPatient.bloodGroup}
-                      onChange={(e) => setNewPatient({...newPatient, bloodGroup: e.target.value})}
+                      value={newPatient.consultation}
+                      onChange={(e) => setNewPatient({...newPatient, consultation: e.target.value})}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
                     >
-                      <option value="">Select Blood Group</option>
+                      <option value="">Select Consultation</option>
                       <option value="A+">A+</option>
                       <option value="A-">A-</option>
                       <option value="B+">B+</option>

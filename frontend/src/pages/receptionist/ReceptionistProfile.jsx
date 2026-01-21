@@ -12,7 +12,7 @@ const receptionists = [
   },
   {
     initials: 'M',
-    name: 'Mary',
+    name: 'Malini',
     employeeId: 'REC002',
     department: 'Front Desk',
     email: 'receptionist23@clinic.com',

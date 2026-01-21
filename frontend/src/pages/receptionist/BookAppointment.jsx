@@ -6,55 +6,47 @@ const ReceptionistAppointments = () => {
   const [appointments] = useState([
     { 
       id: 1, 
-      patientName: 'John Smith', 
-      patientId: 'PAT001',
-      doctor: 'Dr. Jane Smith',
-      department: 'Cardiology',
+      patientName: 'Raja', 
+      doctor: 'Dr. Karthikayani',
       date: '2024-01-18',
       time: '09:00 AM',
       duration: '30 min',
       type: 'Follow-up',
-      status: 'confirmed',
-      contact: '+1 (234) 567-8901'
+      status: 'Confirmed',
+      contact: '+94 76 235 45681'
     },
     { 
       id: 2, 
-      patientName: 'Emily Johnson', 
-      patientId: 'PAT002',
-      doctor: 'Dr. Mark Wilson',
-      department: 'General Medicine',
+      patientName: 'Sivakumar', 
+      doctor: 'Dr. Anbu',
       date: '2024-01-18',
       time: '09:30 AM',
       duration: '45 min',
       type: 'Consultation',
-      status: 'waiting',
-      contact: '+1 (234) 567-8902'
+      status: 'Waiting',
+      contact: '+94 75 245 3654'
     },
     { 
       id: 3, 
-      patientName: 'Michael Brown', 
-      patientId: 'PAT003',
-      doctor: 'Dr. Sarah Lee',
-      department: 'Pediatrics',
+      patientName: 'Karthikeyan', 
+      doctor: 'Dr. Vignesh',
       date: '2024-01-18',
       time: '10:00 AM',
       duration: '60 min',
       type: 'New Patient',
-      status: 'checked-in',
-      contact: '+1 (234) 567-8903'
+      status: 'Checked-in',
+      contact: '+94 75 245 3653'
     },
     { 
       id: 4, 
-      patientName: 'Sarah Miller', 
-      patientId: 'PAT004',
-      doctor: 'Dr. Robert Chen',
-      department: 'Orthopedics',
+      patientName: 'Vijayalakshmi', 
+      doctor: '	Dr. Priya',
       date: '2024-01-19',
       time: '11:00 AM',
       duration: '30 min',
       type: 'Check-up',
-      status: 'pending',
-      contact: '+1 (234) 567-8904'
+      status: 'Pending',
+      contact: '+94 78 568 7521'
     },
   ]);
 
