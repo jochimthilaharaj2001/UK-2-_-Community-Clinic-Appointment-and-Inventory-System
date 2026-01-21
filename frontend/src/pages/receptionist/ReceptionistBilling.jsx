@@ -3,60 +3,61 @@ import Sidebar from '../../components/Sidebar';
 import { FaSearch, FaPlus, FaPrint, FaFileInvoiceDollar, FaMoneyBillWave, FaCreditCard, FaCalendarAlt, FaUser, FaDownload } from 'react-icons/fa';
 
 const ReceptionistBilling = () => {
-  const [bills] = useState([
-    { 
-      id: 1, 
-      invoiceNo: 'INV-2024-001',
-      patientName: 'John Smith',
-      patientId: 'PAT001',
-      date: '2024-01-18',
-      services: ['Consultation', 'Lab Test'],
-      totalAmount: 250.00,
-      paidAmount: 250.00,
-      balance: 0.00,
-      paymentMethod: 'Credit Card',
-      status: 'Paid'
-    },
-    { 
-      id: 2, 
-      invoiceNo: 'INV-2024-002',
-      patientName: 'Emily Johnson',
-      patientId: 'PAT002',
-      date: '2024-01-18',
-      services: ['Consultation', 'X-Ray'],
-      totalAmount: 350.00,
-      paidAmount: 200.00,
-      balance: 150.00,
-      paymentMethod: 'Cash',
-      status: 'Partial'
-    },
-    { 
-      id: 3, 
-      invoiceNo: 'INV-2024-003',
-      patientName: 'Michael Brown',
-      patientId: 'PAT003',
-      date: '2024-01-17',
-      services: ['Consultation'],
-      totalAmount: 150.00,
-      paidAmount: 0.00,
-      balance: 150.00,
-      paymentMethod: 'Pending',
-      status: 'Unpaid'
-    },
-    { 
-      id: 4, 
-      invoiceNo: 'INV-2024-004',
-      patientName: 'Sarah Miller',
-      patientId: 'PAT004',
-      date: '2024-01-16',
-      services: ['Consultation', 'Medication'],
-      totalAmount: 200.00,
-      paidAmount: 200.00,
-      balance: 0.00,
-      paymentMethod: 'Insurance',
-      status: 'Paid'
-    },
-  ]);
+const [bills] = useState([
+  { 
+    id: 1, 
+    invoiceNo: 'INV-2024-001',
+    patientName: 'Raja',
+    patientId: 'PAT001',
+    date: '2024-01-18',
+    services: ['Siddha Consultation', 'Herbal Medicine Dispensing'],
+    totalAmount: 1500.00,
+    paidAmount: 1500.00,
+    balance: 0.00,
+    paymentMethod: 'Credit Card',
+    status: 'Paid'
+  },
+  { 
+    id: 2, 
+    invoiceNo: 'INV-2024-002',
+    patientName: 'Sivakumar',
+    patientId: 'PAT002',
+    date: '2024-01-18',
+    services: ['Siddha Consultation', 'Varmam Therapy'],
+    totalAmount: 5500.00,
+    paidAmount: 2500.00,
+    balance: 3000.00,
+    paymentMethod: 'Cash',
+    status: 'Partial'
+  },
+  { 
+    id: 3, 
+    invoiceNo: 'INV-2024-003',
+    patientName: 'Karthikeyan',
+    patientId: 'PAT003',
+    date: '2024-01-17',
+    services: ['Siddha Consultation', 'Thokkanam (Massage Therapy)'],
+    totalAmount: 2000.00,
+    paidAmount: 0.00,
+    balance: 2000.00,
+    paymentMethod: 'Pending',
+    status: 'Unpaid'
+  },
+  { 
+    id: 4, 
+    invoiceNo: 'INV-2024-004',
+    patientName: 'Vijayalakshmi',
+    patientId: 'PAT004',
+    date: '2024-01-16',
+    services: ['Siddha Consultation', 'External Oil Application'],
+    totalAmount: 2500.00,
+    paidAmount: 2500.00,
+    balance: 0.00,
+    paymentMethod: 'Insurance',
+    status: 'Paid'
+  },
+]);
+
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');

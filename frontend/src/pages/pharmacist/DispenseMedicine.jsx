@@ -6,82 +6,60 @@ import API_BASE_URL from "../../services/api";
 const DispenseMedicine = () => {
   const [prescriptionId, setPrescriptionId] = useState("");
   const [prescription, setPrescription] = useState(null);
-  const [items, setItems] = useState([]);
   const [error, setError] = useState("");
 
-  // 🔍 Retrieve Prescription
-  const handleRetrieve = async () => {
-    setError("");
-    setPrescription(null);
-    setItems([]);
+ const handleRetrieve = async () => {
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/prescriptions/${prescriptionId}`
+    );
+    const data = await res.json();
 
-    if (!prescriptionId) {
-      setError("Please enter prescription ID");
+    if (!res.ok || !data) {
+      setError("Prescription not found");
       return;
     }
 
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/prescriptions/${prescriptionId}`
-      );
-      const data = await res.json();
+    setPrescription(data);
+  } catch {
+    setError("Server error");
+  }
+};
 
-      if (!res.ok) {
-        setError(data.message || "Prescription not found");
-        return;
-      }
 
-      setPrescription(data.prescription);
-      setItems(data.items);
-
-    } catch (err) {
-      setError("Server error while retrieving prescription");
-    }
-  };
-
-  // 💊 Dispense Medicine
   const handleDispense = async () => {
-    setError("");
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/prescriptions/${prescription.id}`,
+      { method: "POST" }
+    );
 
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/prescriptions/dispense`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prescription_id: prescription.id })
-        }
-      );
+    const data = await res.json();
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || "Failed to dispense medicine");
-        return;
-      }
-
-      alert("✅ Medicine dispensed successfully");
-      setPrescription(null);
-      setItems([]);
-      setPrescriptionId("");
-
-    } catch {
-      setError("Server error while dispensing medicine");
+    if (!res.ok) {
+      setError(data.message);
+      return;
     }
-  };
+
+    alert("Medicine dispensed successfully");
+    setPrescription(null);
+  } catch {
+    setError("Failed to dispense medicine");
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-100">
       <Sidebar role="pharmacist" />
 
-      <div className="ml-64 p-6">
+      <div className="ml-64 p-6 relative z-10">
         <h1 className="text-3xl font-bold text-gray-800 mb-6">
           Dispense Medicine
         </h1>
 
-        {/* Search */}
+        {/* Prescription Search */}
         <div className="bg-white p-6 rounded-xl shadow mb-6">
-          <div className="flex gap-4">
+          <div className="flex items-center gap-4">
             <input
               type="text"
               placeholder="Enter Prescription ID"
@@ -91,7 +69,7 @@ const DispenseMedicine = () => {
             />
             <button
               onClick={handleRetrieve}
-              className="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700 flex items-center gap-2"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2"
             >
               <FaSearch /> Retrieve
             </button>
@@ -108,36 +86,19 @@ const DispenseMedicine = () => {
         {prescription && (
           <div className="bg-white p-6 rounded-xl shadow">
             <h2 className="text-xl font-semibold mb-4">
-              Prescription #{prescription.id}
+              Prescription Details
             </h2>
 
-            <p className="mb-2">
-              <strong>Doctor:</strong> {prescription.doctor_name}
-            </p>
-
-            <p className="mb-4">
-              <strong>Notes:</strong> {prescription.notes || "—"}
-            </p>
-
-            {/* Medicine Table */}
-            <table className="w-full border mb-4">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="p-2 border">Medicine</th>
-                  <th className="p-2 border">Strength</th>
-                  <th className="p-2 border">Quantity</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item, index) => (
-                  <tr key={index}>
-                    <td className="p-2 border">{item.medicine_name}</td>
-                    <td className="p-2 border">{item.strength}</td>
-                    <td className="p-2 border">{item.quantity}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <p><strong>Patient:</strong> {prescription.patientName}</p>
+              <p><strong>Medicine:</strong> {prescription.medicine}</p>
+              <p><strong>Strength:</strong> {prescription.strength}</p>
+              <p><strong>Prescribed Qty:</strong> {prescription.quantity}</p>
+              <p>
+                <strong>Available Stock:</strong>{" "}
+                {prescription.availableStock}
+              </p>
+            </div>
 
             <button
               onClick={handleDispense}

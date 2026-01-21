@@ -61,8 +61,8 @@ const Sidebar = () => {
   // 🔹 RECEPTIONIST MENU
   const receptionistMenu = [
     { path: '/receptionist/dashboard', label: 'Dashboard', icon: <FaHome /> },
+    { path: '/receptionist/profile', label: 'Receptionist Desk', icon: <FaUserCircle /> },
     { path: '/receptionist/patient-search', label: 'Search Patients', icon: <FaSearch /> },
-    { path: '/receptionist/patient-registration', label: 'New Patient', icon: <FaUserPlus /> },
     { path: '/receptionist/book-appointment', label: 'Book Appointment', icon: <FaCalendarCheck /> },
     { path: '/receptionist/appointments-calendar', label: 'Appointments Calendar', icon: <FaCalendarAlt /> },
     { path: '/receptionist/billing', label: 'Billing & Payments', icon: <FaFileInvoiceDollar /> },

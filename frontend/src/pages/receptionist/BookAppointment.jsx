@@ -1,389 +1,430 @@
-// pages/receptionist/BookAppointment.jsx
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  FaCalendarAlt, 
-  FaUser, 
-  FaClock, 
-  FaStethoscope, 
-  FaNotesMedical,
-  FaArrowLeft,
-  FaCalendarPlus
-} from 'react-icons/fa';
+import Sidebar from '../../components/Sidebar';
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaCalendarCheck, FaUserMd, FaClock, FaCheck, FaTimes } from 'react-icons/fa';
 
-const BookAppointment = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const patientFromState = location.state?.patient;
-
-  const [formData, setFormData] = useState({
-    patientId: patientFromState?.id || '',
-    patientName: patientFromState?.name || '',
-    date: new Date().toISOString().split('T')[0],
-    time: '09:00',
-    doctor: '',
-    appointmentType: 'consultation',
-    notes: '',
-    duration: '30',
-    urgency: 'routine'
-  });
-
-  const [patients] = useState([
-    { id: 1, name: 'John Smith', phone: '+1 (234) 567-8901' },
-    { id: 2, name: 'Emily Johnson', phone: '+1 (234) 567-8902' },
-    { id: 3, name: 'Michael Brown', phone: '+1 (234) 567-8903' },
-    { id: 4, name: 'Sarah Miller', phone: '+1 (234) 567-8904' },
+const ReceptionistAppointments = () => {
+  const [appointments] = useState([
+    { 
+      id: 1, 
+      patientName: 'Raja', 
+      doctor: 'Dr. Karthikayani',
+      date: '2024-01-18',
+      time: '09:00 AM',
+      duration: '30 min',
+      type: 'Follow-up',
+      status: 'Confirmed',
+      contact: '+94 76 235 45681'
+    },
+    { 
+      id: 2, 
+      patientName: 'Sivakumar', 
+      doctor: 'Dr. Anbu',
+      date: '2024-01-18',
+      time: '09:30 AM',
+      duration: '45 min',
+      type: 'Consultation',
+      status: 'Waiting',
+      contact: '+94 75 245 3654'
+    },
+    { 
+      id: 3, 
+      patientName: 'Karthikeyan', 
+      doctor: 'Dr. Vignesh',
+      date: '2024-01-18',
+      time: '10:00 AM',
+      duration: '60 min',
+      type: 'New Patient',
+      status: 'Checked-in',
+      contact: '+94 75 245 3653'
+    },
+    { 
+      id: 4, 
+      patientName: 'Vijayalakshmi', 
+      doctor: '	Dr. Priya',
+      date: '2024-01-19',
+      time: '11:00 AM',
+      duration: '30 min',
+      type: 'Check-up',
+      status: 'Pending',
+      contact: '+94 78 568 7521'
+    },
   ]);
 
-  const doctors = [
-    'Dr. Sarah Wilson - General Medicine',
-    'Dr. Michael Chen - Cardiology',
-    'Dr. Lisa Park - Pediatrics',
-    'Dr. James Lee - Orthopedics',
-    'Dr. Maria Garcia - Dermatology'
-  ];
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [showForm, setShowForm] = useState(false);
+  const [newAppointment, setNewAppointment] = useState({
+    patientName: '',
+    patientId: '',
+    doctor: '',
+    department: '',
+    date: '',
+    time: '',
+    duration: '30',
+    type: 'Consultation',
+    contact: ''
+  });
 
-  const appointmentTypes = [
-    'Consultation',
-    'Follow-up',
-    'Check-up',
-    'Emergency',
-    'Lab Test',
-    'Procedure',
-    'Vaccination',
-    'Physical Exam'
-  ];
-
-  const timeSlots = [
-    '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-    '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00'
-  ];
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handlePatientSelect = (patientId) => {
-    const patient = patients.find(p => p.id === parseInt(patientId));
-    setFormData({
-      ...formData,
-      patientId: patient.id,
-      patientName: patient.name
-    });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const filteredAppointments = appointments.filter(app => {
+    const matchesSearch = app.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         app.patientId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         app.doctor.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
+    const matchesDate = dateFilter === 'all' || app.date === dateFilter;
     
-    if (!formData.patientId || !formData.date || !formData.time || !formData.doctor) {
-      alert('Please fill in all required fields');
-      return;
+    return matchesSearch && matchesStatus && matchesDate;
+  });
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'confirmed': return 'bg-green-100 text-green-800';
+      case 'waiting': return 'bg-yellow-100 text-yellow-800';
+      case 'checked-in': return 'bg-blue-100 text-blue-800';
+      case 'pending': return 'bg-gray-100 text-gray-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
+  };
 
-    // Format time for display
-    const timeString = new Date(`2000-01-01T${formData.time}`).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const getTypeColor = (type) => {
+    switch(type) {
+      case 'Follow-up': return 'bg-blue-50 text-blue-700';
+      case 'Consultation': return 'bg-purple-50 text-purple-700';
+      case 'New Patient': return 'bg-green-50 text-green-700';
+      case 'Check-up': return 'bg-yellow-50 text-yellow-700';
+      default: return 'bg-gray-50 text-gray-700';
+    }
+  };
 
-    // In real app, send to API
-    console.log('Appointment booked:', formData);
-    
-    alert(`Appointment booked successfully!
-Patient: ${formData.patientName}
-Date: ${formData.date}
-Time: ${timeString}
-Doctor: ${formData.doctor}
-Type: ${formData.appointmentType}`);
-
-    // Navigate to calendar
-    navigate('/receptionist/calendar');
+  const handleStatusUpdate = (id, newStatus) => {
+        alert(`Appointment ${id} status updated to ${newStatus}`);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      {/* Header */}
-      <div className="flex justify-between items-start mb-8">
-        <div>
-          <div className="flex items-center gap-3 mb-3">
-            <button
-              onClick={() => navigate('/receptionist/dashboard')}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-            >
-              <FaArrowLeft />
-              Back to Dashboard
-            </button>
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar />
+      
+      <div className="flex-1 ml-64 p-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Appointment Management</h1>
+            <p className="text-gray-600">Book and manage patient appointments</p>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Book Appointment</h1>
-          <p className="text-gray-600 mt-2">Schedule a new appointment for a patient</p>
-        </div>
-        
-        <div className="flex gap-3">
           <button
-            onClick={() => navigate('/receptionist/patient-search')}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            onClick={() => setShowForm(true)}
+            className="mt-4 md:mt-0 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg flex items-center"
           >
-            Find Patient
-          </button>
-          <button
-            onClick={() => navigate('/receptionist/calendar')}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
-          >
-            View Calendar
+            <FaPlus className="mr-2" />
+            Book Appointment
           </button>
         </div>
-      </div>
 
-      {/* Main Form */}
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-xl shadow-sm border p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <FaCalendarPlus className="text-blue-600 text-2xl" />
+        {/* Filters */}
+        <div className="bg-white rounded-xl shadow p-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="relative">
+              <FaSearch className="absolute left-3 top-3.5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search appointments..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+              />
             </div>
+            
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Appointment Details</h2>
-              <p className="text-gray-600">Fill in the details to schedule an appointment</p>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+              >
+                <option value="all">All Status</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="waiting">Waiting</option>
+                <option value="checked-in">Checked-in</option>
+                <option value="pending">Pending</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            
+            <div>
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+              >
+                <option value="all">All Dates</option>
+                <option value="2024-01-18">Today (Jan 18)</option>
+                <option value="2024-01-19">Tomorrow (Jan 19)</option>
+                <option value="2024-01-20">Jan 20</option>
+              </select>
+            </div>
+            
+            <div>
+              <button className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg">
+                Export List
+              </button>
             </div>
           </div>
+        </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-8">
-              {/* Patient Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  <div className="flex items-center gap-2">
-                    <FaUser className="text-gray-400" />
-                    Select Patient *
-                  </div>
-                </label>
+        {/* Appointments Table */}
+        <div className="bg-white rounded-xl shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-700">Patient</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-700">Doctor</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-700">Date & Time</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-700">Type</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-700">Status</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredAppointments.map((appointment) => (
+                  <tr key={appointment.id} className="hover:bg-gray-50">
+                    <td className="py-4 px-4">
+                      <div>
+                        <p className="font-medium text-gray-900">{appointment.patientName}</p>
+                        <p className="text-sm text-gray-500">{appointment.patientId}</p>
+                        <p className="text-xs text-gray-400">{appointment.contact}</p>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div>
+                        <p className="font-medium text-gray-900">{appointment.doctor}</p>
+                        <p className="text-sm text-gray-500">{appointment.department}</p>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div>
+                        <p className="font-medium text-gray-900">{appointment.date}</p>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <FaClock className="mr-1" />
+                          {appointment.time} • {appointment.duration}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <span className={`px-3 py-1 text-sm rounded-full ${getTypeColor(appointment.type)}`}>
+                        {appointment.type}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4">
+                      <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(appointment.status)}`}>
+                        {appointment.status}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex gap-2">
+                        {appointment.status === 'pending' && (
+                          <button
+                            onClick={() => handleStatusUpdate(appointment.id, 'confirmed')}
+                            className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg flex items-center"
+                          >
+                            <FaCheck className="mr-1" /> Confirm
+                          </button>
+                        )}
+                        {appointment.status === 'waiting' && (
+                          <button
+                            onClick={() => handleStatusUpdate(appointment.id, 'checked-in')}
+                            className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg"
+                          >
+                            Check-in
+                          </button>
+                        )}
+                        {appointment.status !== 'cancelled' && (
+                          <button
+                            onClick={() => handleStatusUpdate(appointment.id, 'cancelled')}
+                            className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg flex items-center"
+                          >
+                            <FaTimes className="mr-1" /> Cancel
+                          </button>
+                        )}
+                        <button className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg">
+                          <FaEdit />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* New Appointment Form Modal */}
+        {showForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Book New Appointment</h2>
+                <button
+                  onClick={() => setShowForm(false)}
+                  className="text-gray-400 hover:text-gray-600 text-xl"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Patient Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={newAppointment.patientName}
+                      onChange={(e) => setNewAppointment({...newAppointment, patientName: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                      placeholder="Enter patient name"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Patient ID
+                    </label>
+                    <input
+                      type="text"
+                      value={newAppointment.patientId}
+                      onChange={(e) => setNewAppointment({...newAppointment, patientId: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                      placeholder="PAT001"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Doctor *
+                    </label>
                     <select
-                      name="patientId"
-                      value={formData.patientId}
-                      onChange={(e) => handlePatientSelect(e.target.value)}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      value={newAppointment.doctor}
+                      onChange={(e) => setNewAppointment({...newAppointment, doctor: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
                     >
-                      <option value="">Select a patient</option>
-                      {patients.map(patient => (
-                        <option key={patient.id} value={patient.id}>
-                          {patient.name} - {patient.phone}
-                        </option>
-                      ))}
+                      <option value="">Select Doctor</option>
+                      <option value="Dr. Jane Smith">Dr. Jane Smith</option>
+                      <option value="Dr. Mark Wilson">Dr. Mark Wilson</option>
+                      <option value="Dr. Sarah Lee">Dr. Sarah Lee</option>
+                      <option value="Dr. Robert Chen">Dr. Robert Chen</option>
                     </select>
                   </div>
+                  
                   <div>
-                    {formData.patientName && (
-                      <div className="p-4 bg-blue-50 rounded-lg">
-                        <p className="font-medium text-gray-900">Selected Patient</p>
-                        <p className="text-gray-600">{formData.patientName}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Date, Time & Doctor */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    <div className="flex items-center gap-2">
-                      <FaCalendarAlt className="text-gray-400" />
-                      Date *
-                    </div>
-                  </label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={formData.date}
-                    onChange={handleChange}
-                    required
-                    min={new Date().toISOString().split('T')[0]}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    <div className="flex items-center gap-2">
-                      <FaClock className="text-gray-400" />
-                      Time *
-                    </div>
-                  </label>
-                  <select
-                    name="time"
-                    value={formData.time}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select time</option>
-                    {timeSlots.map(time => (
-                      <option key={time} value={time}>{time}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    <div className="flex items-center gap-2">
-                      <FaStethoscope className="text-gray-400" />
-                      Duration
-                    </div>
-                  </label>
-                  <select
-                    name="duration"
-                    value={formData.duration}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="15">15 minutes</option>
-                    <option value="30">30 minutes</option>
-                    <option value="45">45 minutes</option>
-                    <option value="60">60 minutes</option>
-                    <option value="90">90 minutes</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Doctor & Type */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Select Doctor *
-                  </label>
-                  <select
-                    name="doctor"
-                    value={formData.doctor}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select a doctor</option>
-                    {doctors.map((doctor, index) => (
-                      <option key={index} value={doctor}>{doctor}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Appointment Type *
-                  </label>
-                  <select
-                    name="appointmentType"
-                    value={formData.appointmentType}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    {appointmentTypes.map(type => (
-                      <option key={type} value={type.toLowerCase()}>{type}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Notes */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  <div className="flex items-center gap-2">
-                    <FaNotesMedical className="text-gray-400" />
-                    Notes & Instructions
-                  </div>
-                </label>
-                <textarea
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleChange}
-                  rows="4"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter any special instructions, symptoms, or notes for the doctor..."
-                />
-              </div>
-
-              {/* Urgency */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Urgency Level
-                </label>
-                <div className="flex gap-4">
-                  {['routine', 'urgent', 'emergency'].map(level => (
-                    <label key={level} className="flex items-center">
-                      <input
-                        type="radio"
-                        name="urgency"
-                        value={level}
-                        checked={formData.urgency === level}
-                        onChange={handleChange}
-                        className="mr-2"
-                      />
-                      <span className="capitalize">{level}</span>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Department
                     </label>
-                  ))}
+                    <input
+                      type="text"
+                      value={newAppointment.department}
+                      onChange={(e) => setNewAppointment({...newAppointment, department: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                      placeholder="Cardiology"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Date *
+                    </label>
+                    <input
+                      type="date"
+                      value={newAppointment.date}
+                      onChange={(e) => setNewAppointment({...newAppointment, date: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Time *
+                    </label>
+                    <input
+                      type="time"
+                      value={newAppointment.time}
+                      onChange={(e) => setNewAppointment({...newAppointment, time: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Duration
+                    </label>
+                    <select
+                      value={newAppointment.duration}
+                      onChange={(e) => setNewAppointment({...newAppointment, duration: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                    >
+                      <option value="15">15 min</option>
+                      <option value="30">30 min</option>
+                      <option value="45">45 min</option>
+                      <option value="60">60 min</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Appointment Type
+                    </label>
+                    <select
+                      value={newAppointment.type}
+                      onChange={(e) => setNewAppointment({...newAppointment, type: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                    >
+                      <option value="Consultation">Consultation</option>
+                      <option value="Follow-up">Follow-up</option>
+                      <option value="Check-up">Check-up</option>
+                      <option value="New Patient">New Patient</option>
+                      <option value="Emergency">Emergency</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Contact Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={newAppointment.contact}
+                      onChange={(e) => setNewAppointment({...newAppointment, contact: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                      placeholder="+1 (234) 567-8900"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-4 pt-6 border-t">
-                <button
-                  type="submit"
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
-                >
-                  Book Appointment
+              <div className="flex gap-3 mt-8">
+                <button className="flex-1 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg">
+                  New Appointment
                 </button>
                 <button
-                  type="button"
-                  onClick={() => navigate('/receptionist/dashboard')}
-                  className="flex-1 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg"
+                  onClick={() => setShowForm(false)}
+                  className="flex-1 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium rounded-lg"
                 >
                   Cancel
                 </button>
               </div>
             </div>
-          </form>
-        </div>
-
-        {/* Tips Section */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
-          <h3 className="font-bold text-gray-900 mb-4">📋 Appointment Scheduling Tips</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <p className="text-sm text-gray-700">• Check doctor availability before scheduling</p>
-              <p className="text-sm text-gray-700">• Allow 15 minutes buffer between appointments</p>
-              <p className="text-sm text-gray-700">• Confirm patient's insurance coverage</p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm text-gray-700">• Send confirmation SMS/Email after booking</p>
-              <p className="text-sm text-gray-700">• Note any special requirements</p>
-              <p className="text-sm text-gray-700">• Check for conflicting appointments</p>
-            </div>
           </div>
-        </div>
-
-        {/* Quick Links */}
-        <div className="mt-6 flex justify-center gap-4">
-          <button
-            onClick={() => navigate('/receptionist/patient-search')}
-            className="px-4 py-2 text-blue-600 hover:text-blue-800"
-          >
-            ← Find Another Patient
-          </button>
-          <button
-            onClick={() => navigate('/receptionist/calendar')}
-            className="px-4 py-2 text-blue-600 hover:text-blue-800"
-          >
-            View Calendar →
-          </button>
-        </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default BookAppointment;
+export default ReceptionistAppointments;

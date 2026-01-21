@@ -38,10 +38,10 @@ const PharmacistLogin = () => {
 
       // Store token and user correctly
       localStorage.setItem('token', data.token);
-      localStorage.setItem("user",JSON.stringify({ 
-        ...data.pharmacist, 
-        role: "pharmacist"
-       }));
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ ...data.pharmacist, role: "pharmacist" })
+);
 
 
       // Redirect to dashboard

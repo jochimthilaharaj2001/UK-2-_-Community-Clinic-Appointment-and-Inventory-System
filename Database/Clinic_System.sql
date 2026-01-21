@@ -53,12 +53,6 @@ CREATE TABLE prescriptions (
     FOREIGN KEY (patient_id) REFERENCES patients(id)
 );
 
-ALTER TABLE prescriptions
-ADD COLUMN status ENUM('PENDING', 'DISPENSED', 'CANCELLED') DEFAULT 'PENDING';
-
--- mark sample prescription as DISPENSED so dispensed endpoint returns rows
-UPDATE prescriptions SET status = 'DISPENSED' WHERE id = 1;
-
 -- =========================================
 -- PRESCRIPTION ITEMS (MEDICINES PER RX)
 -- =========================================
@@ -71,14 +65,15 @@ CREATE TABLE prescription_items (
     FOREIGN KEY (prescription_id) REFERENCES prescriptions(id)
 );
 
+ALTER TABLE prescriptions
+ADD COLUMN status ENUM('PENDING', 'DISPENSED', 'CANCELLED') DEFAULT 'PENDING';
+
+
 INSERT INTO prescriptions (patient_id, doctor_name, notes)
-VALUES 
-(1, 'Dr. Silva', 'Take after meals'),
-(2, 'Dr. Jhon', 'Take before meals');
+VALUES (1, 'Dr. Silva', 'Take after meals');
 
 INSERT INTO prescription_items (prescription_id, medicine_name, strength, quantity)
-VALUES (1, 'Paracetamol', '500mg', 10),
-(2, 'Azithromycin', '500mg', 20);
+VALUES (1, 'Paracetamol', '500mg', 10);
 
 -- =========================================
 -- INVENTORY (CORE PHARMACIST TABLE)
@@ -128,6 +123,24 @@ CREATE TABLE order_requests (
     requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (inventory_id) REFERENCES inventory(id)
 );
+
+-- =========================================
+-- VIEWS (OPTIONAL BUT USEFUL FOR REPORTS)
+-- =========================================
+
+-- Low stock medicines
+CREATE VIEW low_stock_medicines AS
+SELECT *
+FROM inventory
+WHERE quantity < 100;
+
+-- Expired medicines
+CREATE VIEW expired_medicines AS
+SELECT *
+FROM inventory
+WHERE expiry_date < CURDATE();
+
+
 
 -- PHARMACIST MODULE END 
 -- WORK BELOW HERE......FOR OTHER MODULES

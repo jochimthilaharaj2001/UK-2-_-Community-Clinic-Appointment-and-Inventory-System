@@ -27,9 +27,9 @@ import DoctorProfile from './pages/doctor/DoctorProfile';
 
 // Receptionist Pages
 import ReceptionistDashboard from './pages/receptionist/ReceptionistDashboard';
+import ReceptionistProfile from './pages/receptionist/ReceptionistProfile';
 import PatientSearch from './pages/receptionist/PatientSearch';
 import BookAppointment from './pages/receptionist/BookAppointment';
-import PatientRegistration from './pages/receptionist/PatientRegistration';
 import AppointmentsCalendar from './pages/receptionist/AppointmentsCalendar';
 import ReceptionistBilling from './pages/receptionist/ReceptionistBilling';
 
@@ -115,6 +115,16 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+                <Route
+          path="/receptionist/profile"
+          element={
+            <ProtectedRoute role="receptionist">
+              <ReceptionistProfile />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/receptionist/patient-search"
           element={
@@ -131,14 +141,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/receptionist/patient-registration"
-          element={
-            <ProtectedRoute role="receptionist">
-              <PatientRegistration />
-            </ProtectedRoute>
-          }
-        />
+       
         <Route
           path="/receptionist/appointments-calendar"
           element={
