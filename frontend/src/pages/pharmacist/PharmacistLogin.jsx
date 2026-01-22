@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaUserMd, FaLock } from 'react-icons/fa';
-import API_BASE_URL from "../../services/api";
+import API_BASE_URL from "../../config/apiConfig";
 
 const PharmacistLogin = () => {
   const navigate = useNavigate();

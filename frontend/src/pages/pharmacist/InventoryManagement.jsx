@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import { FaSearch, FaPlus, FaEdit, FaTrash } from "react-icons/fa";
-import API_BASE_URL from "../../services/api";
+import API_BASE_URL from "../../config/apiConfig";
 
 const InventoryManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
