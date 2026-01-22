@@ -7,6 +7,6 @@ import {
 const router = express.Router();
 
 router.get('/:id', getPrescriptionById);
-router.post('/dispense', dispenseMedicine);
+router.post('/:id/dispense', dispenseMedicine);
 
 export default router;

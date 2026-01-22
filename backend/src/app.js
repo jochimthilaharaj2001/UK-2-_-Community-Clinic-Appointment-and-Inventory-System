@@ -49,7 +49,6 @@ app.use('/api/receptionist', receptionistRoutes);
 
 // Pharmacist Routes
 app.use('/api/pharmacist', pharmacistRoutes);
-app.use('/api/pharmacist/inventory', inventoryRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/reports', reportRoutes);
 
