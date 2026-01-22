@@ -15,6 +15,7 @@ CREATE TABLE pharmacists (
     status ENUM('ACTIVE', 'INACTIVE') NOT NULL DEFAULT ('INACTIVE'),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 -- Sample pharmacist
 -- Password = 123456 (bcrypt hash)
 INSERT INTO pharmacists (name, email, password, status)
@@ -24,6 +25,7 @@ VALUES (
         '$2a$10$Hj2tTKwmC2xTOHBPod.aBupZ19GVvjunCJmWI8F/qZc7Zr6FmR12C',
         'ACTIVE'
     );
+
 -- =========================================
 -- PATIENTS (needed for dispense & reports)
 -- =========================================
@@ -37,9 +39,11 @@ CREATE TABLE patients (
 INSERT INTO patients (name, age, gender)
 VALUES ('John Doe', 45, 'Male'),
     ('Jane Smith', 32, 'Female');
+
 -- =========================================
 -- PRESCRIPTIONS (INPUT FOR DISPENSE)
 -- =========================================
+
 CREATE TABLE prescriptions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     patient_id INT NOT NULL,
@@ -48,9 +52,11 @@ CREATE TABLE prescriptions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (patient_id) REFERENCES patients(id)
 );
+
 -- =========================================
 -- PRESCRIPTION ITEMS (MEDICINES PER RX)
 -- =========================================
+
 CREATE TABLE prescription_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     prescription_id INT NOT NULL,
@@ -59,17 +65,18 @@ CREATE TABLE prescription_items (
     quantity INT NOT NULL,
     FOREIGN KEY (prescription_id) REFERENCES prescriptions(id)
 );
+
+ALTER TABLE prescription_items ADD COLUMN medicine_id INT NOT NULL;
+
 ALTER TABLE prescriptions
 ADD COLUMN status ENUM('PENDING', 'DISPENSED', 'CANCELLED') DEFAULT 'PENDING';
+
 INSERT INTO prescriptions (patient_id, doctor_name, notes)
 VALUES (1, 'Dr. Silva', 'Take after meals');
-INSERT INTO prescription_items (
-        prescription_id,
-        medicine_name,
-        strength,
-        quantity
-    )
+
+INSERT INTO prescription_items (prescription_id, medicine_name, strength, quantity)
 VALUES (1, 'Paracetamol', '500mg', 10);
+
 -- =========================================
 -- INVENTORY (CORE PHARMACIST TABLE)
 -- =========================================
@@ -115,6 +122,7 @@ VALUES (
         20,
         12.00
     );
+    
 -- =========================================
 -- DISPENSE LOG (STOCK DEDUCTION RECORD)
 -- =========================================
@@ -139,4 +147,9 @@ CREATE TABLE order_requests (
     status VARCHAR(50) DEFAULT 'PENDING',
     requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (inventory_id) REFERENCES inventory(id)
-);
+);       
+
+
+
+
+         
