@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
+import api from '../../services/api';
 import Sidebar from '../../components/Sidebar';
-import { 
-  FaSearch, 
-  FaCalendarPlus, 
-  FaEdit, 
-  FaTrash, 
-  FaEye, 
+import {
+  FaSearch,
+  FaCalendarPlus,
+  FaEdit,
+  FaTrash,
+  FaEye,
   FaFilter,
   FaTimes,
   FaSave,
@@ -25,134 +26,32 @@ import {
 import { format, addDays } from 'date-fns';
 
 const AppointmentManagement = () => {
-  const [appointments, setAppointments] = useState([
-    { 
-      id: 1, 
-      patientName: 'John Smith', 
-      patientId: 'P001', 
-      patientAge: 35,
-      patientGender: 'Male',
-      doctorName: 'Dr. Sarah Wilson',
-      doctorId: 'D001',
-      doctorSpecialization: 'Cardiology',
-      date: format(new Date(), 'yyyy-MM-dd'), 
-      time: '09:00 AM',
-      duration: '30 mins',
-      status: 'confirmed',
-      type: 'regular',
-      notes: 'Follow-up appointment for hypertension check',
-      contact: '+1234567890',
-      email: 'john@example.com',
-      reason: 'Blood pressure follow-up',
-      createdAt: '2024-01-10 10:30 AM',
-      room: 'Room 201'
-    },
-    { 
-      id: 2, 
-      patientName: 'Emily Johnson', 
-      patientId: 'P002', 
-      patientAge: 28,
-      patientGender: 'Female',
-      doctorName: 'Dr. James Davis',
-      doctorId: 'D002',
-      doctorSpecialization: 'Pediatrics',
-      date: format(new Date(), 'yyyy-MM-dd'), 
-      time: '10:30 AM',
-      duration: '45 mins',
-      status: 'pending',
-      type: 'emergency',
-      notes: 'High fever and cough for 3 days',
-      contact: '+1234567891',
-      email: 'emily@example.com',
-      reason: 'Fever consultation',
-      createdAt: '2024-01-14 09:15 AM',
-      room: 'Room 105'
-    },
-    { 
-      id: 3, 
-      patientName: 'Michael Brown', 
-      patientId: 'P003', 
-      patientAge: 45,
-      patientGender: 'Male',
-      doctorName: 'Dr. Robert Chen',
-      doctorId: 'D003',
-      doctorSpecialization: 'Orthopedics',
-      date: format(new Date(), 'yyyy-MM-dd'), 
-      time: '02:00 PM',
-      duration: '60 mins',
-      status: 'confirmed',
-      type: 'regular',
-      notes: 'Annual health checkup and bone density test',
-      contact: '+1234567892',
-      email: 'michael@example.com',
-      reason: 'Annual checkup',
-      createdAt: '2024-01-12 11:00 AM',
-      room: 'Room 401'
-    },
-    { 
-      id: 4, 
-      patientName: 'Sarah Miller', 
-      patientId: 'P004', 
-      patientAge: 32,
-      patientGender: 'Female',
-      doctorName: 'Dr. Lisa Garcia',
-      doctorId: 'D004',
-      doctorSpecialization: 'Dermatology',
-      date: format(addDays(new Date(), 1), 'yyyy-MM-dd'), 
-      time: '11:00 AM',
-      duration: '30 mins',
-      status: 'pending',
-      type: 'consultation',
-      notes: 'Skin rash consultation',
-      contact: '+1234567893',
-      email: 'sarah@example.com',
-      reason: 'Skin allergy',
-      createdAt: '2024-01-15 02:30 PM',
-      room: 'Room 308'
-    },
-    { 
-      id: 5, 
-      patientName: 'David Wilson', 
-      patientId: 'P005', 
-      patientAge: 50,
-      patientGender: 'Male',
-      doctorName: 'Dr. Sarah Wilson',
-      doctorId: 'D001',
-      doctorSpecialization: 'Cardiology',
-      date: format(addDays(new Date(), 1), 'yyyy-MM-dd'), 
-      time: '03:30 PM',
-      duration: '45 mins',
-      status: 'confirmed',
-      type: 'follow-up',
-      notes: 'Post-angioplasty follow-up',
-      contact: '+1234567894',
-      email: 'david@example.com',
-      reason: 'Post-surgery check',
-      createdAt: '2024-01-13 10:45 AM',
-      room: 'Room 201'
-    },
-    { 
-      id: 6, 
-      patientName: 'Jennifer Lee', 
-      patientId: 'P006', 
-      patientAge: 29,
-      patientGender: 'Female',
-      doctorName: 'Dr. Emma Thompson',
-      doctorId: 'D005',
-      doctorSpecialization: 'Neurology',
-      date: format(new Date(), 'yyyy-MM-dd'), 
-      time: '04:00 PM',
-      duration: '60 mins',
-      status: 'cancelled',
-      type: 'consultation',
-      notes: 'Migraine treatment follow-up - Patient cancelled',
-      contact: '+1234567895',
-      email: 'jennifer@example.com',
-      reason: 'Migraine treatment',
-      createdAt: '2024-01-11 03:20 PM',
-      room: 'Room 502'
-    },
-  ]);
+  const [appointments, setAppointments] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+
+  useEffect(() => {
+    fetchAppointments();
+    fetchDoctors();
+  }, []);
+
+  const fetchAppointments = async () => {
+    try {
+      const response = await api.get('/appointments');
+      setAppointments(response.data);
+    } catch (error) {
+      console.error('Failed to fetch appointments', error);
+      // alert('Failed to load appointments');
+    }
+  };
+
+  const fetchDoctors = async () => {
+    try {
+      const response = await api.get('/doctors');
+      setDoctors(response.data); // Assuming data is array of doctors
+    } catch (error) {
+      console.error('Failed to fetch doctors', error);
+    }
+  };
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -184,13 +83,7 @@ const AppointmentManagement = () => {
   };
   const [formData, setFormData] = useState(defaultFormData);
 
-  const doctors = [
-    { id: 'D001', name: 'Dr. Sarah Wilson', specialization: 'Cardiology' },
-    { id: 'D002', name: 'Dr. James Davis', specialization: 'Pediatrics' },
-    { id: 'D003', name: 'Dr. Robert Chen', specialization: 'Orthopedics' },
-    { id: 'D004', name: 'Dr. Lisa Garcia', specialization: 'Dermatology' },
-    { id: 'D005', name: 'Dr. Emma Thompson', specialization: 'Neurology' }
-  ];
+  // Removed static doctors list, using state instead.
 
   const appointmentTypes = [
     { value: 'regular', label: 'Regular Checkup', color: 'bg-green-100 text-green-800' },
@@ -234,32 +127,32 @@ const AppointmentManagement = () => {
 
   const filteredAppointments = appointments
     .filter(app => {
-      const matchesSearch = app.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           app.doctorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           app.patientId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           app.contact.includes(searchTerm) ||
-                           app.reason.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = app.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.doctorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.patientId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.contact?.includes(searchTerm) ||
+        app.reason?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
-      const matchesDate = dateFilter === 'all' || app.date === dateFilter;
-      const matchesDoctor = doctorFilter === 'all' || app.doctorId === doctorFilter;
+      const matchesDate = dateFilter === 'all' || app.date === dateFilter; // might need more robust date compare for ranges
+      const matchesDoctor = doctorFilter === 'all' || app.doctorId == doctorFilter; // loose compare for string/int mismatch
       const matchesType = typeFilter === 'all' || app.type === typeFilter;
       return matchesSearch && matchesStatus && matchesDate && matchesDoctor && matchesType;
     })
     .sort((a, b) => {
       if (sortBy === 'date') {
-        const dateA = new Date(a.date + ' ' + a.time);
-        const dateB = new Date(b.date + ' ' + b.time);
+        const dateA = new Date(a.date + ' ' + (a.time || '00:00'));
+        const dateB = new Date(b.date + ' ' + (b.time || '00:00'));
         return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
       }
       if (sortBy === 'patientName') {
-        return sortOrder === 'asc' 
-          ? a.patientName.localeCompare(b.patientName)
-          : b.patientName.localeCompare(a.patientName);
+        return sortOrder === 'asc'
+          ? a.patientName?.localeCompare(b.patientName)
+          : b.patientName?.localeCompare(a.patientName);
       }
       if (sortBy === 'doctorName') {
-        return sortOrder === 'asc' 
-          ? a.doctorName.localeCompare(b.doctorName)
-          : b.doctorName.localeCompare(a.doctorName);
+        return sortOrder === 'asc'
+          ? a.doctorName?.localeCompare(b.doctorName)
+          : b.doctorName?.localeCompare(a.doctorName);
       }
       return 0;
     });
@@ -297,8 +190,8 @@ const AppointmentManagement = () => {
 
   const getSortIcon = (column) => {
     if (sortBy !== column) return <FaSort className="text-gray-400 ml-1" />;
-    return sortOrder === 'asc' 
-      ? <FaSortUp className="text-blue-600 ml-1" /> 
+    return sortOrder === 'asc'
+      ? <FaSortUp className="text-blue-600 ml-1" />
       : <FaSortDown className="text-blue-600 ml-1" />;
   };
 
@@ -310,66 +203,71 @@ const AppointmentManagement = () => {
   };
 
   const handleDoctorSelect = (doctorId) => {
-    const doctor = doctors.find(d => d.id === doctorId);
+    const doctor = doctors.find(d => d.id == doctorId);
     if (doctor) {
       setFormData({
         ...formData,
         doctorId: doctor.id,
         doctorName: doctor.name,
-        doctorSpecialization: doctor.specialization
+        doctorSpecialization: doctor.specialization // ensure backend doc obj has specialization
       });
     }
   };
 
   const generatePatientId = () => {
+    // Should likely be handled by backend, but keeping purely cosmetic for now
     const newId = `P${String(appointments.length + 1).padStart(3, '0')}`;
-    setFormData({...formData, patientId: newId});
+    setFormData({ ...formData, patientId: newId });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (editingAppointment) {
-      // Update existing appointment
-      const updatedAppointment = {
-        ...editingAppointment,
-        ...formData
-      };
-      
-      setAppointments(appointments.map(app => 
-        app.id === editingAppointment.id ? updatedAppointment : app
-      ));
-      alert('Appointment updated successfully!');
-    } else {
-      // Add new appointment
-      const newAppointment = {
-        id: appointments.length + 1,
-        ...formData,
-        status: 'pending',
-        createdAt: format(new Date(), 'yyyy-MM-dd hh:mm a')
-      };
-      
-      setAppointments([...appointments, newAppointment]);
-      alert('Appointment scheduled successfully!');
+
+    try {
+      if (editingAppointment) {
+        // Update existing appointment
+        await api.put(`/appointments/${editingAppointment.id}`, formData);
+        alert('Appointment updated successfully!');
+      } else {
+        // Add new appointment
+        await api.post('/appointments', formData);
+        alert('Appointment scheduled successfully!');
+      }
+
+      fetchAppointments();
+      setShowForm(false);
+      setEditingAppointment(null);
+      setFormData(defaultFormData);
+    } catch (error) {
+      console.error('Error saving appointment', error);
+      alert('Failed to save appointment. ' + (error.response?.data?.message || ''));
     }
-    
-    setShowForm(false);
-    setEditingAppointment(null);
-    setFormData(defaultFormData);
   };
 
-  const handleDelete = (appointmentId) => {
+  const handleDelete = async (appointmentId) => {
     if (window.confirm('Are you sure you want to delete this appointment?')) {
-      setAppointments(appointments.filter(app => app.id !== appointmentId));
-      alert('Appointment deleted successfully!');
+      try {
+        await api.delete(`/appointments/${appointmentId}`);
+        setAppointments(appointments.filter(app => app.id !== appointmentId));
+        alert('Appointment deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting appointment', error);
+        alert('Failed to delete appointment');
+      }
     }
   };
 
-  const handleStatusChange = (appointmentId, newStatus) => {
-    setAppointments(appointments.map(app => 
-      app.id === appointmentId ? { ...app, status: newStatus } : app
-    ));
-    alert(`Appointment status changed to ${newStatus}`);
+  const handleStatusChange = async (appointmentId, newStatus) => {
+    try {
+      await api.put(`/appointments/${appointmentId}/status`, { status: newStatus });
+      setAppointments(appointments.map(app =>
+        app.id === appointmentId ? { ...app, status: newStatus } : app
+      ));
+      alert(`Appointment status changed to ${newStatus}`);
+    } catch (error) {
+      console.error('Error update status', error);
+      alert('Failed to update status');
+    }
   };
 
   const handlePrintAppointment = (appointment) => {
@@ -389,7 +287,7 @@ const AppointmentManagement = () => {
         <p style="margin-top: 30px;">Thank you for choosing our clinic!</p>
       </div>
     `;
-    
+
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
       <html>
@@ -406,7 +304,7 @@ const AppointmentManagement = () => {
   const getStats = () => {
     const today = format(new Date(), 'yyyy-MM-dd');
     const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd');
-    
+
     return {
       today: appointments.filter(a => a.date === today).length,
       tomorrow: appointments.filter(a => a.date === tomorrow).length,
@@ -423,7 +321,7 @@ const AppointmentManagement = () => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      
+
       <div className="flex-1 p-6 ml-64">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
           <div>
@@ -1064,7 +962,7 @@ const AppointmentManagement = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('patientName')}
                   >
@@ -1073,7 +971,7 @@ const AppointmentManagement = () => {
                       {getSortIcon('patientName')}
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('doctorName')}
                   >
@@ -1082,7 +980,7 @@ const AppointmentManagement = () => {
                       {getSortIcon('doctorName')}
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('date')}
                   >

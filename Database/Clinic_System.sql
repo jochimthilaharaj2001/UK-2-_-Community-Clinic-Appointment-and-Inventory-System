@@ -4,7 +4,6 @@
 -- =========================================
 CREATE DATABASE IF NOT EXISTS clinic_system;
 USE clinic_system;
-
 -- =========================================
 -- PHARMACIST TABLE (LOGIN)
 -- =========================================
@@ -16,16 +15,15 @@ CREATE TABLE pharmacists (
     status ENUM('ACTIVE', 'INACTIVE') NOT NULL DEFAULT ('INACTIVE'),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
 -- Sample pharmacist
 -- Password = 123456 (bcrypt hash)
-INSERT INTO pharmacists (name, email, password, status) VALUES (
-    'Main Pharmacist',
-    'pharmacist@test.com',
-    '$2a$10$Hj2tTKwmC2xTOHBPod.aBupZ19GVvjunCJmWI8F/qZc7Zr6FmR12C',
-    'ACTIVE'
-);
-
+INSERT INTO pharmacists (name, email, password, status)
+VALUES (
+        'Main Pharmacist',
+        'pharmacist@test.com',
+        '$2a$10$Hj2tTKwmC2xTOHBPod.aBupZ19GVvjunCJmWI8F/qZc7Zr6FmR12C',
+        'ACTIVE'
+    );
 -- =========================================
 -- PATIENTS (needed for dispense & reports)
 -- =========================================
@@ -36,11 +34,9 @@ CREATE TABLE patients (
     gender VARCHAR(10),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-INSERT INTO patients (name, age, gender) VALUES
-('John Doe', 45, 'Male'),
-('Jane Smith', 32, 'Female');
-
+INSERT INTO patients (name, age, gender)
+VALUES ('John Doe', 45, 'Male'),
+    ('Jane Smith', 32, 'Female');
 -- =========================================
 -- PRESCRIPTIONS (INPUT FOR DISPENSE)
 -- =========================================
@@ -52,7 +48,6 @@ CREATE TABLE prescriptions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (patient_id) REFERENCES patients(id)
 );
-
 -- =========================================
 -- PRESCRIPTION ITEMS (MEDICINES PER RX)
 -- =========================================
@@ -64,17 +59,17 @@ CREATE TABLE prescription_items (
     quantity INT NOT NULL,
     FOREIGN KEY (prescription_id) REFERENCES prescriptions(id)
 );
-
 ALTER TABLE prescriptions
 ADD COLUMN status ENUM('PENDING', 'DISPENSED', 'CANCELLED') DEFAULT 'PENDING';
-
-
 INSERT INTO prescriptions (patient_id, doctor_name, notes)
 VALUES (1, 'Dr. Silva', 'Take after meals');
-
-INSERT INTO prescription_items (prescription_id, medicine_name, strength, quantity)
+INSERT INTO prescription_items (
+        prescription_id,
+        medicine_name,
+        strength,
+        quantity
+    )
 VALUES (1, 'Paracetamol', '500mg', 10);
-
 -- =========================================
 -- INVENTORY (CORE PHARMACIST TABLE)
 -- =========================================
@@ -87,16 +82,39 @@ CREATE TABLE inventory (
     manufacturer VARCHAR(100),
     expiry_date DATE,
     quantity INT NOT NULL,
-    selling_price DECIMAL(10,2),
+    selling_price DECIMAL(10, 2),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-INSERT INTO inventory
-(generic_name, brand_name, strength, batch_number, manufacturer, expiry_date, quantity, selling_price)
-VALUES
-('Paracetamol', 'Panadol', '500mg', 'BATCH001', 'GSK', '2026-12-31', 100, 5.00),
-('Amoxicillin', 'Amoxil', '250mg', 'BATCH002', 'Pfizer', '2025-06-30', 20, 12.00);
-
+INSERT INTO inventory (
+        generic_name,
+        brand_name,
+        strength,
+        batch_number,
+        manufacturer,
+        expiry_date,
+        quantity,
+        selling_price
+    )
+VALUES (
+        'Paracetamol',
+        'Panadol',
+        '500mg',
+        'BATCH001',
+        'GSK',
+        '2026-12-31',
+        100,
+        5.00
+    ),
+    (
+        'Amoxicillin',
+        'Amoxil',
+        '250mg',
+        'BATCH002',
+        'Pfizer',
+        '2025-06-30',
+        20,
+        12.00
+    );
 -- =========================================
 -- DISPENSE LOG (STOCK DEDUCTION RECORD)
 -- =========================================
@@ -111,7 +129,6 @@ CREATE TABLE dispense_logs (
     FOREIGN KEY (inventory_id) REFERENCES inventory(id),
     FOREIGN KEY (dispensed_by) REFERENCES pharmacists(id)
 );
-
 -- =========================================
 -- ORDER REQUESTS (LOW STOCK → ADMIN)
 -- =========================================
@@ -123,8 +140,3 @@ CREATE TABLE order_requests (
     requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (inventory_id) REFERENCES inventory(id)
 );
-
-
-
--- PHARMACIST MODULE END 
--- WORK BELOW HERE......FOR OTHER MODULES

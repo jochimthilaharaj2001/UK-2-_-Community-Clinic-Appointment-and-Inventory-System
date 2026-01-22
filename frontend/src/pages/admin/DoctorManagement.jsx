@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
+import api from '../../services/api';
 import Sidebar from '../../components/Sidebar';
-import { 
-  FaSearch, 
-  FaUserPlus, 
-  FaEdit, 
-  FaTrash, 
-  FaEye, 
-  FaStar, 
-  FaPhone, 
-  FaEnvelope, 
+import {
+  FaSearch,
+  FaUserPlus,
+  FaEdit,
+  FaTrash,
+  FaEye,
+  FaStar,
+  FaPhone,
+  FaEnvelope,
   FaCalendarAlt,
   FaUserMd,
   FaBriefcaseMedical,
@@ -23,107 +24,36 @@ import {
 } from 'react-icons/fa';
 
 const DoctorManagement = () => {
-  const [doctors, setDoctors] = useState([
-    { 
-      id: 1, 
-      name: 'Dr. Sarah Wilson', 
-      specialization: 'Cardiology', 
-      email: 'sarah@hospital.com',
-      phone: '+1234567890',
-      department: 'Cardiology',
-      status: 'active',
-      experience: '10 years',
-      rating: 4.8,
-      appointments: 156,
-      schedule: 'Mon-Fri, 9AM-5PM',
-      license: 'MED123456',
-      education: 'MD, Cardiology, Harvard Medical School',
-      office: 'Room 201, Cardiology Wing',
-      bio: 'Senior Cardiologist with 10+ years of experience in heart diseases and treatment.',
-      available: true
-    },
-    { 
-      id: 2, 
-      name: 'Dr. James Davis', 
-      specialization: 'Pediatrics', 
-      email: 'james@hospital.com',
-      phone: '+1234567891',
-      department: 'Pediatrics',
-      status: 'active',
-      experience: '8 years',
-      rating: 4.6,
-      appointments: 132,
-      schedule: 'Mon-Sat, 10AM-6PM',
-      license: 'MED123457',
-      education: 'MD, Pediatrics, Johns Hopkins University',
-      office: 'Room 105, Pediatric Wing',
-      bio: 'Specialized in child healthcare and development disorders.',
-      available: true
-    },
-    { 
-      id: 3, 
-      name: 'Dr. Lisa Garcia', 
-      specialization: 'Dermatology', 
-      email: 'lisa@hospital.com',
-      phone: '+1234567892',
-      department: 'Dermatology',
-      status: 'on-leave',
-      experience: '12 years',
-      rating: 4.9,
-      appointments: 98,
-      schedule: 'Tue-Thu, 8AM-4PM',
-      license: 'MED123458',
-      education: 'MD, Dermatology, Stanford University',
-      office: 'Room 308, Dermatology Wing',
-      bio: 'Expert in skin diseases, cosmetic dermatology, and laser treatments.',
-      available: false
-    },
-    { 
-      id: 4, 
-      name: 'Dr. Robert Chen', 
-      specialization: 'Orthopedics', 
-      email: 'robert@hospital.com',
-      phone: '+1234567893',
-      department: 'Orthopedics',
-      status: 'active',
-      experience: '15 years',
-      rating: 4.7,
-      appointments: 178,
-      schedule: 'Mon-Fri, 8AM-6PM',
-      license: 'MED123459',
-      education: 'MD, Orthopedic Surgery, Mayo Clinic',
-      office: 'Room 401, Orthopedics Wing',
-      bio: 'Orthopedic surgeon specialized in joint replacement and sports injuries.',
-      available: true
-    },
-    { 
-      id: 5, 
-      name: 'Dr. Emma Thompson', 
-      specialization: 'Neurology', 
-      email: 'emma@hospital.com',
-      phone: '+1234567894',
-      department: 'Neurology',
-      status: 'active',
-      experience: '7 years',
-      rating: 4.5,
-      appointments: 121,
-      schedule: 'Wed-Fri, 9AM-5PM',
-      license: 'MED123460',
-      education: 'MD, Neurology, Yale School of Medicine',
-      office: 'Room 502, Neurology Wing',
-      bio: 'Neurologist specializing in migraine, epilepsy, and neurological disorders.',
-      available: true
-    },
-  ]);
+  const [doctors, setDoctors] = useState([]);
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [specializationFilter, setSpecializationFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [departmentFilter, setDepartmentFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('name');
-  const [sortOrder, setSortOrder] = useState('asc');
-  const [showForm, setShowForm] = useState(false);
-  const [viewingDoctor, setViewingDoctor] = useState(null);
+  useEffect(() => {
+    fetchDoctors();
+  }, []);
+
+  const fetchDoctors = async () => {
+    try {
+      const response = await api.get('/doctors');
+      setDoctors(response.data);
+    } catch (error) {
+      console.error('Failed to fetch doctors', error);
+      alert('Failed to load doctors');
+    }
+  };
+
+  // Keep the form state as is
+
+  const specializations = [
+    'Cardiology', 'Pediatrics', 'Dermatology', 'Orthopedics', 'Neurology',
+    'General Medicine', 'Gynecology', 'Oncology', 'Psychiatry', 'Urology',
+    'ENT', 'Ophthalmology', 'Dentistry', 'Physiotherapy'
+  ];
+
+  const departments = [
+    'Cardiology', 'Pediatrics', 'Dermatology', 'Orthopedics', 'Neurology',
+    'Emergency', 'ICU', 'Radiology', 'Pathology', 'Pharmacy', 'Administration'
+  ];
+
+  // Assuming these states are defined elsewhere in the component
   const [editingDoctor, setEditingDoctor] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -138,17 +68,15 @@ const DoctorManagement = () => {
     office: '',
     bio: ''
   });
+  const [showForm, setShowForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [specializationFilter, setSpecializationFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [departmentFilter, setDepartmentFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('name');
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [viewingDoctor, setViewingDoctor] = useState(null);
 
-  const specializations = [
-    'Cardiology', 'Pediatrics', 'Dermatology', 'Orthopedics', 'Neurology',
-    'General Medicine', 'Gynecology', 'Oncology', 'Psychiatry', 'Urology',
-    'ENT', 'Ophthalmology', 'Dentistry', 'Physiotherapy'
-  ];
-
-  const departments = [
-    'Cardiology', 'Pediatrics', 'Dermatology', 'Orthopedics', 'Neurology',
-    'Emergency', 'ICU', 'Radiology', 'Pathology', 'Pharmacy', 'Administration'
-  ];
 
   useEffect(() => {
     if (editingDoctor) {
@@ -172,29 +100,29 @@ const DoctorManagement = () => {
   const filteredDoctors = doctors
     .filter(doctor => {
       const matchesSearch = doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           doctor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           doctor.specialization.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           doctor.license.includes(searchTerm);
+        doctor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doctor.specialization.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doctor.license.includes(searchTerm);
       const matchesSpecialization = specializationFilter === 'all' || doctor.specialization === specializationFilter;
-      const matchesStatus = statusFilter === 'all' || doctor.status === statusFilter;
+      const matchesStatus = statusFilter === 'all' || doctor.status?.toLowerCase() === statusFilter.toLowerCase();
       const matchesDepartment = departmentFilter === 'all' || doctor.department === departmentFilter;
       return matchesSearch && matchesSpecialization && matchesStatus && matchesDepartment;
     })
     .sort((a, b) => {
       if (sortBy === 'name') {
-        return sortOrder === 'asc' 
+        return sortOrder === 'asc'
           ? a.name.localeCompare(b.name)
           : b.name.localeCompare(a.name);
       }
       if (sortBy === 'rating') {
-        return sortOrder === 'asc' 
+        return sortOrder === 'asc'
           ? a.rating - b.rating
           : b.rating - a.rating;
       }
       if (sortBy === 'appointments') {
-        return sortOrder === 'asc' 
-          ? a.appointments - b.appointments
-          : b.appointments - a.appointments;
+        return sortOrder === 'asc'
+          ? (a.appointments_count || 0) - (b.appointments_count || 0)
+          : (b.appointments_count || 0) - (a.appointments_count || 0)
       }
       if (sortBy === 'experience') {
         const expA = parseInt(a.experience);
@@ -205,7 +133,7 @@ const DoctorManagement = () => {
     });
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case 'active': return 'bg-green-100 text-green-800';
       case 'on-leave': return 'bg-yellow-100 text-yellow-800';
       case 'inactive': return 'bg-red-100 text-red-800';
@@ -242,8 +170,8 @@ const DoctorManagement = () => {
 
   const getSortIcon = (column) => {
     if (sortBy !== column) return <FaSort className="text-gray-400 ml-1" />;
-    return sortOrder === 'asc' 
-      ? <FaSortUp className="text-blue-600 ml-1" /> 
+    return sortOrder === 'asc'
+      ? <FaSortUp className="text-blue-600 ml-1" />
       : <FaSortDown className="text-blue-600 ml-1" />;
   };
 
@@ -254,71 +182,67 @@ const DoctorManagement = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (editingDoctor) {
-      // Update existing doctor
-      const updatedDoctor = {
-        ...editingDoctor,
-        ...formData,
-        appointments: editingDoctor.appointments,
-        rating: editingDoctor.rating,
-        available: editingDoctor.status === 'active'
-      };
-      
-      setDoctors(doctors.map(doctor => 
-        doctor.id === editingDoctor.id ? updatedDoctor : doctor
-      ));
-      alert('Doctor updated successfully!');
-    } else {
-      // Add new doctor
-      const newDoctor = {
-        id: doctors.length + 1,
-        ...formData,
-        status: 'active',
-        rating: 4.5,
-        appointments: 0,
-        available: true,
-        license: formData.license || `MED${100000 + doctors.length + 1}`
-      };
-      
-      setDoctors([...doctors, newDoctor]);
-      alert('Doctor added successfully!');
+
+    try {
+      if (editingDoctor) {
+        // Update existing doctor
+        await api.put(`/doctors/${editingDoctor.id}`, formData);
+
+        alert('Doctor updated successfully!');
+      } else {
+        // Add new doctor
+        await api.post('/doctors', formData);
+
+        alert('Doctor added successfully!');
+      }
+
+      // Refresh list
+      fetchDoctors();
+
+      setShowForm(false);
+      setEditingDoctor(null);
+      setFormData({
+        name: '',
+        specialization: '',
+        email: '',
+        phone: '',
+        department: '',
+        experience: '',
+        schedule: '',
+        license: '',
+        education: '',
+        office: '',
+        bio: ''
+      });
+    } catch (error) {
+      console.error('Error saving doctor', error);
+      alert('Failed to save doctor. ' + (error.response?.data?.message || ''));
     }
-    
-    setShowForm(false);
-    setEditingDoctor(null);
-    setFormData({
-      name: '',
-      specialization: '',
-      email: '',
-      phone: '',
-      department: '',
-      experience: '',
-      schedule: '',
-      license: '',
-      education: '',
-      office: '',
-      bio: ''
-    });
   };
 
-  const handleDelete = (doctorId) => {
+  const handleDelete = async (doctorId) => {
     if (window.confirm('Are you sure you want to delete this doctor?')) {
-      setDoctors(doctors.filter(doctor => doctor.id !== doctorId));
-      alert('Doctor deleted successfully!');
+      try {
+        await api.delete(`/doctors/${doctorId}`);
+        setDoctors(doctors.filter(doctor => doctor.id !== doctorId));
+        alert('Doctor deleted successfully!');
+      } catch (error) {
+        console.error('Failed to delete doctor', error);
+        alert('Failed to delete doctor');
+      }
     }
   };
 
   const handleStatusChange = (doctorId, newStatus) => {
-    setDoctors(doctors.map(doctor => 
-      doctor.id === doctorId 
-        ? { 
-            ...doctor, 
-            status: newStatus,
-            available: newStatus === 'active'
-          } 
+    setDoctors(doctors.map(doctor =>
+      doctor.id === doctorId
+        ? {
+          ...doctor,
+          status: newStatus,
+          available: newStatus === 'active'
+        }
         : doctor
     ));
     alert(`Doctor status changed to ${newStatus}`);
@@ -334,16 +258,18 @@ const DoctorManagement = () => {
 
   const generateLicense = () => {
     const randomLicense = 'MED' + Math.floor(100000 + Math.random() * 900000);
-    setFormData({...formData, license: randomLicense});
+    setFormData({ ...formData, license: randomLicense });
   };
 
   const getStats = () => {
     const total = doctors.length;
     const active = doctors.filter(d => d.status === 'active').length;
     const onLeave = doctors.filter(d => d.status === 'on-leave').length;
-    const totalAppointments = doctors.reduce((sum, doc) => sum + doc.appointments, 0);
-    const avgRating = (doctors.reduce((sum, doc) => sum + doc.rating, 0) / total).toFixed(1);
-    
+    const totalAppointments = doctors.reduce((sum, doc) => sum + (doc.appointments_count || 0), 0);
+    const avgRating = total > 0
+      ? (doctors.reduce((sum, doc) => sum + parseFloat(doc.rating || 0), 0) / total).toFixed(1)
+      : '0.0';
+
     return { total, active, onLeave, totalAppointments, avgRating };
   };
 
@@ -352,7 +278,7 @@ const DoctorManagement = () => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      
+
       <div className="flex-1 p-6 ml-64">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
           <div>
@@ -790,7 +716,7 @@ const DoctorManagement = () => {
                       <div className="text-sm text-blue-600">Rating</div>
                     </div>
                     <div className="bg-green-50 p-4 rounded-lg">
-                      <div className="text-2xl font-bold text-green-700">{viewingDoctor.appointments}</div>
+                      <div className="text-2xl font-bold text-green-700">{viewingDoctor.appointments_count || 0}</div>
                       <div className="text-sm text-green-600">Appointments</div>
                     </div>
                     <div className="bg-purple-50 p-4 rounded-lg">
@@ -833,11 +759,10 @@ const DoctorManagement = () => {
                 </button>
                 <button
                   onClick={() => handleToggleAvailability(viewingDoctor.id)}
-                  className={`flex-1 py-3 font-medium rounded-lg ${
-                    viewingDoctor.available
-                      ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
-                      : 'bg-green-600 hover:bg-green-700 text-white'
-                  }`}
+                  className={`flex-1 py-3 font-medium rounded-lg ${viewingDoctor.available
+                    ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
+                    : 'bg-green-600 hover:bg-green-700 text-white'
+                    }`}
                 >
                   {viewingDoctor.available ? 'Mark as On Leave' : 'Mark as Active'}
                 </button>
@@ -873,7 +798,7 @@ const DoctorManagement = () => {
                   <span className="font-bold">{doctor.rating}</span>
                 </div>
               </div>
-              
+
               <div className="space-y-2 mb-4">
                 <div className="flex items-center text-gray-600">
                   <FaEnvelope className="mr-2 text-sm" />
@@ -888,7 +813,7 @@ const DoctorManagement = () => {
                   <span className="text-sm">{doctor.department}</span>
                 </div>
               </div>
-              
+
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-500">{doctor.experience}</span>
                 <button
@@ -908,7 +833,7 @@ const DoctorManagement = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('name')}
                   >
@@ -926,7 +851,7 @@ const DoctorManagement = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('appointments')}
                   >
@@ -971,16 +896,15 @@ const DoctorManagement = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col gap-1">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(doctor.status)}`}>
-                          {doctor.status.charAt(0).toUpperCase() + doctor.status.slice(1)}
+                          {doctor.status ? (doctor.status.charAt(0).toUpperCase() + doctor.status.slice(1)) : 'N/A'}
                         </span>
                         <span className="text-xs text-gray-500">{doctor.schedule}</span>
                         <button
                           onClick={() => handleToggleAvailability(doctor.id)}
-                          className={`text-xs px-2 py-1 rounded w-full ${
-                            doctor.available
-                              ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                              : 'bg-green-100 text-green-700 hover:bg-green-200'
-                          }`}
+                          className={`text-xs px-2 py-1 rounded w-full ${doctor.available
+                            ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                            : 'bg-green-100 text-green-700 hover:bg-green-200'
+                            }`}
                         >
                           {doctor.available ? 'Mark as On Leave' : 'Mark as Active'}
                         </button>
@@ -988,7 +912,7 @@ const DoctorManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-center">
-                        <div className="text-lg font-bold text-gray-900">{doctor.appointments}</div>
+                        <div className="text-lg font-bold text-gray-900">{doctor.appointments_count || 0}</div>
                         <div className="text-xs text-gray-500">This month</div>
                         <div className="flex items-center justify-center mt-1">
                           <FaStar className="text-yellow-500 w-3 h-3 mr-1" />
@@ -1116,7 +1040,7 @@ const DoctorManagement = () => {
             {specializations.map(spec => {
               const count = doctors.filter(d => d.specialization === spec).length;
               if (count === 0) return null;
-              
+
               const percentage = (count / doctors.length) * 100;
               return (
                 <div key={spec} className="space-y-1">
@@ -1125,7 +1049,7 @@ const DoctorManagement = () => {
                     <span className="text-sm text-gray-500">{count} doctors ({percentage.toFixed(1)}%)</span>
                   </div>
                   <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="h-full bg-blue-500"
                       style={{ width: `${percentage}%` }}
                     />

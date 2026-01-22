@@ -1,88 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../../services/api';
 import Sidebar from '../../components/Sidebar';
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaBox, FaExclamationTriangle, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 
 const InventoryManagement = () => {
-  const [inventory, setInventory] = useState([
-    { 
-      id: 1, 
-      name: 'Paracetamol 500mg', 
-      category: 'Pain Relief', 
-      stock: 1250,
-      unit: 'tablets',
-      reorderLevel: 200,
-      price: 0.25,
-      supplier: 'MediCare Supplies',
-      expiryDate: '2025-06-30',
-      status: 'in-stock',
-      location: 'A1-05'
-    },
-    { 
-      id: 2, 
-      name: 'Amoxicillin 250mg', 
-      category: 'Antibiotics', 
-      stock: 580,
-      unit: 'capsules',
-      reorderLevel: 300,
-      price: 0.45,
-      supplier: 'PharmaCorp',
-      expiryDate: '2024-09-15',
-      status: 'in-stock',
-      location: 'B2-12'
-    },
-    { 
-      id: 3, 
-      name: 'Insulin Syringes', 
-      category: 'Medical Supplies', 
-      stock: 85,
-      unit: 'pieces',
-      reorderLevel: 100,
-      price: 1.20,
-      supplier: 'MedEquip Inc.',
-      expiryDate: '2026-12-31',
-      status: 'low-stock',
-      location: 'C3-08'
-    },
-    { 
-      id: 4, 
-      name: 'Ibuprofen 400mg', 
-      category: 'Pain Relief', 
-      stock: 2300,
-      unit: 'tablets',
-      reorderLevel: 500,
-      price: 0.30,
-      supplier: 'MediCare Supplies',
-      expiryDate: '2025-03-20',
-      status: 'in-stock',
-      location: 'A1-07'
-    },
-    { 
-      id: 5, 
-      name: 'Blood Pressure Monitor', 
-      category: 'Equipment', 
-      stock: 12,
-      unit: 'units',
-      reorderLevel: 5,
-      price: 89.99,
-      supplier: 'HealthTech Devices',
-      expiryDate: '2027-01-31',
-      status: 'in-stock',
-      location: 'D4-02'
-    },
-    { 
-      id: 6, 
-      name: 'COVID-19 Test Kit', 
-      category: 'Diagnostics', 
-      stock: 45,
-      unit: 'kits',
-      reorderLevel: 50,
-      price: 8.50,
-      supplier: 'BioTest Labs',
-      expiryDate: '2024-05-31',
-      status: 'expiring-soon',
-      location: 'E5-11'
-    },
-  ]);
+  const [inventory, setInventory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchInventory();
+  }, []);
+
+  const fetchInventory = async () => {
+    try {
+      const response = await api.get('/inventory');
+      setInventory(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to fetch inventory', error);
+      // alert('Failed to load inventory');
+      setLoading(false);
+    }
+  };
 
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -105,8 +44,8 @@ const InventoryManagement = () => {
   const filteredAndSortedInventory = [...inventory]
     .filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           item.supplier.toLowerCase().includes(searchTerm.toLowerCase());
+        item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.supplier.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter;
       const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
       return matchesSearch && matchesCategory && matchesStatus;
@@ -119,7 +58,7 @@ const InventoryManagement = () => {
         return sortOrder === 'asc' ? a.price - b.price : b.price - a.price;
       }
       if (sortBy === 'name') {
-        return sortOrder === 'asc' 
+        return sortOrder === 'asc'
           ? a.name.localeCompare(b.name)
           : b.name.localeCompare(a.name);
       }
@@ -127,7 +66,7 @@ const InventoryManagement = () => {
     });
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case 'in-stock': return 'bg-green-100 text-green-800';
       case 'low-stock': return 'bg-yellow-100 text-yellow-800';
       case 'out-of-stock': return 'bg-red-100 text-red-800';
@@ -154,37 +93,65 @@ const InventoryManagement = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const status = formData.stock <= formData.reorderLevel 
-      ? 'low-stock' 
-      : new Date(formData.expiryDate) < new Date(Date.now() + 90 * 86400000)
-        ? 'expiring-soon'
-        : 'in-stock';
 
-    const newItem = {
-      id: inventory.length + 1,
-      ...formData,
-      stock: parseInt(formData.stock),
-      reorderLevel: parseInt(formData.reorderLevel),
-      price: parseFloat(formData.price),
-      status: status
-    };
-    
-    setInventory([...inventory, newItem]);
-    setShowForm(false);
-    setFormData({
-      name: '',
-      category: '',
-      stock: '',
-      unit: '',
-      reorderLevel: '',
-      price: '',
-      supplier: '',
-      expiryDate: '',
-      location: ''
-    });
-    alert('Inventory item added successfully!');
+    try {
+      await api.post('/inventory', formData);
+      alert('Inventory item added successfully!');
+      fetchInventory();
+      setShowForm(false);
+      setFormData({
+        name: '',
+        category: '',
+        stock: '',
+        unit: '',
+        reorderLevel: '',
+        price: '',
+        supplier: '',
+        expiryDate: '',
+        location: ''
+      });
+    } catch (error) {
+      console.error('Error adding inventory', error);
+      alert('Failed to add item');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this item?')) {
+      try {
+        await api.delete(`/inventory/${id}`);
+        setInventory(inventory.filter(i => i.id !== id));
+        alert('Item deleted successfully');
+      } catch (error) {
+        console.error('Error deleting item', error);
+        alert('Failed to delete item');
+      }
+    }
+  };
+
+  const handleUpdateStock = async (item) => {
+    const newStock = parseInt(prompt(`Enter new stock quantity for ${item.name}:`, item.stock));
+    if (!isNaN(newStock) && newStock >= 0) {
+      try {
+        // We can reuse the put endpoint or a specific one. My controller uses generic update, so I need to send full body or patch.
+        // The controller replaces fields. I better send the full object with updated stock.
+        // Ideally we should have a PATCH endpoint for partial updates.
+        // For now, I will construct the full object or just assume the controller handles it if I send all fields.
+        // Wait, my controller (Step 116) expects all fields.
+        // I'll send the item merged with new stock.
+        const updatedItem = { ...item, stock: newStock };
+        await api.put(`/inventory/${item.id}`, updatedItem);
+
+        // Optimistic update or fetch
+        fetchInventory();
+        alert('Stock updated successfully');
+      } catch (error) {
+        console.error('Error updating stock', error);
+        alert('Failed to update stock');
+      }
+    }
   };
 
   const handleSort = (column) => {
@@ -198,15 +165,15 @@ const InventoryManagement = () => {
 
   const SortIcon = ({ column }) => {
     if (sortBy !== column) return <FaSort className="text-gray-400 ml-1" />;
-    return sortOrder === 'asc' 
-      ? <FaSortUp className="text-blue-600 ml-1" /> 
+    return sortOrder === 'asc'
+      ? <FaSortUp className="text-blue-600 ml-1" />
       : <FaSortDown className="text-blue-600 ml-1" />;
   };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      
+
       <div className="flex-1 p-6 ml-64">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
           <div>
@@ -491,7 +458,7 @@ const InventoryManagement = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('name')}
                   >
@@ -503,7 +470,7 @@ const InventoryManagement = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Category
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('stock')}
                   >
@@ -512,7 +479,7 @@ const InventoryManagement = () => {
                       <SortIcon column="stock" />
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('price')}
                   >
@@ -583,32 +550,14 @@ const InventoryManagement = () => {
                           <FaEdit />
                         </button>
                         <button
-                          onClick={() => {
-                            if (window.confirm('Are you sure you want to delete this item?')) {
-                              setInventory(inventory.filter(i => i.id !== item.id));
-                              alert('Item deleted successfully');
-                            }
-                          }}
+                          onClick={() => handleDelete(item.id)}
                           className="text-red-600 hover:text-red-900"
                           title="Delete"
                         >
                           <FaTrash />
                         </button>
                         <button
-                          onClick={() => {
-                            const newStock = parseInt(prompt(`Enter new stock quantity for ${item.name}:`, item.stock));
-                            if (!isNaN(newStock) && newStock >= 0) {
-                              const status = newStock <= item.reorderLevel 
-                                ? 'low-stock' 
-                                : new Date(item.expiryDate) < new Date(Date.now() + 90 * 86400000)
-                                  ? 'expiring-soon'
-                                  : 'in-stock';
-                              setInventory(inventory.map(i => 
-                                i.id === item.id ? { ...i, stock: newStock, status } : i
-                              ));
-                              alert('Stock updated successfully');
-                            }
-                          }}
+                          onClick={() => handleUpdateStock(item)}
                           className="text-blue-600 hover:text-blue-900 px-2 py-1 border border-blue-600 rounded text-xs"
                         >
                           Update Stock
@@ -651,7 +600,7 @@ const InventoryManagement = () => {
                   </button>
                 </div>
               ))}
-            
+
             {inventory.filter(item => item.status === 'low-stock').length === 0 && (
               <p className="text-gray-600 text-center py-4">No low stock items at the moment.</p>
             )}

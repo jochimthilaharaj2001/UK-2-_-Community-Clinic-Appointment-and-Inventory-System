@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
+import api from '../../services/api';
 import Sidebar from '../../components/Sidebar';
-import { 
-  FaSearch, 
-  FaEdit, 
-  FaTrash, 
-  FaUserPlus, 
-  FaEye, 
+import {
+  FaSearch,
+  FaEdit,
+  FaTrash,
+  FaUserPlus,
+  FaEye,
   FaFilter,
   FaTimes,
   FaSave,
@@ -21,112 +22,21 @@ import {
 } from 'react-icons/fa';
 
 const UserManagement = () => {
-  const [users, setUsers] = useState([
-    { 
-      id: 1, 
-      name: 'John Smith', 
-      email: 'john@example.com', 
-      role: 'patient', 
-      status: 'active', 
-      phone: '+1234567890', 
-      joinDate: '2023-01-15',
-      address: '123 Main St, City',
-      lastLogin: '2024-01-15 09:30',
-      department: 'N/A',
-      specialization: 'N/A'
-    },
-    { 
-      id: 2, 
-      name: 'Dr. Sarah Wilson', 
-      email: 'sarah@hospital.com', 
-      role: 'doctor', 
-      status: 'active', 
-      phone: '+1234567891', 
-      joinDate: '2022-06-10',
-      address: '456 Oak Ave, City',
-      lastLogin: '2024-01-15 08:45',
-      department: 'Cardiology',
-      specialization: 'Heart Specialist'
-    },
-    { 
-      id: 3, 
-      name: 'Emily Johnson', 
-      email: 'emily@hospital.com', 
-      role: 'staff', 
-      status: 'active', 
-      phone: '+1234567892', 
-      joinDate: '2023-03-20',
-      address: '789 Pine Rd, City',
-      lastLogin: '2024-01-14 16:20',
-      department: 'Administration',
-      specialization: 'N/A'
-    },
-    { 
-      id: 4, 
-      name: 'Michael Brown', 
-      email: 'michael@example.com', 
-      role: 'patient', 
-      status: 'inactive', 
-      phone: '+1234567893', 
-      joinDate: '2022-11-05',
-      address: '321 Elm St, City',
-      lastLogin: '2023-12-20 11:15',
-      department: 'N/A',
-      specialization: 'N/A'
-    },
-    { 
-      id: 5, 
-      name: 'Dr. James Davis', 
-      email: 'james@hospital.com', 
-      role: 'doctor', 
-      status: 'active', 
-      phone: '+1234567894', 
-      joinDate: '2021-08-15',
-      address: '654 Birch Ln, City',
-      lastLogin: '2024-01-15 10:00',
-      department: 'Pediatrics',
-      specialization: 'Child Specialist'
-    },
-    { 
-      id: 6, 
-      name: 'Lisa Garcia', 
-      email: 'lisa@hospital.com', 
-      role: 'pharmacist', 
-      status: 'active', 
-      phone: '+1234567895', 
-      joinDate: '2023-05-12',
-      address: '987 Cedar Blvd, City',
-      lastLogin: '2024-01-15 07:30',
-      department: 'Pharmacy',
-      specialization: 'Medication Management'
-    },
-    { 
-      id: 7, 
-      name: 'Admin User', 
-      email: 'admin@clinic.com', 
-      role: 'admin', 
-      status: 'active', 
-      phone: '+1234567896', 
-      joinDate: '2021-01-01',
-      address: 'Admin Building, Clinic',
-      lastLogin: '2024-01-15 06:00',
-      department: 'Administration',
-      specialization: 'System Admin'
-    },
-    { 
-      id: 8, 
-      name: 'Nurse Jennifer', 
-      email: 'jennifer@hospital.com', 
-      role: 'staff', 
-      status: 'active', 
-      phone: '+1234567897', 
-      joinDate: '2023-08-22',
-      address: '555 Maple Dr, City',
-      lastLogin: '2024-01-14 14:45',
-      department: 'Nursing',
-      specialization: 'Senior Nurse'
-    },
-  ]);
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await api.get('/users');
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Failed to fetch users', error);
+      // alert('Failed to load users');
+    }
+  };
 
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -150,68 +60,16 @@ const UserManagement = () => {
     { value: 'admin', label: 'Admin', icon: <FaUserShield />, color: 'bg-purple-100 text-purple-800' },
     { value: 'doctor', label: 'Doctor', icon: <FaUserMd />, color: 'bg-blue-100 text-blue-800' },
     { value: 'pharmacist', label: 'Pharmacist', icon: <FaPills />, color: 'bg-green-100 text-green-800' },
-    { value: 'staff', label: 'Staff', icon: <FaUserNurse />, color: 'bg-yellow-100 text-yellow-800' },
     { value: 'patient', label: 'Patient', icon: <FaUser />, color: 'bg-gray-100 text-gray-800' }
   ];
 
-  useEffect(() => {
-    if (editingUser) {
-      setFormData({
-        name: editingUser.name,
-        email: editingUser.email,
-        phone: editingUser.phone,
-        role: editingUser.role,
-        department: editingUser.department || '',
-        specialization: editingUser.specialization || '',
-        address: editingUser.address || ''
-      });
-      setShowForm(true);
-    }
-  }, [editingUser]);
+  // ... (useEffect for editingUser and other helpers remain mostly same, just checking placement)
 
-  const filteredUsers = users
-    .filter(user => {
-      const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           user.phone.includes(searchTerm) ||
-                           user.department.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-      const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-      return matchesSearch && matchesRole && matchesStatus;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'name') {
-        return sortOrder === 'asc' 
-          ? a.name.localeCompare(b.name)
-          : b.name.localeCompare(a.name);
-      }
-      if (sortBy === 'joinDate') {
-        return sortOrder === 'asc' 
-          ? new Date(a.joinDate) - new Date(b.joinDate)
-          : new Date(b.joinDate) - new Date(a.joinDate);
-      }
-      if (sortBy === 'lastLogin') {
-        return sortOrder === 'asc'
-          ? new Date(a.lastLogin) - new Date(b.lastLogin)
-          : new Date(b.lastLogin) - new Date(a.lastLogin);
-      }
-      return 0;
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
     });
-
-  const getRoleColor = (role) => {
-    const roleObj = roles.find(r => r.value === role);
-    return roleObj ? roleObj.color : 'bg-gray-100 text-gray-800';
-  };
-
-  const getStatusColor = (status) => {
-    return status === 'active' 
-      ? 'bg-green-100 text-green-800' 
-      : 'bg-red-100 text-red-800';
-  };
-
-  const getRoleIcon = (role) => {
-    const roleObj = roles.find(r => r.value === role);
-    return roleObj ? roleObj.icon : <FaUser />;
   };
 
   const handleSort = (column) => {
@@ -223,77 +81,121 @@ const UserManagement = () => {
     }
   };
 
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (editingUser) {
-      // Update existing user
-      const updatedUser = {
-        ...editingUser,
-        ...formData,
-        lastLogin: new Date().toISOString().split('T')[0] + ' ' + 
-                  new Date().toTimeString().split(' ')[0]
-      };
-      
-      setUsers(users.map(user => 
-        user.id === editingUser.id ? updatedUser : user
-      ));
-      alert('User updated successfully!');
-    } else {
-      // Add new user
-      const newUser = {
-        id: users.length + 1,
-        ...formData,
-        status: 'active',
-        joinDate: new Date().toISOString().split('T')[0],
-        lastLogin: new Date().toISOString().split('T')[0] + ' ' + 
-                  new Date().toTimeString().split(' ')[0]
-      };
-      
-      setUsers([...users, newUser]);
-      alert('User added successfully!');
+  const getRoleIcon = (role) => {
+    switch (role) {
+      case 'admin': return <FaUserShield />;
+      case 'doctor': return <FaUserMd />;
+      case 'pharmacist': return <FaPills />;
+      case 'receptionist': return <FaUserNurse />;
+      default: return <FaUser />;
     }
-    
-    setShowForm(false);
-    setEditingUser(null);
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      role: 'patient',
-      department: '',
-      specialization: '',
-      address: ''
-    });
   };
 
-  const handleDelete = (userId) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      setUsers(users.filter(user => user.id !== userId));
-      alert('User deleted successfully!');
+  const getRoleColor = (role) => {
+    switch (role) {
+      case 'admin': return 'bg-purple-100 text-purple-800';
+      case 'doctor': return 'bg-blue-100 text-blue-800';
+      case 'pharmacist': return 'bg-green-100 text-green-800';
+      case 'receptionist': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusColor = (status) => {
+    return status?.toLowerCase() === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+  };
+
+  const filteredUsers = users
+    .filter(user => {
+      const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.phone && user.phone.includes(searchTerm)) ||
+        (user.department && user.department.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+      const matchesStatus = statusFilter === 'all' || user.status?.toLowerCase() === statusFilter.toLowerCase();
+      return matchesSearch && matchesRole && matchesStatus;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'name') {
+        return sortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+      }
+      if (sortBy === 'joinDate') {
+        return sortOrder === 'asc'
+          ? new Date(a.joinDate) - new Date(b.joinDate)
+          : new Date(b.joinDate) - new Date(a.joinDate);
+      }
+      return 0;
+    });
+
+  // Re-inserting the missing useEffect for editingUser form population
+  useEffect(() => {
+    if (editingUser) {
+      setFormData({
+        name: editingUser.name,
+        email: editingUser.email,
+        phone: editingUser.phone || '', // Handle potential missing fields
+        role: editingUser.role,
+        department: editingUser.department || '',
+        specialization: editingUser.specialization || '',
+        address: editingUser.address || ''
+      });
+      setShowForm(true);
+    }
+  }, [editingUser]);
+
+
+  // ... filter logic ...
+
+  // NEW handleSubmit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      if (editingUser) {
+        // Update not fully supported by single endpoint yet, but generic structure:
+        // We might need to handle specific per-role update here or alert user.
+        alert("Update feature depends on specific user role endpoints. Please use specific management pages (Doctors/Pharmacists) for full edits.");
+      } else {
+        // Add new user
+        await api.post('/users', formData);
+        alert('User created successfully!');
+      }
+
+      fetchUsers();
+      setShowForm(false);
+      setEditingUser(null);
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        role: 'patient',
+        department: '',
+        specialization: '',
+        address: ''
+      });
+
+    } catch (error) {
+      console.error('Error saving user', error);
+      alert('Failed to save user. ' + (error.response?.data?.message || ''));
+    }
+  };
+
+  // NEW handleDelete
+  const handleDelete = async (userId) => {
+    // Backend doesn't support generic delete yet as per analysis
+    if (window.confirm('Are you sure you want to delete this user? This feature might not be fully linked to backend yet.')) {
+      // alert("Delete implemented in specific modules (Doctor/Patient).");
+      // setUsers(users.filter(user => user.id !== userId)); // Optimistic update
     }
   };
 
   const handleStatusToggle = (userId) => {
-    setUsers(users.map(user => 
-      user.id === userId 
-        ? { ...user, status: user.status === 'active' ? 'inactive' : 'active' }
-        : user
-    ));
+    // Placeholder
+    alert("Status toggle to be implemented via backend.");
   };
 
   const handleResetPassword = (userId) => {
-    const user = users.find(u => u.id === userId);
-    if (user && window.confirm(`Reset password for ${user.name}?`)) {
-      alert(`Password reset link sent to ${user.email}`);
-    }
+    alert("Reset password to be implemented via backend.");
   };
 
   const getRoleStats = () => {
@@ -309,7 +211,7 @@ const UserManagement = () => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      
+
       <div className="flex-1 p-6 ml-64">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
           <div>
@@ -628,7 +530,7 @@ const UserManagement = () => {
                       </div>
                     </div>
                     <div className="flex items-center">
-                      <div className={`w-3 h-3 rounded-full mr-3 ${viewingUser.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
+                      <div className={`w-3 h-3 rounded-full mr-3 ${viewingUser.status?.toLowerCase() === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
                       <div>
                         <div className="text-sm text-gray-500">Status</div>
                         <div className="font-medium">
@@ -694,7 +596,7 @@ const UserManagement = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('name')}
                   >
@@ -714,7 +616,7 @@ const UserManagement = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('joinDate')}
                   >
@@ -766,13 +668,12 @@ const UserManagement = () => {
                         </span>
                         <button
                           onClick={() => handleStatusToggle(user.id)}
-                          className={`text-xs px-2 py-1 rounded ${
-                            user.status === 'active'
-                              ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                              : 'bg-green-100 text-green-700 hover:bg-green-200'
-                          }`}
+                          className={`text-xs px-2 py-1 rounded ${user.status?.toLowerCase() === 'active'
+                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                            : 'bg-green-100 text-green-700 hover:bg-green-200'
+                            }`}
                         >
-                          {user.status === 'active' ? 'Deactivate' : 'Activate'}
+                          {user.status?.toLowerCase() === 'active' ? 'Deactivate' : 'Activate'}
                         </button>
                       </div>
                     </td>
@@ -852,7 +753,7 @@ const UserManagement = () => {
               <div className="flex justify-between">
                 <span className="text-gray-600">Active Users</span>
                 <span className="font-bold text-green-600">
-                  {users.filter(u => u.status === 'active').length}
+                  {users.filter(u => u.status?.toLowerCase() === 'active').length}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -867,8 +768,8 @@ const UserManagement = () => {
                   {users.filter(u => {
                     const joinDate = new Date(u.joinDate);
                     const now = new Date();
-                    return joinDate.getMonth() === now.getMonth() && 
-                           joinDate.getFullYear() === now.getFullYear();
+                    return joinDate.getMonth() === now.getMonth() &&
+                      joinDate.getFullYear() === now.getFullYear();
                   }).length}
                 </span>
               </div>

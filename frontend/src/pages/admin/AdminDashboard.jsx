@@ -1,20 +1,45 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../../services/api';
 import Sidebar from '../../components/Sidebar';
 import StatsCard from '../../components/StatsCard';
-import { 
-  FaUsers, FaUserMd, FaCalendarAlt, FaPills, 
-  FaMoneyBillWave, FaStar 
+import {
+  FaUsers, FaUserMd, FaCalendarAlt, FaPills,
+  FaMoneyBillWave, FaStar
 } from 'react-icons/fa';
 
 const AdminDashboard = () => {
-  const [stats] = useState({
-    totalPatients: 2847,
-    totalDoctors: 42,
-    todayAppointments: 156,
-    lowStockItems: 23,
-    monthlyRevenue: 125430,
-    satisfactionRate: 4.7
+  const [stats, setStats] = useState({
+    totalPatients: 0,
+    totalDoctors: 0,
+    todayAppointments: 0,
+    lowStockItems: 0,
+    monthlyRevenue: 0,
+    satisfactionRate: 0
   });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // We only have a few stats from the backend currently (doctors, patients, appointments, users)
+        // We will map them and keep placeholders for others until backend endpoints exist.
+        const response = await api.get('/dashboard/stats');
+        const data = response.data;
+
+        setStats(prev => ({
+          ...prev,
+          totalPatients: data.patients || 0,
+          totalDoctors: data.doctors || 0,
+          todayAppointments: data.appointments || 0, // This is total appointments for now
+          // Maintain placeholders for now or if backend sends 0
+          monthlyRevenue: data.revenue || 0,
+        }));
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   const [recentActivities] = useState([
     { id: 1, user: 'Dr. Sarah Wilson', action: 'Completed appointment', time: '10:30 AM', type: 'appointment' },
@@ -76,7 +101,7 @@ const AdminDashboard = () => {
   ];
 
   const getActivityIcon = (type) => {
-    switch(type) {
+    switch (type) {
       case 'appointment': return '📅';
       case 'registration': return '👤';
       case 'inventory': return '💊';
@@ -89,7 +114,7 @@ const AdminDashboard = () => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      
+
       <div className="flex-1 p-6 ml-64">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>

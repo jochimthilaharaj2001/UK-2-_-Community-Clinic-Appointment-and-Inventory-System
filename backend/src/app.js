@@ -10,6 +10,8 @@ import appointmentRoutes from './routes/appointments.js';
 import doctorRoutes from './routes/doctors.js';
 import patientRoutes from './routes/patients.js';
 import userRoutes from './routes/users.js';
+import adminInventoryRoutes from './routes/adminInventoryRoutes.js';
+import adminReportRoutes from './routes/adminReportRoutes.js';
 
 import pharmacistRoutes from './routes/pharmacistRoutes.js';
 import inventoryRoutes from './routes/inventoryRoutes.js';
@@ -36,6 +38,8 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/inventory', adminInventoryRoutes); // New Admin Inventory Route
+app.use('/api/admin/reports', adminReportRoutes);
 
 // Doctor Specific Routes
 app.use('/api/doctor', doctorPanelRoutes);

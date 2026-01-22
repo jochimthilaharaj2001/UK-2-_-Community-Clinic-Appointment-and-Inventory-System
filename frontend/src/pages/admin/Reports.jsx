@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../../services/api';
 import Sidebar from '../../components/Sidebar';
 import { FaDownload, FaFilter, FaChartBar, FaUsers, FaUserMd, FaCalendarAlt, FaMoneyBillWave, FaPills } from 'react-icons/fa';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -6,33 +7,13 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 const Reports = () => {
   const [reportType, setReportType] = useState('financial');
   const [dateRange, setDateRange] = useState('monthly');
+  const [loading, setLoading] = useState(true);
 
-  const financialData = [
-    { month: 'Jan', revenue: 125430, expenses: 85430, profit: 40000 },
-    { month: 'Feb', revenue: 132560, expenses: 92340, profit: 40220 },
-    { month: 'Mar', revenue: 148920, expenses: 101230, profit: 47690 },
-    { month: 'Apr', revenue: 156780, expenses: 112340, profit: 44440 },
-    { month: 'May', revenue: 142310, expenses: 98760, profit: 43550 },
-    { month: 'Jun', revenue: 165430, expenses: 115670, profit: 49760 },
-  ];
-
-  const patientData = [
-    { month: 'Jan', new: 245, returning: 432, total: 677 },
-    { month: 'Feb', new: 278, returning: 456, total: 734 },
-    { month: 'Mar', new: 312, returning: 489, total: 801 },
-    { month: 'Apr', new: 289, returning: 512, total: 801 },
-    { month: 'May', new: 301, returning: 534, total: 835 },
-    { month: 'Jun', new: 324, returning: 567, total: 891 },
-  ];
-
-  const appointmentData = [
-    { name: 'Consultation', value: 45 },
-    { name: 'Follow-up', value: 30 },
-    { name: 'Emergency', value: 15 },
-    { name: 'Regular Checkup', value: 10 },
-  ];
-
-  const departmentRevenue = [
+  const [financialData, setFinancialData] = useState([]);
+  const [patientData, setPatientData] = useState([]);
+  const [appointmentData, setAppointmentData] = useState([]);
+  const [inventoryValue, setInventoryValue] = useState([]);
+  const departmentRevenue = [ // Placeholder as we didn't implement this specifically yet, or can derive from inventory/appointments?
     { department: 'Cardiology', revenue: 45600, patients: 234 },
     { department: 'Pediatrics', revenue: 38900, patients: 189 },
     { department: 'Orthopedics', revenue: 52300, patients: 156 },
@@ -40,12 +21,29 @@ const Reports = () => {
     { department: 'Neurology', revenue: 41500, patients: 98 },
   ];
 
-  const inventoryValue = [
-    { category: 'Medicines', value: 125600, items: 45 },
-    { category: 'Supplies', value: 45600, items: 23 },
-    { category: 'Equipment', value: 198700, items: 12 },
-    { category: 'Vaccines', value: 78900, items: 8 },
-  ];
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  const fetchReports = async () => {
+    try {
+      const [financialRes, patientRes, appointmentRes, inventoryRes] = await Promise.all([
+        api.get('/admin/reports/financial'),
+        api.get('/admin/reports/patients'),
+        api.get('/admin/reports/appointments'),
+        api.get('/admin/reports/inventory')
+      ]);
+
+      setFinancialData(financialRes.data);
+      setPatientData(patientRes.data);
+      setAppointmentData(appointmentRes.data);
+      setInventoryValue(inventoryRes.data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching reports:', error);
+      setLoading(false);
+    }
+  };
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -79,7 +77,7 @@ const Reports = () => {
             </select>
           </div>
         </div>
-        
+
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={financialData}>
@@ -312,7 +310,7 @@ const Reports = () => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      
+
       <div className="flex-1 p-6 ml-64">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
           <div>
@@ -347,44 +345,40 @@ const Reports = () => {
           <div className="flex flex-wrap gap-4">
             <button
               onClick={() => setReportType('financial')}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-                reportType === 'financial'
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${reportType === 'financial'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               <FaMoneyBillWave />
               Financial Reports
             </button>
             <button
               onClick={() => setReportType('patient')}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-                reportType === 'patient'
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${reportType === 'patient'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               <FaUsers />
               Patient Reports
             </button>
             <button
               onClick={() => setReportType('operational')}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-                reportType === 'operational'
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${reportType === 'operational'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               <FaChartBar />
               Operational Reports
             </button>
             <button
               onClick={() => setReportType('inventory')}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-                reportType === 'inventory'
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${reportType === 'inventory'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               <FaPills />
               Inventory Reports
@@ -411,7 +405,7 @@ const Reports = () => {
                   <p className="text-sm text-green-600">Items out of stock</p>
                 </div>
               </div>
-              
+
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
