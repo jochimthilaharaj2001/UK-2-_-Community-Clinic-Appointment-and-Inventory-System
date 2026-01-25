@@ -1,11 +1,11 @@
 // pages/doctor/DoctorProfile.jsx
 import { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
-import { 
-  FaUserMd, 
-  FaEnvelope, 
-  FaPhone, 
-  FaMapMarkerAlt, 
+import {
+  FaUserMd,
+  FaEnvelope,
+  FaPhone,
+  FaMapMarkerAlt,
   FaCalendarAlt,
   FaGraduationCap,
   FaBriefcaseMedical,
@@ -15,64 +15,62 @@ import {
   FaEdit,
   FaTimes,
   FaUser,
-  FaHospital
+  FaHospital,
+  FaLock
 } from 'react-icons/fa';
+
 
 const DoctorProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState(null);
   const [formData, setFormData] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [successMessage, setSuccessMessage] = useState('');
+  const [error, setError] = useState('');
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
 
-  // Initial doctor profile data
-  const initialProfileData = {
-    id: '3',
-    name: 'Dr. S.Murugesan',
-    email: 'dr.murugesan@siddhahospital.com',
-    phone: '+94 77 123 4567',
-    specialization: 'Siddha Medicine',
-    department: 'Department of Siddha & Indigenous Medicine',
-    qualifications: ['BSMS - Bachelor of Siddha Medicine and Surgery'],
-    experience: '11 years',
-    licenseNumber: 'SL-SMC/BSMS/23456',
-    hospital: 'Government Siddha Teaching Hospital, Jaffna',
-    address: 'No.45, Hospital Road, Jaffna,Sri Lanka',
-    consultationFee: 'LKR 1,500',
-    availability: 'Mon-Fri: 9 AM - 5 PM',
-    bio: 'Experienced Siddha Medical Practitioner with over 11 years of clinical experience in treating chronic and lifestyle-related diseases using traditional Siddha medicine. Specialized in Varmam therapy, herbal and mineral-based formulations, and holistic patient care.Dedicated to preserving and practicing authentic Siddha medical traditions.',
-    education: [
-      { degree: 'BSMS', institution: 'University of Jaffna', year: '2011' },
-      
-    ],
-    certifications: [
-      'Registered Siddha Medical Practitioner - Sri Lanka Siddha Medical Council',
-      'Certificate in Varmam Therapy - National Institute of Siddha'
-    ],
-    languages: ['Tamil','English', 'Sinhala'],
-    joinDate: '2015-06-01'
-  };
 
   useEffect(() => {
-    // Always use initial data as base, merged with any stored changes
-    const storedProfile = localStorage.getItem('doctorProfile');
-    const user = JSON.parse(localStorage.getItem('user'));
-    
-    // Use initialProfileData as the base
-    let profileToUse = {
-      ...initialProfileData,
-      ...(user && { name: user.name, email: user.email })
-    };
-    
-    // Merge with stored profile if it exists (only merged fields, not replacing)
-    if (storedProfile) {
-      const parsedProfile = JSON.parse(storedProfile);
-      profileToUse = { ...profileToUse, ...parsedProfile };
-    }
-    
-    setProfileData(profileToUse);
-    setFormData(profileToUse);
+    fetchProfile();
   }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/doctor/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch profile');
+
+      const data = await response.json();
+
+      // Map backend fields to frontend expectations if necessary
+      // Ensure JSON fields are arrays
+      const formattedData = {
+        ...data,
+        licenseNumber: data.license || '',
+        education: typeof data.education === 'string' ? JSON.parse(data.education) : (data.education || []),
+        certifications: typeof data.certifications === 'string' ? JSON.parse(data.certifications) : (data.certifications || []),
+        languages: typeof data.languages === 'string' ? JSON.parse(data.languages) : (data.languages || []),
+        qualifications: typeof data.qualifications === 'string' ? JSON.parse(data.qualifications) : (data.qualifications || []),
+      };
+
+      setProfileData(formattedData);
+      setFormData(formattedData);
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to load profile');
+      setLoading(false);
+    }
+  };
 
   // Ensure formData is always initialized when profileData changes
   useEffect(() => {
@@ -101,7 +99,7 @@ const DoctorProfile = () => {
   const addArrayItem = (field, defaultValue = '') => {
     setFormData({
       ...formData,
-      [field]: [...formData[field], defaultValue]
+      [field]: [...(formData[field] || []), defaultValue]
     });
   };
 
@@ -113,40 +111,92 @@ const DoctorProfile = () => {
     });
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     setLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      // Update localStorage
-      localStorage.setItem('doctorProfile', JSON.stringify(formData));
-      
-      // Update user data in localStorage
-      const user = JSON.parse(localStorage.getItem('user'));
-      const updatedUser = {
-        ...user,
-        name: formData.name,
-        specialization: formData.specialization,
-        department: formData.department
-      };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      
+    setError('');
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/api/doctor/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (!res.ok) throw new Error('Failed to update profile');
+
+      // Update locally
       setProfileData(formData);
       setIsEditing(false);
       setSuccessMessage('Profile updated successfully!');
-      setLoading(false);
-      
-      // Clear success message after 3 seconds
+
+      // Update user in local storage to keep name/email in sync
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (user) {
+        localStorage.setItem('user', JSON.stringify({ ...user, name: formData.name, email: formData.email }));
+      }
+
       setTimeout(() => setSuccessMessage(''), 3000);
-    }, 1000);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to save profile');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleChangePassword = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setError('New passwords do not match');
+      return;
+    }
+
+    if (!passwordData.currentPassword || !passwordData.newPassword) {
+      setError('Please fill in all password fields');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/api/doctor/change-password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to change password');
+
+      setSuccessMessage('Password updated successfully!');
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const handleCancelEdit = () => {
     setFormData(profileData);
     setIsEditing(false);
   };
 
-  if (!profileData) {
+  if (loading && !profileData) {
     return (
       <div className="flex min-h-screen bg-gray-50">
         <Sidebar />
@@ -160,7 +210,7 @@ const DoctorProfile = () => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      
+
       <div className="flex-1 ml-64 p-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
@@ -529,8 +579,63 @@ const DoctorProfile = () => {
                 <p className="text-gray-700">{profileData.address}</p>
               )}
             </div>
+
+            {/* Change Password */}
+            <div className="bg-white rounded-2xl shadow p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                <FaLock className="mr-2" />
+                Change Password
+              </h3>
+
+              {error && error.includes('password') && (
+                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                  <input
+                    type="password"
+                    value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter current password"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                  <input
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter new password"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                  <input
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Confirm new password"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={handleChangePassword}
+                disabled={loading}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Updating...' : 'Update Password'}
+              </button>
+            </div>
           </div>
         </div>
+
       </div>
     </div>
   );

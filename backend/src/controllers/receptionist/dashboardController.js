@@ -7,7 +7,8 @@ export const getReceptionistStats = async (req, res) => {
             totalAppointments: 0,
             waitingPatients: 0,
             newPatients: 0,
-            pendingPayments: 0
+            pendingPayments: 0,
+            totalPatients: 0
         };
 
         // Today's Appointments
@@ -43,7 +44,28 @@ export const getReceptionistStats = async (req, res) => {
             stats.pendingPayments = 0;
         }
 
+        // Total Patients
+        const [totalPats] = await db.query('SELECT COUNT(*) as count FROM patients');
+        stats.totalPatients = totalPats[0].count;
+
         res.json(stats);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const getRecentInvoices = async (req, res) => {
+    try {
+        const [rows] = await db.query(`
+            SELECT i.*, p.name as patient_name 
+            FROM invoices i 
+            JOIN patients p ON i.patient_id = p.id 
+            WHERE i.status != 'Paid' 
+            ORDER BY i.created_at DESC 
+            LIMIT 5
+        `);
+        res.json(rows);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error' });

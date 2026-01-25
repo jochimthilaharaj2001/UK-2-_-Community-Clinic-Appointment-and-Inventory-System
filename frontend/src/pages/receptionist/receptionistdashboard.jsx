@@ -17,49 +17,81 @@ const ReceptionistDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  const notificationsRef = useRef(null); 
+  const notificationsRef = useRef(null);
 
-  // Dashboard stats
-  const [stats] = useState({
-    todayAppointments: 24,
-    totalPatients: 342,
-    pendingPayments: 8,
-    waitingRoom: 3,
-    completedAppointments: 19,
-    newPatients: 12,
+  const [stats, setStats] = useState({
+    todayAppointments: 0,
+    totalPatients: 0,
+    pendingPayments: 0,
+    waitingRoom: 0,
+    completedAppointments: 0,
+    newPatients: 0,
   });
 
   // Appointments data
-  const [appointments] = useState([
-    { id: 1, patient: 'Raja', doctor: 'Dr. Karthikayani', time: '09:00 AM', status: 'Confirmed' },
-    { id: 2, patient: 'Sivakumar', doctor: 'Dr. Anbu', time: '10:30 AM', status: 'Waiting' },
-    { id: 3, patient: 'Karthikeyan', doctor: 'Dr. Vignesh', time: '11:15 AM', status: 'Confirmed' },
-    { id: 4, patient: 'Vijayalakshmi', doctor: 'Dr. Priya', time: '02:00 PM', status: 'Pending' },
-    { id: 5, patient: 'Kanagarajah', doctor: 'Dr. Harini', time: '03:30 PM', status: 'Confirmed' },
-  ]);
+  const [appointments, setAppointments] = useState([]);
 
   // Waiting room patients
-  const [waitingPatients] = useState([
-    { id: 1, name: 'Vimalan', checkIn: '08:45 AM', waitTime: '15 min', priority: 'Routine' },
-    { id: 2, name: 'David ', checkIn: '09:15 AM', waitTime: '45 min', priority: 'Urgent' },
-    { id: 3, name: 'Sathish Kumar', checkIn: '09:30 AM', waitTime: '30 min', priority: 'Routine' },
-  ]);
+  const [waitingPatients, setWaitingPatients] = useState([]);
 
   // Pending payments
-  const [pendingPayments] = useState([
+  const [pendingPayments, setPendingPayments] = useState([
     { id: 1, patient: 'Aravind', amount: 150, dueDate: '2024-01-20', status: 'Overdue' },
     { id: 2, patient: 'Priya Nadarajah', amount: 85, dueDate: '2024-01-22', status: 'Pending' },
     { id: 3, patient: 'Kumaravel', amount: 200, dueDate: '2024-01-25', status: 'Pending' },
   ]);
 
-  
+
   useEffect(() => {
+    fetchDashboardData();
     setNotifications([
       { id: 1, message: 'New appointment booked for 10:30 AM', time: '5 min ago', read: false },
       { id: 2, message: 'Patient checked in - Sarah Johnson', time: '15 min ago', read: false },
       { id: 3, message: 'Payment received from John Doe', time: '1 hour ago', read: true },
     ]);
   }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      // Stats
+      const statsRes = await fetch('http://localhost:5000/api/receptionist/dashboard/stats', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (statsRes.ok) {
+        const data = await statsRes.json();
+        setStats({
+          todayAppointments: data.totalAppointments,
+          totalPatients: data.totalPatients,
+          pendingPayments: data.pendingPayments,
+          waitingRoom: data.waitingPatients,
+          completedAppointments: 0,
+          newPatients: data.newPatients,
+        });
+      }
+
+      // Appointments
+      const appRes = await fetch('http://localhost:5000/api/receptionist/appointments/today', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (appRes.ok) {
+        const data = await appRes.json();
+        setAppointments(data);
+        setWaitingPatients(data.filter(a => a.status === 'checked-in' || a.status === 'waiting'));
+      }
+
+      // Pending Payments
+      const payRes = await fetch('http://localhost:5000/api/receptionist/dashboard/pending-payments', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (payRes.ok) {
+        const data = await payRes.json();
+        setPendingPayments(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
 
   useEffect(() => {
@@ -87,6 +119,11 @@ const ReceptionistDashboard = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-teal-600 font-bold">Rural Siddha Hospital</span>
+              <span className="text-gray-300">|</span>
+              <span className="text-gray-500 text-sm">Thellipalai</span>
+            </div>
             <h1 className="text-3xl font-bold text-gray-900">Reception Dashboard</h1>
             <p className="text-gray-600 mt-1">Welcome back! Here's what's happening today.</p>
           </div>
@@ -192,11 +229,13 @@ const ReceptionistDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {appointments.map(a => (
+                {appointments.length === 0 ? (
+                  <tr><td colSpan="4" className="text-center py-4 text-gray-500">No appointments for today</td></tr>
+                ) : appointments.map(a => (
                   <tr key={a.id} className="border-b hover:bg-gray-50">
-                    <td className="py-3">{a.patient}</td>
-                    <td className="py-3">{a.doctor}</td>
-                    <td className="py-3">{a.time}</td>
+                    <td className="py-3">{a.patient_name || a.patient_id}</td>
+                    <td className="py-3">{a.doctor_name}</td>
+                    <td className="py-3">{a.appointment_time}</td>
                     <td className="py-3"><StatusBadge status={a.status} /></td>
                   </tr>
                 ))}
@@ -208,29 +247,34 @@ const ReceptionistDashboard = () => {
         {/* Waiting Room */}
         <div className="bg-white p-6 rounded-xl shadow mb-6">
           <h2 className="text-xl font-semibold mb-4">Waiting Room ({waitingPatients.length})</h2>
-          {waitingPatients.map(p => (
+          {waitingPatients.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">No patients in waiting room</p>
+          ) : waitingPatients.map(p => (
             <div key={p.id} className="p-3 border rounded-lg mb-2 flex justify-between items-center">
               <div>
-                <p className="font-medium">{p.name}</p>
-                <p className="text-sm text-gray-500">Checked in: {p.checkIn} • Wait: {p.waitTime}</p>
+                <p className="font-medium">{p.patient_name || p.patient_id}</p>
+                <p className="text-sm text-gray-500">
+                  Time: {p.appointment_time} • Status: {p.status}
+                </p>
               </div>
-              <span className={`px-2 py-1 rounded-full text-xs ${p.priority === 'urgent' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                {p.priority}
+              <span className={`px-2 py-1 rounded-full text-xs ${p.status === 'checked-in' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                {p.status}
               </span>
             </div>
           ))}
         </div>
 
-        {/* Pending Payments */}
         <div className="bg-white p-6 rounded-xl shadow">
           <h2 className="text-xl font-semibold mb-4">Pending Payments</h2>
-          {pendingPayments.map(p => (
-            <div key={p.id} className="p-3 border rounded-lg mb-2 flex justify-between items-center">
+          {pendingPayments.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">No pending payments</p>
+          ) : pendingPayments.map(p => (
+            <div key={p.id} className="p-3 border rounded-lg mb-2 flex justify-between items-center hover:bg-gray-50 cursor-pointer" onClick={() => navigate('/receptionist/billing')}>
               <div>
-                <p className="font-medium">{p.patient}</p>
-                <p className="text-sm text-gray-500">Due: {p.dueDate}</p>
+                <p className="font-medium">{p.patient_name}</p>
+                <p className="text-sm text-gray-500">Invoice: {p.invoice_no} • Due: {new Date(p.created_at).toLocaleDateString()}</p>
               </div>
-              <p className="font-bold">${p.amount}</p>
+              <p className="font-bold text-red-600">${Number(p.total_amount).toFixed(2)}</p>
             </div>
           ))}
         </div>

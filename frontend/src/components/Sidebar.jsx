@@ -62,7 +62,8 @@ const Sidebar = () => {
   const receptionistMenu = [
     { path: '/receptionist/dashboard', label: 'Dashboard', icon: <FaHome /> },
     { path: '/receptionist/profile', label: 'Receptionist Desk', icon: <FaUserCircle /> },
-    { path: '/receptionist/patient-search', label: 'Search Patients', icon: <FaSearch /> },
+    { path: '/receptionist/patients', label: 'Patient Management', icon: <FaUsers /> },
+    { path: '/receptionist/register-patient', label: 'Register Patient', icon: <FaUserPlus /> },
     { path: '/receptionist/book-appointment', label: 'Book Appointment', icon: <FaCalendarCheck /> },
     { path: '/receptionist/appointments-calendar', label: 'Appointments Calendar', icon: <FaCalendarAlt /> },
     { path: '/receptionist/billing', label: 'Billing & Payments', icon: <FaFileInvoiceDollar /> },
@@ -160,8 +161,9 @@ const Sidebar = () => {
             </span>
           </div>
           <div>
-            <h1 className="text-xl font-bold">Clinic System</h1>
-            <p className="text-sm text-gray-300">
+            <h1 className="text-lg font-bold leading-tight">Rural Siddha<br />Hospital</h1>
+            <p className="text-xs font-semibold text-blue-400">Thellipalai</p>
+            <p className="text-xs text-gray-400 mt-1">
               {getPortalName()}
             </p>
           </div>
@@ -236,7 +238,7 @@ const Sidebar = () => {
           <div className="flex items-center justify-between text-xs text-gray-400">
             <span className="px-2 py-1 bg-gray-700 rounded">Role: {role}</span>
             <span className="px-2 py-1 bg-gray-700 rounded">
-              ID: {user?.id?.substring(0, 8) || 'N/A'}
+              ID: {String(user?.id || '').substring(0, 8) || 'N/A'}
             </span>
           </div>
         </div>

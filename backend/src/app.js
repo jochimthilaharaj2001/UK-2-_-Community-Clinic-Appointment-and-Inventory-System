@@ -21,6 +21,7 @@ import reportRoutes from './routes/reportRoutes.js';
 import doctorPanelRoutes from './routes/doctorRoutes.js';
 import dashboardRoutes from './routes/dashboard.js';
 import receptionistRoutes from './routes/receptionistRoutes.js';
+import patientPortalRoutes from './routes/patientPortalRoutes.js';
 
 dotenv.config();
 
@@ -43,6 +44,9 @@ app.use('/api/admin/reports', adminReportRoutes);
 
 // Doctor Specific Routes
 app.use('/api/doctor', doctorPanelRoutes);
+
+// Patient Portal Routes (Restored)
+app.use('/api/patient', patientPortalRoutes);
 
 // Receptionist Routes
 app.use('/api/receptionist', receptionistRoutes);

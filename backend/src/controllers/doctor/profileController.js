@@ -1,4 +1,6 @@
 import db from '../../config/db.js';
+import bcrypt from 'bcryptjs';
+
 
 export const getDoctorProfile = async (req, res) => {
     const doctorId = req.user.id;
@@ -38,7 +40,7 @@ export const updateDoctorProfile = async (req, res) => {
         await db.query(`
             UPDATE doctors SET 
             name=?, phone=?, specialization=?, department=?, experience=?, 
-            license=?, hospital=?, address=?, consultation_fee=?, bio=?, schedule=?,
+            license=?, hospital=?, address=?, consultation_fee=?, bio=?, availability=?,
             qualifications=?, certifications=?, languages=?, education=?
             WHERE id=?
         `, [
@@ -54,3 +56,27 @@ export const updateDoctorProfile = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+export const changePassword = async (req, res) => {
+    const doctorId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    try {
+        const [doctors] = await db.query('SELECT password FROM doctors WHERE id = ?', [doctorId]);
+        if (doctors.length === 0) return res.status(404).json({ message: 'Doctor not found' });
+
+        const isMatch = await bcrypt.compare(currentPassword, doctors[0].password);
+        if (!isMatch) return res.status(400).json({ message: 'Incorrect current password' });
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        await db.query('UPDATE doctors SET password = ? WHERE id = ?', [hashedPassword, doctorId]);
+
+        res.json({ message: 'Password changed successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+

@@ -37,15 +37,24 @@ export const getDoctorStats = async (req, res) => {
         );
         stats.pendingPrescriptions = prescriptions[0].count;
 
-        // Monthly Earnings (assuming consultation_fee in doctors table * appointments)
+        // Monthly Earnings (sum of consultation fees for completed appointments this month)
         const [fees] = await db.query('SELECT consultation_fee FROM doctors WHERE id = ?', [doctorId]);
         const fee = fees.length ? parseFloat(fees[0].consultation_fee) || 0 : 0;
 
         const [monthApps] = await db.query(
-            'SELECT COUNT(*) as count FROM appointments WHERE doctor_id = ? AND MONTH(date) = MONTH(CURRENT_DATE()) AND status = ?',
+            'SELECT COUNT(*) as count FROM appointments WHERE doctor_id = ? AND MONTH(date) = MONTH(CURRENT_DATE()) AND YEAR(date) = YEAR(CURRENT_DATE()) AND status = ?',
             [doctorId, 'completed']
         );
         stats.monthlyEarnings = fee * monthApps[0].count;
+
+        // Available Slots calculation
+        // Assuming 10 slots per day maximum per doctor
+        const MAX_SLOTS_PER_DAY = 10;
+        const [slotsCount] = await db.query(
+            'SELECT COUNT(*) as count FROM appointments WHERE doctor_id = ? AND date = ? AND status != ?',
+            [doctorId, today, 'cancelled']
+        );
+        stats.availableSlots = Math.max(0, MAX_SLOTS_PER_DAY - slotsCount[0].count);
 
         res.json(stats);
     } catch (error) {

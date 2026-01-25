@@ -4,7 +4,17 @@ export const getInvoices = async (req, res) => {
     const { status, patient } = req.query;
     try {
         let query = `
-            SELECT i.*, p.name as patient_name 
+            SELECT 
+                i.id,
+                i.patient_id,
+                i.invoice_no,
+                i.total_amount,
+                i.paid_amount,
+                i.balance,
+                i.status,
+                i.created_at,
+                p.name as patient_name,
+                p.phone as patient_phone
             FROM invoices i
             LEFT JOIN patients p ON i.patient_id = p.id
         `;
@@ -31,9 +41,12 @@ export const getInvoices = async (req, res) => {
 
         // Fetch services (items) for each invoice
         for (let inv of invoices) {
-            const [items] = await db.query('SELECT description as name, amount FROM invoice_items WHERE invoice_id = ?', [inv.id]);
-            inv.services = items.map(item => item.name); // Frontend expects array of strings or we adapt
-            // Frontend: bill.services is ['Consultation', 'Lab']
+            const [items] = await db.query(
+                'SELECT description as name, amount FROM invoice_items WHERE invoice_id = ?',
+                [inv.id]
+            );
+            inv.services = items.map(item => item.name);
+            inv.service_details = items; // Full details if needed
         }
 
         res.json(invoices);

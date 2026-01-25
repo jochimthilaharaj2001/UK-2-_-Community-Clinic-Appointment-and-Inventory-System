@@ -4,9 +4,11 @@ export const getDoctorAppointments = async (req, res) => {
     const doctorId = req.user.id;
     try {
         const [appointments] = await db.query(`
-            SELECT * FROM appointments 
-            WHERE doctor_id = ? 
-            ORDER BY date DESC, time ASC
+            SELECT a.*, p.name as patientName 
+            FROM appointments a
+            JOIN patients p ON a.patient_id = p.id
+            WHERE a.doctor_id = ? 
+            ORDER BY a.appointment_date DESC, a.appointment_time ASC
         `, [doctorId]);
         res.json(appointments);
     } catch (error) {

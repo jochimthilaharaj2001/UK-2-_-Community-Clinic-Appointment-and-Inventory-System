@@ -24,19 +24,21 @@ export const getDoctorById = async (req, res) => {
     }
 };
 
-export const createDoctor = async (req, res) => {
-    const { name, email, phone, specialization, department, experience, schedule, license, education, office, bio } = req.body;
+import bcrypt from 'bcryptjs';
 
-    // Basic validation
+export const createDoctor = async (req, res) => {
+    const { name, email, phone, specialization, department, experience, schedule, license, education, office, bio, password } = req.body;
+
     if (!name || !email || !specialization) {
         return res.status(400).json({ message: 'Please provide required fields' });
     }
 
     try {
+        const hashedPassword = await bcrypt.hash(password || '123456', 10);
         const [result] = await db.query(
-            `INSERT INTO doctors (name, email, phone, specialization, department, experience, schedule, license, education, office, bio) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [name, email, phone, specialization, department, experience, schedule, license, education, office, bio]
+            `INSERT INTO doctors (name, email, password, phone, specialization, department, experience, schedule, license, education, office, bio) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [name, email, hashedPassword, phone, specialization, department, experience, schedule, license, education, office, bio]
         );
 
         res.status(201).json({ id: result.insertId, ...req.body });
@@ -51,13 +53,9 @@ export const createDoctor = async (req, res) => {
 
 export const updateDoctor = async (req, res) => {
     const { id } = req.params;
-    const { name, email, phone, specialization, department, experience, schedule, license, education, office, bio, status, available } = req.body;
+    const { name, email, phone, specialization, department, experience, schedule, license, education, office, bio, status } = req.body;
 
     try {
-        // If status is updated, it might affect "available" field if we had one explicit,
-        // but in schema we used 'status' enum. Frontend might send 'available' boolean.
-        // For now just update fields present.
-
         await db.query(
             `UPDATE doctors SET 
         name = ?, email = ?, phone = ?, specialization = ?, department = ?, 

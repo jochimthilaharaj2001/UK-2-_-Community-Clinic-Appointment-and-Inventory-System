@@ -6,8 +6,12 @@ import {
   FaUserShield,
   FaUserMd,
   FaPills,
-  FaUserTie
+  FaUserTie,
+  FaEye,
+  FaEyeSlash
 } from 'react-icons/fa';
+import API_BASE_URL from '../services/api';
+
 
 const Login = () => {
   const navigate = useNavigate();
@@ -21,6 +25,8 @@ const Login = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const roleConfigs = {
     admin: {
@@ -29,7 +35,7 @@ const Login = () => {
       color: 'from-blue-600 to-blue-700',
       hoverColor: 'from-blue-700 to-blue-800',
       demoEmail: 'admin@clinic.com',
-      demoPassword: 'admin123',
+      demoPassword: '123456',
       redirectPath: '/admin',
       description: 'Sign in to clinic admin portal'
     },
@@ -38,28 +44,30 @@ const Login = () => {
       icon: <FaPills className="text-5xl text-purple-600" />,
       color: 'from-purple-600 to-purple-700',
       hoverColor: 'from-purple-700 to-purple-800',
-      demoEmail: 'pharmacist@clinic.com',
-      demoPassword: 'pharma123',
+      demoEmail: 'pharmacist@test.com',
+      demoPassword: '123456',
       redirectPath: '/pharmacist/dashboard',
       description: 'Sign in to pharmacy management portal'
     },
     doctor: {
       title: 'Doctor Login',
       icon: <FaUserMd className="text-5xl text-green-600" />,
-      color: 'from-green-600 to-green-700',
-      hoverColor: 'from-green-700 to-green-800',
-      demoEmail: 'doctor@clinic.com',
-      demoPassword: 'doctor123',
+      color: 'from-[#1a5f35] to-[#124a29]', // Dark Green
+      hoverColor: 'from-[#124a29] to-[#0d381f]',
+      demoColor: 'bg-[#10b981] hover:bg-[#059669]', // Vibrant Green
+      demoEmail: 'sarah@example.com',
+      demoPassword: '123456',
       redirectPath: '/doctor/dashboard',
       description: 'Sign in to doctor portal'
     },
+
     receptionist: {
       title: 'Receptionist Login',
       icon: <FaUserTie className="text-5xl text-teal-600" />,
       color: 'from-teal-600 to-teal-700',
       hoverColor: 'from-teal-700 to-teal-800',
-      demoEmail: 'reception@clinic.com',
-      demoPassword: 'reception123',
+      demoEmail: 'reception@example.com',
+      demoPassword: '123456',
       redirectPath: '/receptionist/dashboard',
       description: 'Sign in to reception desk portal'
     },
@@ -69,7 +77,7 @@ const Login = () => {
       color: 'from-indigo-600 to-indigo-700',
       hoverColor: 'from-indigo-700 to-indigo-800',
       demoEmail: 'patient@example.com',
-      demoPassword: 'patient123',
+      demoPassword: '123456',
       redirectPath: '/patient/dashboard',
       description: 'Sign in to access your health records and appointments'
     }
@@ -90,86 +98,73 @@ const Login = () => {
     setLoading(true);
     setError('');
 
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
     try {
-      // Mock authentication - In production, this would be an API call
-      let authenticated = false;
-      let userData = null;
+      let response;
+      let data;
 
-      // Admin credentials
-      if (role === 'admin' && formData.email === config.demoEmail && formData.password === config.demoPassword) {
-        authenticated = true;
-        userData = {
-          id: '1',
-          email: formData.email,
-          role: 'admin',
-          name: 'Admin User',
-          department: 'Administration'
-        };
-      }
-      // Pharmacist credentials
-      else if (role === 'pharmacist' && formData.email === config.demoEmail && formData.password === config.demoPassword) {
-        authenticated = true;
-        userData = {
-          id: '2',
-          email: formData.email,
-          role: 'pharmacist',
-          name: 'John Pharmacist',
-          department: 'Pharmacy',
-          licenseNumber: 'PHARM12345'
-        };
-      }
-      // Doctor credentials
-      else if (role === 'doctor' && formData.email === config.demoEmail && formData.password === config.demoPassword) {
-        authenticated = true;
-        userData = {
-          id: '3',
-          email: formData.email,
-          role: 'doctor',
-          name: 'Dr. Jane Smith',
-          department: 'General Medicine',
-          specialization: 'General Practitioner'
-        };
-      }
-      // Receptionist credentials
-      else if (role === 'receptionist' && formData.email === config.demoEmail && formData.password === config.demoPassword) {
-        authenticated = true;
-        userData = {
-          id: '4',
-          email: formData.email,
-          role: 'receptionist',
-          name: 'Jessica Reception',
-          department: 'Front Desk',
-          location: 'Main Reception'
-        };
-      }
-      // Patient credentials
-      else if (role === 'patient' && formData.email === config.demoEmail && formData.password === config.demoPassword) {
-        authenticated = true;
-        userData = {
-          id: '5',
-          email: formData.email,
-          role: 'patient',
-          name: 'John Doe',
-          contact: '1234567890',
-          address: '123 Main St, Candy City'
-        };
+      // Patient Login (Real Backend)
+      if (role === 'patient') {
+        try {
+          response = await fetch(`${API_BASE_URL}/patient/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+          data = await response.json();
+
+          if (response.ok) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify({ ...data.patient, role: 'patient' }));
+            localStorage.setItem('role', 'patient');
+            navigate('/patient/dashboard');
+            return;
+          } else {
+            setError(data.message || 'Login failed');
+            return;
+          }
+        } catch (err) {
+          console.error("Backend connection error", err);
+          setError('Connection to server failed. Ensure backend is running.');
+          return;
+        }
       }
 
-      if (authenticated && userData) {
-        // Store authentication data
-        localStorage.setItem('token', `demo-token-${role}-${Date.now()}`);
-        localStorage.setItem('user', JSON.stringify(userData));
-        localStorage.setItem('role', role);
+      // Admin, Doctor, Receptionist Login (Real Backend)
+      try {
+        response = await fetch(`${API_BASE_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        data = await response.json();
 
-        // Redirect based on role
-        setTimeout(() => {
+        if (response.ok) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('role', data.user.role);
+
+          // Verify that the logged in role matches the selected portal role
+          if (data.user.role !== role) {
+            setError(`This account is registered as ${data.user.role}, but you are trying to login to the ${role} portal.`);
+            localStorage.clear();
+            return;
+          }
+
           navigate(config.redirectPath);
-        }, 500);
-      } else {
-        setError('Invalid email or password');
+          return;
+        } else {
+          // USER REQUEST: for doctor login show invalid email and password
+          if (role === 'doctor') {
+            setError('Invalid email or password');
+          } else {
+            setError(data.message || 'Login failed');
+          }
+          return;
+        }
+      } catch (err) {
+        console.error("Backend connection error", err);
+        setError('Connection to server failed. Ensure backend is running.');
+        return;
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -184,13 +179,7 @@ const Login = () => {
       email: config.demoEmail,
       password: config.demoPassword,
     });
-
-    // Auto-submit after setting demo credentials
-    setTimeout(() => {
-      document.getElementById('loginForm').dispatchEvent(
-        new Event('submit', { bubbles: true, cancelable: true })
-      );
-    }, 100);
+    setError('');
   };
 
   const switchRole = (newRole) => {
@@ -206,7 +195,11 @@ const Login = () => {
           <div className="inline-block p-4 bg-white rounded-2xl shadow-lg mb-4">
             {config.icon}
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">{config.title}</h1>
+          <div className="mb-2">
+            <h1 className="text-2xl font-bold text-gray-900">Rural Siddha Hospital</h1>
+            <p className="text-blue-600 font-semibold text-lg">Thellipalai</p>
+          </div>
+          <h3 className="text-2xl font-semibold text-gray-800 mt-4">{config.title}</h3>
           <p className="text-gray-600 mt-2">{config.description}</p>
         </div>
 
@@ -276,16 +269,24 @@ const Login = () => {
                     <FaLock className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
                     required
-                    className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="pl-10 pr-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     placeholder="Enter password"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                  >
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
                 </div>
               </div>
+
 
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
@@ -316,11 +317,12 @@ const Login = () => {
           <div className="mt-6">
             <button
               onClick={handleDemoLogin}
-              className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition"
+              className={`w-full py-3 px-4 ${config.demoColor || 'bg-green-600 hover:bg-green-700'} text-white font-semibold rounded-lg transition`}
             >
               Use Demo {role.charAt(0).toUpperCase() + role.slice(1)} Account
             </button>
             <p className="text-center text-gray-600 text-sm mt-2">
+
               Email: {config.demoEmail} | Password: {config.demoPassword}
             </p>
           </div>

@@ -1,9 +1,4 @@
--- Admin tables migration
-
--- Users table (consolidated or separate, let's stick to separate for now to avoid breaking pharmacist,
--- but we need a generic users table if we want a unified login, or just specific tables.
--- The frontend has UserManagement which implies a generic view.
--- Let's create specific tables first as requested.
+-- Admin tables migration refinements
 
 -- DOCTORS
 CREATE TABLE IF NOT EXISTS doctors (
@@ -19,29 +14,30 @@ CREATE TABLE IF NOT EXISTS doctors (
     education VARCHAR(200),
     office VARCHAR(100),
     bio TEXT,
-    status ENUM('active', 'on-leave', 'inactive') DEFAULT 'active',
+    status ENUM('active', 'on-leave', 'inactive', 'ACTIVE', 'INACTIVE') DEFAULT 'active',
     rating DECIMAL(2,1) DEFAULT 0.0,
     appointments_count INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- APPOINTMENTS (Updating existing prescription/patient flow or new?)
--- Frontend shows full appointment management.
+-- APPOINTMENTS
 CREATE TABLE IF NOT EXISTS appointments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     patient_name VARCHAR(100) NOT NULL,
-    patient_id VARCHAR(50), -- manually entered or linked
+    patient_id VARCHAR(50),
     patient_age INT,
     patient_gender VARCHAR(20),
     contact VARCHAR(20),
     email VARCHAR(100),
     doctor_id INT,
-    date DATE,
-    time VALID_TIME, -- Wait, MySQL doesn't have VALID_TIME. Just VARCHAR or TIME
-    time_slot VARCHAR(20),
+    doctor_name VARCHAR(100),
+    appointment_date DATE,
+    appointment_time VARCHAR(20),
+    date DATE, -- redundant but for compatibility
+    time VARCHAR(20), -- redundant but for compatibility
     duration VARCHAR(20),
-    type VARCHAR(50), -- regular, emergency etc
-    status ENUM('pending', 'confirmed', 'cancelled', 'completed', 'no-show') DEFAULT 'pending',
+    type VARCHAR(50),
+    status ENUM('pending', 'confirmed', 'cancelled', 'completed', 'no-show', 'scheduled', 'Waiting', 'Confirmed', 'Pending') DEFAULT 'pending',
     reason VARCHAR(255),
     notes TEXT,
     room VARCHAR(50),
@@ -49,8 +45,14 @@ CREATE TABLE IF NOT EXISTS appointments (
     FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE SET NULL
 );
 
--- Altering time column
-ALTER TABLE appointments MODIFY COLUMN time VARCHAR(20);
+-- INVENTORY (Ensuring columns exist for both Admin and Pharmacist modules)
+-- Pharmacist uses: generic_name, brand_name, strength, batch_number, manufacturer, expiry_date, quantity, selling_price
+-- Admin uses: name, category, unit, reorder_level, location
+ALTER TABLE inventory ADD COLUMN IF NOT EXISTS name VARCHAR(100);
+ALTER TABLE inventory ADD COLUMN IF NOT EXISTS category VARCHAR(100);
+ALTER TABLE inventory ADD COLUMN IF NOT EXISTS unit VARCHAR(50);
+ALTER TABLE inventory ADD COLUMN IF NOT EXISTS reorder_level INT DEFAULT 0;
+ALTER TABLE inventory ADD COLUMN IF NOT EXISTS location VARCHAR(100);
 
 -- ADMINS
 CREATE TABLE IF NOT EXISTS admins (
@@ -62,11 +64,18 @@ CREATE TABLE IF NOT EXISTS admins (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert default admin if not exists (password: admin123)
--- bcrypt hash for 'admin123' is needed. 
--- $2a$10$wI6.R/h.h.h.h. -- placeholder, will use a known hash or insert via code.
--- For now, let's insert a text password and we can hash it via script if needed, or just insert a known hash.
--- Using the same hash as pharmacist for simplicity: $2a$10$Hj2tTKwmC2xTOHBPod.aBupZ19GVvjunCJmWI8F/qZc7Zr6FmR12C (123456)
+-- RECEPTIONISTS (Ensure table exists if not covered by other migrations)
+CREATE TABLE IF NOT EXISTS receptionists (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    phone VARCHAR(20),
+    status ENUM('active', 'inactive') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert default admin (password: 123456)
 INSERT IGNORE INTO admins (name, email, password) VALUES 
 ('Super Admin', 'admin@clinic.com', '$2a$10$Hj2tTKwmC2xTOHBPod.aBupZ19GVvjunCJmWI8F/qZc7Zr6FmR12C');
 

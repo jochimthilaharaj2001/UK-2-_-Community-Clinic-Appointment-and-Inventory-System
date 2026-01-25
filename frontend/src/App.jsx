@@ -23,15 +23,19 @@ import DoctorPatients from './pages/doctor/DoctorPatients';
 import DoctorPrescriptions from './pages/doctor/DoctorPrescriptions';
 import DoctorSchedule from './pages/doctor/DoctorSchedule';
 import DoctorProfile from './pages/doctor/DoctorProfile';
+import Teleconsultation from './pages/doctor/Teleconsultation';
+
 
 
 // Receptionist Pages
 import ReceptionistDashboard from './pages/receptionist/ReceptionistDashboard';
 import ReceptionistProfile from './pages/receptionist/ReceptionistProfile';
 import PatientSearch from './pages/receptionist/PatientSearch';
-import BookAppointment from './pages/receptionist/BookAppointment';
+import BookAppointment from './pages/receptionist/ReceptionistAppointments';
 import AppointmentsCalendar from './pages/receptionist/AppointmentsCalendar';
 import ReceptionistBilling from './pages/receptionist/ReceptionistBilling';
+import ReceptionistPatients from './pages/receptionist/ReceptionistPatients';
+import PatientRegistration from './pages/receptionist/PatientRegistration';
 
 // Patient Pages
 import PatientDashboard from './pages/patient/PatientDashboard';
@@ -105,6 +109,15 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/doctor/teleconsult"
+          element={
+            <ProtectedRoute role="doctor">
+              <Teleconsultation />
+            </ProtectedRoute>
+          }
+        />
+
 
         {/* Receptionist Protected Routes */}
         <Route
@@ -116,7 +129,7 @@ function App() {
           }
         />
 
-                <Route
+        <Route
           path="/receptionist/profile"
           element={
             <ProtectedRoute role="receptionist">
@@ -141,7 +154,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-       
+
         <Route
           path="/receptionist/appointments-calendar"
           element={
@@ -155,6 +168,22 @@ function App() {
           element={
             <ProtectedRoute role="receptionist">
               <ReceptionistBilling />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/receptionist/patients"
+          element={
+            <ProtectedRoute role="receptionist">
+              <ReceptionistPatients />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/receptionist/register-patient"
+          element={
+            <ProtectedRoute role="receptionist">
+              <PatientRegistration />
             </ProtectedRoute>
           }
         />

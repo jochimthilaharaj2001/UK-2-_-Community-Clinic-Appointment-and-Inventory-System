@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
 import {
     FaCalendarAlt,
@@ -11,12 +11,40 @@ import {
 } from 'react-icons/fa';
 
 const PatientAppointments = () => {
-    const [appointments, setAppointments] = useState([
-        { id: 1, doctor: 'Dr. Jane Smith', spec: 'General Physician', date: '2026-01-25', time: '10:00 AM', status: 'Confirmed', type: 'Checkup' },
-        { id: 2, doctor: 'Dr. John Miller', spec: 'Pediatrician', date: '2026-02-10', time: '02:30 PM', status: 'Pending', type: 'Follow-up' },
-        { id: 3, doctor: 'Dr. Sarah Wilson', spec: 'Dermatologist', date: '2025-12-20', time: '11:15 AM', status: 'Completed', type: 'Skincare' },
-        { id: 4, doctor: 'Dr. Robert Brown', spec: 'Cardiologist', date: '2025-11-15', time: '09:00 AM', status: 'Cancelled', type: 'Heart Check' }
-    ]);
+    const [appointments, setAppointments] = useState([]);
+
+    useEffect(() => {
+        const fetchAppointments = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            try {
+                const response = await fetch('http://localhost:5000/api/patient/appointments', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (Array.isArray(data)) {
+                        const mappedData = data.map(apt => ({
+                            ...apt,
+                            spec: apt.type,
+                            type: 'Consultation',
+                            status: apt.status ? apt.status.charAt(0).toUpperCase() + apt.status.slice(1).toLowerCase() : 'Pending',
+                            date: apt.date ? new Date(apt.date).toISOString().split('T')[0] : null
+                        }));
+                        setAppointments(mappedData);
+                    } else {
+                        setAppointments([]);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch appointments", err);
+            }
+        };
+
+        fetchAppointments();
+    }, []);
 
     const [filter, setFilter] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');

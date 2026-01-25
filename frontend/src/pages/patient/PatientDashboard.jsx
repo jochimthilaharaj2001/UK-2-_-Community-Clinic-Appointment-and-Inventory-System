@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
 import StatsCard from '../../components/StatsCard';
@@ -16,29 +17,77 @@ import { useNavigate } from 'react-router-dom';
 const PatientDashboard = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
-    const [appointments, setAppointments] = useState([
-        { id: 1, doctor: 'Dr. Jane Smith', date: '2026-01-25', time: '10:00 AM', type: 'General Checkup', status: 'Confirmed' },
-        { id: 2, doctor: 'Dr. John Miller', date: '2026-02-10', time: '02:30 PM', type: 'Follow-up', status: 'Pending' }
-    ]);
-    const [prescriptions, setPrescriptions] = useState([
-        { id: 1, med: 'Amoxicillin', dosage: '500mg', instructions: 'Twice daily', date: '2026-01-15' },
-        { id: 2, med: 'Ibuprofen', dosage: '400mg', instructions: 'Whenever needed', date: '2026-01-10' }
-    ]);
+    const [appointments, setAppointments] = useState([]);
+    const [prescriptions, setPrescriptions] = useState([]);
+    const [stats, setStats] = useState({ upcomingAppointments: 0, totalPrescriptions: 0, totalReports: 0 });
     const [showNotifications, setShowNotifications] = useState(false);
-    const [notifications, setNotifications] = useState([
-        { id: 1, title: 'Appointment Confirmed', message: 'Your appointment with Dr. Jane Smith is confirmed.', time: '2 mins ago', unread: true, link: '/patient/appointments' },
-        { id: 2, title: 'New Prescription', message: 'Dr. Smith added a new prescription for you.', time: '1 hour ago', unread: true, link: '/patient/medical-records' },
-        { id: 3, title: 'Reminder', message: 'Take your Amoxicillin at 8:00 PM.', time: '3 hours ago', unread: false, link: '/patient/medical-records' }
-    ]);
+    const [notifications, setNotifications] = useState([]);
 
     useEffect(() => {
         const userData = JSON.parse(localStorage.getItem('user'));
+        const token = localStorage.getItem('token');
         if (userData && userData.role === 'patient') {
             setUser(userData);
+            fetchDashboardData(token);
         } else {
             navigate('/login');
         }
     }, [navigate]);
+
+    const fetchDashboardData = async (token) => {
+        console.log("🚀 START FETCHING DASHBOARD DATA...");
+        try {
+            // Stats
+            const statsRes = await fetch('http://localhost:5000/api/patient/dashboard-stats', { headers: { 'Authorization': `Bearer ${token}` } });
+            console.log("Stats API Status:", statsRes.status);
+            if (statsRes.ok) {
+                const s = await statsRes.json();
+                console.log("✅ Stats Data:", s);
+                setStats(s);
+            } else {
+                console.error("❌ Stats API Error:", await statsRes.text());
+            }
+
+            // Appointments (Limit 2)
+            const aptRes = await fetch('http://localhost:5000/api/patient/appointments', { headers: { 'Authorization': `Bearer ${token}` } });
+            console.log("Appointments API Status:", aptRes.status);
+            if (aptRes.ok) {
+                const data = await aptRes.json();
+                console.log("✅ Appointments Data:", data);
+                if (Array.isArray(data)) {
+                    setAppointments(data.slice(0, 2).map(a => ({
+                        ...a,
+                        status: a.status ? a.status.charAt(0).toUpperCase() + a.status.slice(1).toLowerCase() : 'Pending'
+                    })));
+                } else {
+                    console.warn("⚠️ Appointments data is NOT an array:", data);
+                    setAppointments([]);
+                }
+            }
+
+            // Prescriptions (Limit 2)
+            const medRes = await fetch('http://localhost:5000/api/patient/medical-records', { headers: { 'Authorization': `Bearer ${token}` } });
+            console.log("Medical Records API Status:", medRes.status);
+            if (medRes.ok) {
+                const data = await medRes.json();
+                console.log("✅ Medical Records Data:", data);
+                setPrescriptions(Array.isArray(data.prescriptions) ? data.prescriptions.slice(0, 2) : []);
+
+                // Update stats if needed based on actual listing
+                // setStats(prev => ({...prev, totalReports: (data.reports?.length || 0) }));
+            }
+
+            // Notifications
+            const notifRes = await fetch('http://localhost:5000/api/patient/notifications', { headers: { 'Authorization': `Bearer ${token}` } });
+            if (notifRes.ok) {
+                const data = await notifRes.json();
+                setNotifications(Array.isArray(data) ? data : []);
+            }
+
+        } catch (error) {
+            console.error("🔥 CRITICAL DASHBOARD IMPORT ERROR:", error);
+        }
+    };
 
     return (
         <div className="flex bg-gray-50 min-h-screen">
@@ -47,6 +96,11 @@ const PatientDashboard = () => {
                 {/* Header */}
                 <div className="flex justify-between items-center mb-8">
                     <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-indigo-600 font-bold">Rural Siddha Hospital</span>
+                            <span className="text-gray-300">|</span>
+                            <span className="text-gray-500 text-sm">Thellipalai</span>
+                        </div>
                         <h1 className="text-3xl font-bold text-gray-800">Hello, {user?.name || 'Patient'}!</h1>
                         <p className="text-gray-600">Track your health and appointments at a glance.</p>
                     </div>
@@ -114,26 +168,26 @@ const PatientDashboard = () => {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     <StatsCard
-                        title="Total Appointments"
-                        value="5"
+                        title="Upcoming Appointments"
+                        value={stats.upcomingAppointments || 0}
                         icon={<FaCalendarAlt />}
                         color="bg-indigo-500"
                     />
                     <StatsCard
                         title="Active Prescriptions"
-                        value="2"
+                        value={stats.totalPrescriptions || 0}
                         icon={<FaFilePrescription />}
                         color="bg-green-500"
                     />
                     <StatsCard
                         title="Medical Records"
-                        value="12"
+                        value={stats.totalReports || 0}
                         icon={<FaClipboardList />}
                         color="bg-blue-500"
                     />
                     <StatsCard
                         title="Last Visit"
-                        value="15 Jan 26"
+                        value={appointments[0]?.date || 'N/A'}
                         icon={<FaHistory />}
                         color="bg-orange-500"
                     />
@@ -153,29 +207,33 @@ const PatientDashboard = () => {
                         </div>
                         <div className="p-6">
                             <div className="space-y-4">
-                                {appointments.map((apt) => (
-                                    <div key={apt.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-xl hover:border-indigo-200 hover:shadow-sm transition">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
-                                                <FaStethoscope />
+                                {appointments.length > 0 ? (
+                                    appointments.map((apt) => (
+                                        <div key={apt.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-xl hover:border-indigo-200 hover:shadow-sm transition">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
+                                                    <FaStethoscope />
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-semibold text-gray-800">{apt.doctor}</h3>
+                                                    <p className="text-sm text-gray-500">{apt.type}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-medium text-gray-800">{apt.date}</p>
+                                                <p className="text-sm text-gray-500">{apt.time}</p>
                                             </div>
                                             <div>
-                                                <h3 className="font-semibold text-gray-800">{apt.doctor}</h3>
-                                                <p className="text-sm text-gray-500">{apt.type}</p>
+                                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${apt.status === 'Confirmed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                                                    }`}>
+                                                    {apt.status}
+                                                </span>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="font-medium text-gray-800">{apt.date}</p>
-                                            <p className="text-sm text-gray-500">{apt.time}</p>
-                                        </div>
-                                        <div>
-                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${apt.status === 'Confirmed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                                                }`}>
-                                                {apt.status}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))
+                                ) : (
+                                    <div className="text-center py-6 text-gray-500 italic">No upcoming appointments</div>
+                                )}
                             </div>
                             <button
                                 onClick={() => navigate('/patient/book-appointment')}
@@ -199,23 +257,27 @@ const PatientDashboard = () => {
                         </div>
                         <div className="p-6">
                             <div className="space-y-4">
-                                {prescriptions.map((p) => (
-                                    <div key={p.id} className="p-4 border border-gray-100 rounded-xl hover:border-green-200 hover:shadow-sm transition">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <h3 className="font-bold text-gray-800">{p.med}</h3>
-                                            <span className="text-xs text-gray-400">{p.date}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <p className="text-sm text-gray-600">Dosage: <span className="text-gray-800 font-medium">{p.dosage}</span></p>
-                                                <p className="text-xs text-gray-500 mt-1 italic">{p.instructions}</p>
+                                {prescriptions.length > 0 ? (
+                                    prescriptions.map((p) => (
+                                        <div key={p.id} className="p-4 border border-gray-100 rounded-xl hover:border-green-200 hover:shadow-sm transition">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h3 className="font-bold text-gray-800">{p.med}</h3>
+                                                <span className="text-xs text-gray-400">{p.date}</span>
                                             </div>
-                                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center text-green-600">
-                                                <FaFilePrescription />
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <p className="text-sm text-gray-600">Dosage: <span className="text-gray-800 font-medium">{p.dosage}</span></p>
+                                                    <p className="text-xs text-gray-500 mt-1 italic">{p.instructions}</p>
+                                                </div>
+                                                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center text-green-600">
+                                                    <FaFilePrescription />
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))
+                                ) : (
+                                    <div className="text-center py-6 text-gray-500 italic">No recent prescriptions</div>
+                                )}
                             </div>
                         </div>
                     </div>

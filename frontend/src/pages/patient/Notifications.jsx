@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
 import {
     FaBell,
@@ -12,24 +13,92 @@ import { useNavigate } from 'react-router-dom';
 
 const Notifications = () => {
     const navigate = useNavigate();
-    const [notifications, setNotifications] = useState([
-        { id: 1, title: 'Appointment Confirmed', message: 'Your appointment with Dr. Jane Smith is confirmed for Jan 25th.', time: '2 mins ago', unread: true, type: 'appointment', link: '/patient/appointments' },
-        { id: 2, title: 'New Prescription', message: 'Dr. Smith added a new prescription for your checkup.', time: '1 hour ago', unread: true, type: 'prescription', link: '/patient/medical-records' },
-        { id: 3, title: 'Reminder', message: 'Take your Amoxicillin at 8:00 PM.', time: '3 hours ago', unread: false, type: 'reminder', link: '/patient/medical-records' },
-        { id: 4, title: 'Report Ready', message: 'Your Laboratory results are now available for viewing.', time: '1 day ago', unread: false, type: 'report', link: '/patient/medical-records' },
-        { id: 5, title: 'Profile Updated', message: 'Your password was changed successfully.', time: '2 days ago', unread: false, type: 'profile', link: '/patient/profile' }
-    ]);
+    const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const markAsRead = (id) => {
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
+
+    const fetchNotifications = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('http://localhost:5000/api/patient/notifications', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setNotifications(data.map(n => {
+                    // Infer type from title if missing
+                    let type = n.type || 'general';
+                    if (!n.type) {
+                        const titleLower = n.title?.toLowerCase() || '';
+                        if (titleLower.includes('appointment')) type = 'appointment';
+                        else if (titleLower.includes('prescription') || titleLower.includes('medication')) type = 'prescription';
+                        else if (titleLower.includes('report') || titleLower.includes('result')) type = 'report';
+                    }
+
+                    return {
+                        ...n,
+                        time: n.created_at ? new Date(n.created_at).toLocaleString() : 'Just now',
+                        unread: !n.is_read, // Map DB is_read (1/0) to frontend unread (bool)
+                        type: type,
+                        link: getLinkForType(type)
+                    };
+                }));
+            }
+        } catch (err) {
+            console.error("Failed to fetch notifications", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getLinkForType = (type) => {
+        switch (type?.toLowerCase()) {
+            case 'appointment': return '/patient/appointments';
+            case 'prescription': return '/patient/medical-records';
+            default: return '#';
+        }
+    };
+
+    const markAsRead = async (id) => {
+        // Optimistic update
         setNotifications(notifications.map(n => n.id === id ? { ...n, unread: false } : n));
+
+        try {
+            const token = localStorage.getItem('token');
+            await fetch(`http://localhost:5000/api/patient/notifications/${id}/read`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const markAllRead = async () => {
+        setNotifications(notifications.map(n => ({ ...n, unread: false })));
+        try {
+            const token = localStorage.getItem('token');
+            // Assuming backend supports this or iterating
+            await fetch(`http://localhost:5000/api/patient/notifications/read-all`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     const deleteNotification = (id) => {
+        // Optimistic delete
         setNotifications(notifications.filter(n => n.id !== id));
+        // Add backend API call if endpoint exists
     };
 
     const getIcon = (type) => {
-        switch (type) {
+        switch (type?.toLowerCase()) {
             case 'appointment': return <FaCheckCircle className="text-green-500" />;
             case 'prescription': return <FaFilePrescription className="text-indigo-500" />;
             case 'reminder': return <FaClock className="text-orange-500" />;
@@ -57,7 +126,7 @@ const Notifications = () => {
                             </div>
                         </div>
                         <button
-                            onClick={() => setNotifications(notifications.map(n => ({ ...n, unread: false })))}
+                            onClick={markAllRead}
                             className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-indigo-600 hover:bg-indigo-50 transition shadow-sm"
                         >
                             Mark All Read
@@ -71,7 +140,7 @@ const Notifications = () => {
                                     key={n.id}
                                     onClick={() => {
                                         markAsRead(n.id);
-                                        navigate(n.link);
+                                        if (n.link && n.link !== '#') navigate(n.link);
                                     }}
                                     className={`group flex items-start gap-5 p-6 rounded-2xl border transition cursor-pointer ${n.unread ? 'bg-white border-indigo-100 shadow-lg shadow-indigo-50' : 'bg-gray-50/50 border-transparent text-gray-500'}`}
                                 >

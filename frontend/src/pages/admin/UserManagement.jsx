@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../../services/api';
 import Sidebar from '../../components/Sidebar';
 import {
@@ -23,6 +23,9 @@ import {
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchUsers();
@@ -34,8 +37,30 @@ const UserManagement = () => {
       setUsers(response.data);
     } catch (error) {
       console.error('Failed to fetch users', error);
-      // alert('Failed to load users');
+      setError("Failed to load users");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const text = event.target.result;
+        const data = JSON.parse(text);
+
+        await api.post('/users/bulk', { users: data });
+        alert('Bulk upload successful!');
+        fetchUsers();
+      } catch (err) {
+        alert('Failed to process file: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
   };
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -60,16 +85,29 @@ const UserManagement = () => {
     { value: 'admin', label: 'Admin', icon: <FaUserShield />, color: 'bg-purple-100 text-purple-800' },
     { value: 'doctor', label: 'Doctor', icon: <FaUserMd />, color: 'bg-blue-100 text-blue-800' },
     { value: 'pharmacist', label: 'Pharmacist', icon: <FaPills />, color: 'bg-green-100 text-green-800' },
+    { value: 'receptionist', label: 'Receptionist', icon: <FaUserNurse />, color: 'bg-yellow-100 text-yellow-800' },
     { value: 'patient', label: 'Patient', icon: <FaUser />, color: 'bg-gray-100 text-gray-800' }
   ];
-
-  // ... (useEffect for editingUser and other helpers remain mostly same, just checking placement)
 
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  const getRoleIcon = (role) => {
+    const roleObj = roles.find(r => r.value === role);
+    return roleObj ? roleObj.icon : <FaUser />;
+  };
+
+  const getRoleColor = (role) => {
+    const roleObj = roles.find(r => r.value === role);
+    return roleObj ? roleObj.color : 'bg-gray-100 text-gray-800';
+  };
+
+  const getStatusColor = (status) => {
+    return status?.toLowerCase() === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
   };
 
   const handleSort = (column) => {
@@ -81,34 +119,10 @@ const UserManagement = () => {
     }
   };
 
-  const getRoleIcon = (role) => {
-    switch (role) {
-      case 'admin': return <FaUserShield />;
-      case 'doctor': return <FaUserMd />;
-      case 'pharmacist': return <FaPills />;
-      case 'receptionist': return <FaUserNurse />;
-      default: return <FaUser />;
-    }
-  };
-
-  const getRoleColor = (role) => {
-    switch (role) {
-      case 'admin': return 'bg-purple-100 text-purple-800';
-      case 'doctor': return 'bg-blue-100 text-blue-800';
-      case 'pharmacist': return 'bg-green-100 text-green-800';
-      case 'receptionist': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusColor = (status) => {
-    return status?.toLowerCase() === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-  };
-
   const filteredUsers = users
     .filter(user => {
-      const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const matchesSearch = (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (user.phone && user.phone.includes(searchTerm)) ||
         (user.department && user.department.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesRole = roleFilter === 'all' || user.role === roleFilter;
@@ -117,7 +131,7 @@ const UserManagement = () => {
     })
     .sort((a, b) => {
       if (sortBy === 'name') {
-        return sortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+        return sortOrder === 'asc' ? (a.name || '').localeCompare(b.name || '') : (b.name || '').localeCompare(a.name || '');
       }
       if (sortBy === 'joinDate') {
         return sortOrder === 'asc'
@@ -127,13 +141,12 @@ const UserManagement = () => {
       return 0;
     });
 
-  // Re-inserting the missing useEffect for editingUser form population
   useEffect(() => {
     if (editingUser) {
       setFormData({
         name: editingUser.name,
         email: editingUser.email,
-        phone: editingUser.phone || '', // Handle potential missing fields
+        phone: editingUser.phone || '',
         role: editingUser.role,
         department: editingUser.department || '',
         specialization: editingUser.specialization || '',
@@ -143,55 +156,50 @@ const UserManagement = () => {
     }
   }, [editingUser]);
 
-
-  // ... filter logic ...
-
-  // NEW handleSubmit
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       if (editingUser) {
-        // Update not fully supported by single endpoint yet, but generic structure:
-        // We might need to handle specific per-role update here or alert user.
-        alert("Update feature depends on specific user role endpoints. Please use specific management pages (Doctors/Pharmacists) for full edits.");
+        await api.put(`/users/${editingUser.id}`, formData);
+        alert('User updated successfully!');
       } else {
-        // Add new user
         await api.post('/users', formData);
-        alert('User created successfully!');
+        alert('User added successfully!');
       }
-
-      fetchUsers();
       setShowForm(false);
       setEditingUser(null);
       setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        role: 'patient',
-        department: '',
-        specialization: '',
-        address: ''
+        name: '', email: '', phone: '', role: 'patient',
+        department: '', specialization: '', address: ''
       });
-
-    } catch (error) {
-      console.error('Error saving user', error);
-      alert('Failed to save user. ' + (error.response?.data?.message || ''));
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || err.message);
     }
   };
 
-  // NEW handleDelete
   const handleDelete = async (userId) => {
-    // Backend doesn't support generic delete yet as per analysis
-    if (window.confirm('Are you sure you want to delete this user? This feature might not be fully linked to backend yet.')) {
-      // alert("Delete implemented in specific modules (Doctor/Patient).");
-      // setUsers(users.filter(user => user.id !== userId)); // Optimistic update
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      try {
+        await api.delete(`/users/${userId}`);
+        alert('User deleted successfully!');
+        fetchUsers();
+      } catch (err) {
+        alert(err.response?.data?.message || err.message);
+      }
     }
   };
 
-  const handleStatusToggle = (userId) => {
-    // Placeholder
-    alert("Status toggle to be implemented via backend.");
+  const handleStatusToggle = async (userId, currentStatus) => {
+    try {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      await api.put(`/users/${userId}/status`, { status: newStatus });
+      alert(`User status changed to ${newStatus}`);
+      fetchUsers();
+    } catch (err) {
+      alert(err.response?.data?.message || err.message);
+    }
   };
 
   const handleResetPassword = (userId) => {
@@ -222,33 +230,27 @@ const UserManagement = () => {
             onClick={() => {
               setEditingUser(null);
               setFormData({
-                name: '',
-                email: '',
-                phone: '',
-                role: 'patient',
-                department: '',
-                specialization: '',
-                address: ''
+                name: '', email: '', phone: '', role: 'patient',
+                department: '', specialization: '', address: ''
               });
               setShowForm(true);
             }}
-            className="mt-4 md:mt-0 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center"
+            className="mt-4 md:mt-0 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center shadow-lg"
           >
             <FaUserPlus className="mr-2" />
             Add New User
           </button>
         </div>
 
-        {/* Statistics Cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           {roles.map((role) => (
-            <div key={role.value} className="bg-white rounded-xl shadow p-4">
+            <div key={role.value} className="bg-white rounded-xl shadow p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <div className={`p-2 rounded-lg ${role.color.replace('text-', 'text-opacity-100 text-').split(' ')[0]}`}>
+                <div className={`p-2 rounded-lg ${role.color}`}>
                   {role.icon}
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-gray-900">{roleStats[role.value]}</div>
+                  <div className="text-2xl font-bold text-gray-900">{roleStats[role.value] || 0}</div>
                   <div className="text-sm text-gray-600">{role.label}s</div>
                 </div>
               </div>
@@ -256,7 +258,6 @@ const UserManagement = () => {
           ))}
         </div>
 
-        {/* Search and Filter */}
         <div className="bg-white rounded-xl shadow p-4 mb-6">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex-1">
@@ -282,9 +283,7 @@ const UserManagement = () => {
                 >
                   <option value="all">All Roles</option>
                   {roles.map(role => (
-                    <option key={role.value} value={role.value}>
-                      {role.label}s
-                    </option>
+                    <option key={role.value} value={role.value}>{role.label}s</option>
                   ))}
                 </select>
               </div>
@@ -302,14 +301,11 @@ const UserManagement = () => {
           </div>
         </div>
 
-        {/* Add/Edit User Form Modal */}
         {showForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-xl shadow-xl p-8 max-w-2xl w-full">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {editingUser ? 'Edit User' : 'Add New User'}
-                </h2>
+                <h2 className="text-2xl font-bold text-gray-900">{editingUser ? 'Edit User' : 'Add New User'}</h2>
                 <button
                   onClick={() => {
                     setShowForm(false);
@@ -324,312 +320,110 @@ const UserManagement = () => {
               <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter full name"
-                    />
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                    <input type="text" name="name" value={formData.name} onChange={handleInputChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Enter full name" />
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email Address *
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="user@example.com"
-                    />
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                    <input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="user@example.com" />
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Phone Number *
-                    </label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="+1234567890"
-                    />
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
+                    <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="+1234567890" />
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Role *
-                    </label>
-                    <select
-                      name="role"
-                      value={formData.role}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Role *</label>
+                    <select name="role" value={formData.role} onChange={handleInputChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                       {roles.map(role => (
-                        <option key={role.value} value={role.value}>
-                          {role.label}
-                        </option>
+                        <option key={role.value} value={role.value}>{role.label}</option>
                       ))}
                     </select>
                   </div>
-
-                  {formData.role === 'doctor' || formData.role === 'pharmacist' || formData.role === 'staff' ? (
+                  {formData.role === 'doctor' || formData.role === 'pharmacist' || formData.role === 'receptionist' ? (
                     <>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Department
-                        </label>
-                        <input
-                          type="text"
-                          name="department"
-                          value={formData.department}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Enter department"
-                        />
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                        <input type="text" name="department" value={formData.department} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Enter department" />
                       </div>
-
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Specialization
-                        </label>
-                        <input
-                          type="text"
-                          name="specialization"
-                          value={formData.specialization}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Enter specialization"
-                        />
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Specialization</label>
+                        <input type="text" name="specialization" value={formData.specialization} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Enter specialization" />
                       </div>
                     </>
                   ) : (
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Address
-                      </label>
-                      <input
-                        type="text"
-                        name="address"
-                        value={formData.address}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Enter address"
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                      <input type="text" name="address" value={formData.address} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Enter address" />
                     </div>
                   )}
                 </div>
 
                 <div className="flex gap-3 mt-8">
-                  <button
-                    type="submit"
-                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center justify-center"
-                  >
+                  <button type="submit" className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center justify-center">
                     <FaSave className="mr-2" />
                     {editingUser ? 'Update User' : 'Add User'}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowForm(false);
-                      setEditingUser(null);
-                    }}
-                    className="flex-1 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium rounded-lg"
-                  >
-                    Cancel
-                  </button>
+                  <button type="button" onClick={() => { setShowForm(false); setEditingUser(null); }} className="flex-1 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium rounded-lg">Cancel</button>
                 </div>
               </form>
             </div>
           </div>
         )}
 
-        {/* User Details View Modal */}
         {viewingUser && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-xl shadow-xl p-8 max-w-2xl w-full">
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-                    <span className="text-2xl text-blue-600 font-medium">
-                      {viewingUser.name.split(' ').map(n => n[0]).join('')}
-                    </span>
+                  <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-600 text-2xl">
+                    {viewingUser.name ? viewingUser.name.split(' ').map(n => n[0]).join('') : 'U'}
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900">{viewingUser.name}</h2>
                     <span className={`px-2 py-1 text-sm font-medium rounded-full ${getRoleColor(viewingUser.role)}`}>
-                      {viewingUser.role.charAt(0).toUpperCase() + viewingUser.role.slice(1)}
+                      {viewingUser.role ? (viewingUser.role.charAt(0).toUpperCase() + viewingUser.role.slice(1)) : 'Patient'}
                     </span>
                   </div>
                 </div>
-                <button
-                  onClick={() => setViewingUser(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <FaTimes className="text-xl" />
-                </button>
+                <button onClick={() => setViewingUser(null)} className="text-gray-400 hover:text-gray-600"><FaTimes className="text-xl" /></button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <h3 className="font-medium text-gray-900 mb-3">Contact Information</h3>
                   <div className="space-y-3">
-                    <div className="flex items-center">
-                      <FaEnvelope className="text-gray-400 mr-3" />
-                      <div>
-                        <div className="text-sm text-gray-500">Email</div>
-                        <div className="font-medium">{viewingUser.email}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <FaPhone className="text-gray-400 mr-3" />
-                      <div>
-                        <div className="text-sm text-gray-500">Phone</div>
-                        <div className="font-medium">{viewingUser.phone}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <FaUser className="text-gray-400 mr-3" />
-                      <div>
-                        <div className="text-sm text-gray-500">Address</div>
-                        <div className="font-medium">{viewingUser.address}</div>
-                      </div>
-                    </div>
+                    <div className="flex items-center"><FaEnvelope className="text-gray-400 mr-3" /> <div><div className="text-sm text-gray-500">Email</div><div className="font-medium">{viewingUser.email}</div></div></div>
+                    <div className="flex items-center"><FaPhone className="text-gray-400 mr-3" /> <div><div className="text-sm text-gray-500">Phone</div><div className="font-medium">{viewingUser.phone}</div></div></div>
+                    <div className="flex items-center"><FaUser className="text-gray-400 mr-3" /> <div><div className="text-sm text-gray-500">Address</div><div className="font-medium">{viewingUser.address || 'N/A'}</div></div></div>
                   </div>
                 </div>
-
                 <div>
-                  <h3 className="font-medium text-gray-900 mb-3">Account Information</h3>
+                  <h3 className="font-medium text-gray-900 mb-3">Professional Information</h3>
                   <div className="space-y-3">
-                    <div className="flex items-center">
-                      <FaCalendar className="text-gray-400 mr-3" />
-                      <div>
-                        <div className="text-sm text-gray-500">Join Date</div>
-                        <div className="font-medium">{viewingUser.joinDate}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <FaCalendar className="text-gray-400 mr-3" />
-                      <div>
-                        <div className="text-sm text-gray-500">Last Login</div>
-                        <div className="font-medium">{viewingUser.lastLogin}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <div className={`w-3 h-3 rounded-full mr-3 ${viewingUser.status?.toLowerCase() === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
-                      <div>
-                        <div className="text-sm text-gray-500">Status</div>
-                        <div className="font-medium">
-                          {viewingUser.status.charAt(0).toUpperCase() + viewingUser.status.slice(1)}
-                        </div>
-                      </div>
-                    </div>
+                    <div className="flex items-center"><FaUserMd className="text-gray-400 mr-3" /> <div><div className="text-sm text-gray-500">Department</div><div className="font-medium">{viewingUser.department || 'N/A'}</div></div></div>
+                    <div className="flex items-center"><FaPills className="text-gray-400 mr-3" /> <div><div className="text-sm text-gray-500">Specialization</div><div className="font-medium">{viewingUser.specialization || 'N/A'}</div></div></div>
                   </div>
                 </div>
-
-                {(viewingUser.department || viewingUser.specialization) && (
-                  <div className="md:col-span-2">
-                    <h3 className="font-medium text-gray-900 mb-3">Professional Information</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      {viewingUser.department !== 'N/A' && (
-                        <div>
-                          <div className="text-sm text-gray-500">Department</div>
-                          <div className="font-medium">{viewingUser.department}</div>
-                        </div>
-                      )}
-                      {viewingUser.specialization !== 'N/A' && (
-                        <div>
-                          <div className="text-sm text-gray-500">Specialization</div>
-                          <div className="font-medium">{viewingUser.specialization}</div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
 
               <div className="flex gap-3 mt-8">
-                <button
-                  onClick={() => {
-                    setEditingUser(viewingUser);
-                    setViewingUser(null);
-                  }}
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
-                >
-                  Edit User
-                </button>
-                <button
-                  onClick={() => handleResetPassword(viewingUser.id)}
-                  className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg flex items-center justify-center"
-                >
-                  <FaKey className="mr-2" />
-                  Reset Password
-                </button>
-                <button
-                  onClick={() => setViewingUser(null)}
-                  className="flex-1 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium rounded-lg"
-                >
-                  Close
-                </button>
+                <button onClick={() => { setEditingUser(viewingUser); setViewingUser(null); }} className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg">Edit User</button>
+                <button onClick={() => setViewingUser(null)} className="flex-1 py-3 bg-gray-100 hover:bg-gray-400 text-gray-800 font-medium rounded-lg">Close</button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Users Table */}
         <div className="bg-white rounded-xl shadow overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort('name')}
-                  >
-                    <div className="flex items-center">
-                      User
-                      {sortBy === 'name' && (
-                        <span className="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort('joinDate')}
-                  >
-                    <div className="flex items-center">
-                      Join Date
-                      {sortBy === 'joinDate' && (
-                        <span className="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('name')}>User {sortBy === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -637,79 +431,25 @@ const UserManagement = () => {
                   <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10">
-                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                            <span className="text-blue-600 font-medium">
-                              {getRoleIcon(user.role)}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
-                        </div>
+                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3 font-bold text-blue-600">{getRoleIcon(user.role)}</div>
+                        <div><div className="text-sm font-medium text-gray-900">{user.name}</div><div className="text-sm text-gray-500">{user.email}</div></div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{user.phone}</div>
-                      <div className="text-sm text-gray-500">{user.department}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleColor(user.role)}`}>
-                          {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                        </span>
-                      </div>
-                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900">{user.phone}</div></td>
+                    <td className="px-6 py-4 whitespace-nowrap"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role)}`}>{user.role}</span></td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(user.status)}`}>
-                          {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-                        </span>
-                        <button
-                          onClick={() => handleStatusToggle(user.id)}
-                          className={`text-xs px-2 py-1 rounded ${user.status?.toLowerCase() === 'active'
-                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                            }`}
-                        >
-                          {user.status?.toLowerCase() === 'active' ? 'Deactivate' : 'Activate'}
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.status)}`}>{user.status || 'active'}</span>
+                        <button onClick={() => handleStatusToggle(user.id, user.status)} className={`text-xs px-2 py-1 rounded ${user.status === 'active' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                          {user.status === 'active' ? 'Deactivate' : 'Activate'}
                         </button>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {user.joinDate}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
-                        <button
-                          onClick={() => setViewingUser(user)}
-                          className="text-blue-600 hover:text-blue-900 p-2 rounded-full hover:bg-blue-50"
-                          title="View Details"
-                        >
-                          <FaEye />
-                        </button>
-                        <button
-                          onClick={() => setEditingUser(user)}
-                          className="text-green-600 hover:text-green-900 p-2 rounded-full hover:bg-green-50"
-                          title="Edit"
-                        >
-                          <FaEdit />
-                        </button>
-                        <button
-                          onClick={() => handleResetPassword(user.id)}
-                          className="text-purple-600 hover:text-purple-900 p-2 rounded-full hover:bg-purple-50"
-                          title="Reset Password"
-                        >
-                          <FaKey />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(user.id)}
-                          className="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-50"
-                          title="Delete"
-                        >
-                          <FaTrash />
-                        </button>
+                        <button onClick={() => setViewingUser(user)} className="text-blue-600 hover:text-blue-900 px-2 py-1 rounded-lg hover:bg-blue-50" title="View"><FaEye /></button>
+                        <button onClick={() => setEditingUser(user)} className="text-green-600 hover:text-green-900 px-2 py-1 rounded-lg hover:bg-green-50" title="Edit"><FaEdit /></button>
+                        <button onClick={() => handleDelete(user.id)} className="text-red-600 hover:text-red-900 px-2 py-1 rounded-lg hover:bg-red-50" title="Delete"><FaTrash /></button>
                       </div>
                     </td>
                   </tr>
@@ -717,107 +457,20 @@ const UserManagement = () => {
               </tbody>
             </table>
           </div>
-
-          <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200">
-            <div className="flex-1">
-              <p className="text-sm text-gray-700">
-                Showing <span className="font-medium">{filteredUsers.length}</span> of{' '}
-                <span className="font-medium">{users.length}</span> users
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                className="px-3 py-1 text-sm border rounded-lg hover:bg-gray-100 disabled:opacity-50"
-                disabled
-              >
-                Previous
-              </button>
-              <button
-                className="px-3 py-1 text-sm border rounded-lg hover:bg-gray-100"
-              >
-                Next
-              </button>
-            </div>
-          </div>
         </div>
 
-        {/* Summary Section */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white rounded-xl shadow p-6">
-            <h3 className="font-bold text-gray-900 mb-4">User Statistics</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Total Users</span>
-                <span className="font-bold">{users.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Active Users</span>
-                <span className="font-bold text-green-600">
-                  {users.filter(u => u.status?.toLowerCase() === 'active').length}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Inactive Users</span>
-                <span className="font-bold text-red-600">
-                  {users.filter(u => u.status === 'inactive').length}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">New This Month</span>
-                <span className="font-bold text-blue-600">
-                  {users.filter(u => {
-                    const joinDate = new Date(u.joinDate);
-                    const now = new Date();
-                    return joinDate.getMonth() === now.getMonth() &&
-                      joinDate.getFullYear() === now.getFullYear();
-                  }).length}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow p-6 md:col-span-2">
             <h3 className="font-bold text-gray-900 mb-4">Quick Actions</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <button
-                onClick={() => {
-                  setEditingUser(null);
-                  setFormData({ ...formData, role: 'doctor' });
-                  setShowForm(true);
-                }}
-                className="p-4 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition text-center"
-              >
-                <FaUserMd className="text-2xl mx-auto mb-2" />
-                <div className="font-medium">Add Doctor</div>
-              </button>
-              <button
-                onClick={() => {
-                  setEditingUser(null);
-                  setFormData({ ...formData, role: 'patient' });
-                  setShowForm(true);
-                }}
-                className="p-4 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg transition text-center"
-              >
-                <FaUser className="text-2xl mx-auto mb-2" />
-                <div className="font-medium">Add Patient</div>
-              </button>
-              <button
-                onClick={() => {
-                  setEditingUser(null);
-                  setFormData({ ...formData, role: 'pharmacist' });
-                  setShowForm(true);
-                }}
-                className="p-4 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg transition text-center"
-              >
-                <FaPills className="text-2xl mx-auto mb-2" />
-                <div className="font-medium">Add Pharmacist</div>
-              </button>
-              <button
-                onClick={() => alert('Bulk import functionality coming soon!')}
-                className="p-4 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg transition text-center"
-              >
+            <div className="grid grid-cols-2 gap-4">
+              <button onClick={() => fileInputRef.current.click()} className="p-4 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg transition text-center shadow-sm">
                 <FaUserPlus className="text-2xl mx-auto mb-2" />
                 <div className="font-medium">Bulk Import</div>
+                <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept=".json" />
+              </button>
+              <button onClick={() => { setSearchTerm(''); setRoleFilter('all'); setStatusFilter('all'); }} className="p-4 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg transition text-center shadow-sm">
+                <FaFilter className="text-2xl mx-auto mb-2" />
+                <div className="font-medium">Reset Filters</div>
               </button>
             </div>
           </div>

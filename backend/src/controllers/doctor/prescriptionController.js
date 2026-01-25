@@ -61,8 +61,8 @@ export const createPrescription = async (req, res) => {
 
         // Create Prescription
         const [result] = await db.query(
-            'INSERT INTO prescriptions (patient_id, doctor_id, doctor_name, notes, status) VALUES (?, ?, ?, ?, ?)',
-            [patientId, doctorId, doctorName, instructions, 'PENDING']
+            'INSERT INTO prescriptions (patient_id, doctor_id, diagnostic, status) VALUES (?, ?, ?, ?)',
+            [patientId, doctorId, instructions, 'PENDING']
         );
 
         const prescriptionId = result.insertId;
@@ -81,8 +81,8 @@ export const createPrescription = async (req, res) => {
 
             for (const m of medicines) {
                 await db.query(
-                    'INSERT INTO prescription_items (prescription_id, medicine_name, strength, quantity) VALUES (?, ?, ?, ?)',
-                    [prescriptionId, m.name, m.dosage, 1] // Quantity hardcoded to 1 for now
+                    'INSERT INTO prescription_items (prescription_id, medicine_name, strength, quantity, frequency, duration) VALUES (?, ?, ?, ?, ?, ?)',
+                    [prescriptionId, m.name, m.dosage, 1, m.frequency, m.duration]
                 );
             }
         }
@@ -93,3 +93,61 @@ export const createPrescription = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+export const updatePrescription = async (req, res) => {
+    const doctorId = req.user.id;
+    const { id } = req.params;
+    const { medicines, instructions, status } = req.body;
+
+    try {
+        // Verify ownership
+        const [pres] = await db.query('SELECT doctor_id FROM prescriptions WHERE id = ?', [id]);
+        if (pres.length === 0) return res.status(404).json({ message: 'Prescription not found' });
+        if (pres[0].doctor_id !== doctorId) return res.status(403).json({ message: 'Unauthorized' });
+
+        // Update main record
+        await db.query(
+            'UPDATE prescriptions SET diagnostic = ?, status = ? WHERE id = ?',
+            [instructions, status, id]
+        );
+
+        // Update items: delete old and insert new (simplest way)
+        await db.query('DELETE FROM prescription_items WHERE prescription_id = ?', [id]);
+        if (medicines && medicines.length > 0) {
+            for (const m of medicines) {
+                await db.query(
+                    'INSERT INTO prescription_items (prescription_id, medicine_name, strength, quantity, frequency, duration) VALUES (?, ?, ?, ?, ?, ?)',
+                    [id, m.name, m.dosage || m.medicine_name, 1, m.frequency, m.duration]
+                );
+            }
+        }
+
+        res.json({ message: 'Prescription updated successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const deletePrescription = async (req, res) => {
+    const doctorId = req.user.id;
+    const { id } = req.params;
+
+    try {
+        // Verify ownership
+        const [pres] = await db.query('SELECT doctor_id FROM prescriptions WHERE id = ?', [id]);
+        if (pres.length === 0) return res.status(404).json({ message: 'Prescription not found' });
+        if (pres[0].doctor_id !== doctorId) return res.status(403).json({ message: 'Unauthorized' });
+
+        // Delete items first
+        await db.query('DELETE FROM prescription_items WHERE prescription_id = ?', [id]);
+        // Delete prescription
+        await db.query('DELETE FROM prescriptions WHERE id = ?', [id]);
+
+        res.json({ message: 'Prescription deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+

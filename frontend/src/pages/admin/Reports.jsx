@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../../services/api';
 import Sidebar from '../../components/Sidebar';
 import { FaDownload, FaFilter, FaChartBar, FaUsers, FaUserMd, FaCalendarAlt, FaMoneyBillWave, FaPills } from 'react-icons/fa';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const Reports = () => {
   const [reportType, setReportType] = useState('financial');
@@ -13,7 +15,8 @@ const Reports = () => {
   const [patientData, setPatientData] = useState([]);
   const [appointmentData, setAppointmentData] = useState([]);
   const [inventoryValue, setInventoryValue] = useState([]);
-  const departmentRevenue = [ // Placeholder as we didn't implement this specifically yet, or can derive from inventory/appointments?
+
+  const departmentRevenue = [
     { department: 'Cardiology', revenue: 45600, patients: 234 },
     { department: 'Pediatrics', revenue: 38900, patients: 189 },
     { department: 'Orthopedics', revenue: 52300, patients: 156 },
@@ -56,7 +59,54 @@ const Reports = () => {
   ];
 
   const handleDownloadReport = () => {
-    alert(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report for ${dateRange} period downloaded.`);
+    const doc = new jsPDF();
+
+    // Add Hospital Name and Header
+    doc.setFontSize(22);
+    doc.setTextColor(41, 128, 185);
+    doc.text("Rural Siddha Hospital Thellipalai", 105, 20, { align: "center" });
+
+    doc.setFontSize(16);
+    doc.setTextColor(52, 73, 94);
+    doc.text(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report - ${dateRange.charAt(0).toUpperCase() + dateRange.slice(1)}`, 105, 30, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.setTextColor(127, 140, 141);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 105, 38, { align: "center" });
+
+    // Summary Section
+    doc.setFontSize(14);
+    doc.setTextColor(44, 62, 80);
+    doc.text("Summary Highlights", 14, 50);
+
+    const summaryData = summaryStats.map(stat => [stat.title, stat.value, stat.change]);
+    autoTable(doc, {
+      startY: 55,
+      head: [['Metric', 'Value', 'Growth/Trend']],
+      body: summaryData,
+      theme: 'grid',
+      headStyles: { fillStyle: [41, 128, 185] }
+    });
+
+    if (reportType === 'financial') {
+      doc.text("Financial Breakdown", 14, doc.lastAutoTable.finalY + 15);
+      autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 20,
+        head: [['Period', 'Revenue', 'Expenses', 'Net Profit']],
+        body: financialData.map(d => [d.month, `$${d.revenue.toLocaleString()}`, `$${d.expenses.toLocaleString()}`, `$${d.profit.toLocaleString()}`]),
+        theme: 'striped'
+      });
+    } else if (reportType === 'patient') {
+      doc.text("Patient Growth Data", 14, doc.lastAutoTable.finalY + 15);
+      autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 20,
+        head: [['Period', 'New Patients', 'Returning', 'Total']],
+        body: patientData.map(d => [d.month, d.new, d.returning, d.total]),
+        theme: 'striped'
+      });
+    }
+
+    doc.save(`${reportType}_report_${dateRange}.pdf`);
   };
 
   const renderFinancialReport = () => (
@@ -84,7 +134,7 @@ const Reports = () => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip />
+              <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
               <Legend />
               <Bar dataKey="revenue" fill="#0088FE" name="Revenue" />
               <Bar dataKey="expenses" fill="#FF8042" name="Expenses" />
@@ -103,7 +153,7 @@ const Reports = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" />
                 <YAxis type="category" dataKey="department" />
-                <Tooltip />
+                <Tooltip formatter={(value) => typeof value === 'number' && value > 1000 ? `$${value.toLocaleString()}` : value} />
                 <Legend />
                 <Bar dataKey="revenue" fill="#8884D8" name="Revenue ($)" />
                 <Bar dataKey="patients" fill="#82ca9d" name="Patients" />
@@ -132,7 +182,7 @@ const Reports = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -319,16 +369,16 @@ const Reports = () => {
           </div>
           <button
             onClick={handleDownloadReport}
-            className="mt-4 md:mt-0 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center"
+            className="mt-4 md:mt-0 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center shadow-lg transform active:scale-95 transition"
           >
             <FaDownload className="mr-2" />
-            Download Report
+            Download Summary PDF
           </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
           {summaryStats.map((stat, index) => (
-            <div key={index} className={`${stat.color} border rounded-xl p-4`}>
+            <div key={index} className={`${stat.color} border rounded-xl p-4 shadow-sm hover:shadow-md transition`}>
               <div className="flex items-center justify-between mb-2">
                 {stat.icon}
                 <span className={`text-sm font-medium ${stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
@@ -345,9 +395,9 @@ const Reports = () => {
           <div className="flex flex-wrap gap-4">
             <button
               onClick={() => setReportType('financial')}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${reportType === 'financial'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition ${reportType === 'financial'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
             >
               <FaMoneyBillWave />
@@ -355,9 +405,9 @@ const Reports = () => {
             </button>
             <button
               onClick={() => setReportType('patient')}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${reportType === 'patient'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition ${reportType === 'patient'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
             >
               <FaUsers />
@@ -365,9 +415,9 @@ const Reports = () => {
             </button>
             <button
               onClick={() => setReportType('operational')}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${reportType === 'operational'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition ${reportType === 'operational'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
             >
               <FaChartBar />
@@ -375,9 +425,9 @@ const Reports = () => {
             </button>
             <button
               onClick={() => setReportType('inventory')}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${reportType === 'inventory'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition ${reportType === 'inventory'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
             >
               <FaPills />
@@ -451,16 +501,25 @@ const Reports = () => {
         <div className="mt-8 bg-white rounded-xl shadow p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-4">Report Generation Options</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
-              <h4 className="font-bold text-gray-900 mb-2">Daily Summary</h4>
-              <p className="text-sm text-gray-600">Generate daily activity report</p>
+            <div
+              onClick={() => { setDateRange('monthly'); handleDownloadReport(); }}
+              className="p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition group"
+            >
+              <h4 className="font-bold text-gray-900 mb-2 group-hover:text-blue-700">Daily Summary</h4>
+              <p className="text-sm text-gray-600">Download current activity report</p>
             </div>
-            <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
-              <h4 className="font-bold text-gray-900 mb-2">Monthly Performance</h4>
+            <div
+              onClick={() => { setDateRange('monthly'); setReportType('operational'); handleDownloadReport(); }}
+              className="p-4 border rounded-lg hover:bg-green-50 hover:border-green-300 cursor-pointer transition group"
+            >
+              <h4 className="font-bold text-gray-900 mb-2 group-hover:text-green-700">Monthly Performance</h4>
               <p className="text-sm text-gray-600">Comprehensive monthly metrics</p>
             </div>
-            <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
-              <h4 className="font-bold text-gray-900 mb-2">Custom Report</h4>
+            <div
+              onClick={() => { setDateRange('yearly'); handleDownloadReport(); }}
+              className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-300 cursor-pointer transition group"
+            >
+              <h4 className="font-bold text-gray-900 mb-2 group-hover:text-purple-700">Custom Report</h4>
               <p className="text-sm text-gray-600">Create custom report with filters</p>
             </div>
           </div>

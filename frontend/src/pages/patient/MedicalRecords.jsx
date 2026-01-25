@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
 import { jsPDF } from 'jspdf';
 import {
@@ -16,17 +17,52 @@ const MedicalRecords = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('All');
     const [downloading, setDownloading] = useState(false);
+    const [prescriptions, setPrescriptions] = useState([]);
+    const [medicalReports, setMedicalReports] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const prescriptions = [
-        { id: 1, doctor: 'Dr. Jane Smith', date: '2026-01-15', meds: 'Amoxicillin, Paracetamol', diagnostic: 'Post-viral cough', status: 'Active' },
-        { id: 2, doctor: 'Dr. John Miller', date: '2025-12-10', meds: 'Cetirizine', diagnostic: 'Allergic Rhinitis', status: 'Completed' },
-        { id: 3, doctor: 'Dr. Sarah Wilson', date: '2025-11-05', meds: 'Hydrocortisone Cream', diagnostic: 'Dermatitis', status: 'Completed' }
-    ];
+    useEffect(() => {
+        fetchMedicalRecords();
+    }, []);
 
-    const medicalReports = [
-        { id: 1, title: 'Blood Test Report', date: '2026-01-02', clinic: 'Community Clinic Lab', type: 'Laboratory' },
-        { id: 2, title: 'X-Ray Thorax', date: '2025-11-20', clinic: 'Community Imaging Center', type: 'Radiology' }
-    ];
+    const fetchMedicalRecords = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('http://localhost:5000/api/patient/medical-records', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+
+                // Map Prescriptions
+                if (data.prescriptions) {
+                    setPrescriptions(data.prescriptions.map(p => ({
+                        id: p.id,
+                        doctor: p.doctor || 'Unknown Doctor',
+                        date: p.date ? new Date(p.date).toISOString().split('T')[0] : 'N/A',
+                        meds: p.meds || 'Medicine',
+                        diagnostic: p.diagnostic || 'General',
+                        status: p.status || 'Completed'
+                    })));
+                }
+
+                // Map Reports
+                if (data.reports) {
+                    setMedicalReports(data.reports.map(r => ({
+                        id: r.id,
+                        title: r.title || 'Medical Report',
+                        date: r.date ? new Date(r.date).toISOString().split('T')[0] : 'N/A',
+                        clinic: r.clinic || 'Community Clinic',
+                        type: r.type || 'General'
+                    })));
+                }
+            }
+        } catch (err) {
+            console.error("Failed to fetch records", err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const filteredPrescriptions = prescriptions.filter(p =>
         (p.meds.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -178,7 +214,7 @@ const MedicalRecords = () => {
                                     </div>
                                 ))
                             ) : (
-                                <div className="text-center py-12 text-gray-400 font-medium">No prescriptions found.</div>
+                                <div className="text-center py-12 text-gray-400 font-medium">No prescription history found.</div>
                             )}
                         </div>
                     )}

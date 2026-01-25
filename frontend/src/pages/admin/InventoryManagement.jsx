@@ -29,6 +29,7 @@ const InventoryManagement = () => {
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [showForm, setShowForm] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     category: '',
@@ -95,7 +96,6 @@ const InventoryManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       await api.post('/inventory', formData);
       alert('Inventory item added successfully!');
@@ -135,16 +135,8 @@ const InventoryManagement = () => {
     const newStock = parseInt(prompt(`Enter new stock quantity for ${item.name}:`, item.stock));
     if (!isNaN(newStock) && newStock >= 0) {
       try {
-        // We can reuse the put endpoint or a specific one. My controller uses generic update, so I need to send full body or patch.
-        // The controller replaces fields. I better send the full object with updated stock.
-        // Ideally we should have a PATCH endpoint for partial updates.
-        // For now, I will construct the full object or just assume the controller handles it if I send all fields.
-        // Wait, my controller (Step 116) expects all fields.
-        // I'll send the item merged with new stock.
         const updatedItem = { ...item, stock: newStock };
         await api.put(`/inventory/${item.id}`, updatedItem);
-
-        // Optimistic update or fetch
         fetchInventory();
         alert('Stock updated successfully');
       } catch (error) {
@@ -543,7 +535,21 @@ const InventoryManagement = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => alert(`Editing ${item.name}`)}
+                          onClick={() => {
+                            setEditingItem(item);
+                            setFormData({
+                              name: item.name,
+                              category: item.category,
+                              stock: item.stock,
+                              unit: item.unit,
+                              reorderLevel: item.reorderLevel,
+                              price: item.price,
+                              supplier: item.supplier,
+                              expiryDate: item.expiryDate,
+                              location: item.location
+                            });
+                            setShowForm(true);
+                          }}
                           className="text-green-600 hover:text-green-900"
                           title="Edit"
                         >
@@ -606,8 +612,8 @@ const InventoryManagement = () => {
             )}
           </div>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 

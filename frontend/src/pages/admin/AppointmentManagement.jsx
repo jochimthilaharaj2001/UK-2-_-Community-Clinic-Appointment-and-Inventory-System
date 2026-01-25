@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import api from '../../services/api';
+import { useLocation } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
 import {
   FaSearch,
@@ -26,28 +27,37 @@ import {
 import { format, addDays } from 'date-fns';
 
 const AppointmentManagement = () => {
+  const location = useLocation();
   const [appointments, setAppointments] = useState([]);
   const [doctors, setDoctors] = useState([]);
-
-  useEffect(() => {
-    fetchAppointments();
-    fetchDoctors();
-  }, []);
+  const [loading, setLoading] = useState(true);
 
   const fetchAppointments = async () => {
     try {
       const response = await api.get('/appointments');
-      setAppointments(response.data);
+      const data = response.data;
+      if (Array.isArray(data)) {
+        const mapped = data.map(app => ({
+          ...app,
+          patientName: app.patient_name || app.patientName || 'N/A',
+          doctorName: app.doctor_name || app.doctorName || 'N/A',
+          date: app.appointment_date ? new Date(app.appointment_date).toISOString().split('T')[0] : (app.date || ''),
+          time: app.appointment_time || app.time || '',
+          patientId: app.patient_id ? `P${app.patient_id}` : (app.patientId || 'N/A')
+        }));
+        setAppointments(mapped);
+      }
     } catch (error) {
       console.error('Failed to fetch appointments', error);
-      // alert('Failed to load appointments');
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchDoctors = async () => {
     try {
       const response = await api.get('/doctors');
-      setDoctors(response.data); // Assuming data is array of doctors
+      setDoctors(response.data);
     } catch (error) {
       console.error('Failed to fetch doctors', error);
     }
@@ -83,7 +93,16 @@ const AppointmentManagement = () => {
   };
   const [formData, setFormData] = useState(defaultFormData);
 
-  // Removed static doctors list, using state instead.
+  useEffect(() => {
+    fetchAppointments();
+    fetchDoctors();
+
+    // Handle quick action from dashboard
+    const queryParams = new URLSearchParams(location.search);
+    if (queryParams.get('action') === 'schedule') {
+      setShowForm(true);
+    }
+  }, [location]);
 
   const appointmentTypes = [
     { value: 'regular', label: 'Regular Checkup', color: 'bg-green-100 text-green-800' },
@@ -127,11 +146,11 @@ const AppointmentManagement = () => {
 
   const filteredAppointments = appointments
     .filter(app => {
-      const matchesSearch = app.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        app.doctorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        app.patientId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        app.contact?.includes(searchTerm) ||
-        app.reason?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = (app.patientName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (app.doctorName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (app.patientId?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (app.contact || '').includes(searchTerm) ||
+        (app.reason?.toLowerCase() || '').includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
       const matchesDate = dateFilter === 'all' || app.date === dateFilter; // might need more robust date compare for ranges
       const matchesDoctor = doctorFilter === 'all' || app.doctorId == doctorFilter; // loose compare for string/int mismatch
@@ -146,13 +165,13 @@ const AppointmentManagement = () => {
       }
       if (sortBy === 'patientName') {
         return sortOrder === 'asc'
-          ? a.patientName?.localeCompare(b.patientName)
-          : b.patientName?.localeCompare(a.patientName);
+          ? (a.patientName || '').localeCompare(b.patientName || '')
+          : (b.patientName || '').localeCompare(a.patientName || '');
       }
       if (sortBy === 'doctorName') {
         return sortOrder === 'asc'
-          ? a.doctorName?.localeCompare(b.doctorName)
-          : b.doctorName?.localeCompare(a.doctorName);
+          ? (a.doctorName || '').localeCompare(b.doctorName || '')
+          : (b.doctorName || '').localeCompare(a.doctorName || '');
       }
       return 0;
     });
@@ -222,14 +241,11 @@ const AppointmentManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       if (editingAppointment) {
-        // Update existing appointment
         await api.put(`/appointments/${editingAppointment.id}`, formData);
         alert('Appointment updated successfully!');
       } else {
-        // Add new appointment
         await api.post('/appointments', formData);
         alert('Appointment scheduled successfully!');
       }

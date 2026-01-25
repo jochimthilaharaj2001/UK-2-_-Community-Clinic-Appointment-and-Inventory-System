@@ -77,6 +77,73 @@ export const login = async (req, res) => {
             }
         }
 
+        // Check in pharmacists table
+        const [pharmacists] = await db.query('SELECT * FROM pharmacists WHERE email = ?', [email]);
+        if (pharmacists.length > 0) {
+            const pharmacist = pharmacists[0];
+            const isMatch = await bcrypt.compare(password, pharmacist.password);
+
+            if (isMatch) {
+                const token = jwt.sign(
+                    { id: pharmacist.id, role: 'pharmacist', name: pharmacist.name },
+                    process.env.JWT_SECRET || 'secret',
+                    { expiresIn: '1d' }
+                );
+                return res.json({
+                    token,
+                    user: {
+                        id: pharmacist.id,
+                        name: pharmacist.name,
+                        email: pharmacist.email,
+                        role: 'pharmacist'
+                    }
+                });
+            }
+        }
+
+        // Check in patients table
+        // For patients, handle email as login
+        const [patients] = await db.query('SELECT * FROM patients WHERE email = ?', [email]);
+        if (patients.length > 0) {
+            const patient = patients[0];
+
+            // If patient has a password (some might not if they were just records)
+            if (patient.password) {
+                const isMatch = await bcrypt.compare(password, patient.password);
+                if (isMatch) {
+                    const token = jwt.sign(
+                        { id: patient.id, role: 'patient', name: patient.name },
+                        process.env.JWT_SECRET || 'secret',
+                        { expiresIn: '1d' }
+                    );
+                    return res.json({
+                        token,
+                        user: {
+                            id: patient.id,
+                            name: patient.name,
+                            email: patient.email,
+                            role: 'patient'
+                        }
+                    });
+                }
+            } else if (password === '123456') { // Demo fallback if password not set
+                const token = jwt.sign(
+                    { id: patient.id, role: 'patient', name: patient.name },
+                    process.env.JWT_SECRET || 'secret',
+                    { expiresIn: '1d' }
+                );
+                return res.json({
+                    token,
+                    user: {
+                        id: patient.id,
+                        name: patient.name,
+                        email: patient.email,
+                        role: 'patient'
+                    }
+                });
+            }
+        }
+
         return res.status(401).json({ message: 'Invalid credentials' });
     } catch (error) {
         console.error(error);

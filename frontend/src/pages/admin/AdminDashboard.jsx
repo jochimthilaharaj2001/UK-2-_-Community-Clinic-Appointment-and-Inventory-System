@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
+import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
 import StatsCard from '../../components/StatsCard';
 import {
@@ -8,20 +9,22 @@ import {
 } from 'react-icons/fa';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalPatients: 0,
     totalDoctors: 0,
     todayAppointments: 0,
     lowStockItems: 0,
     monthlyRevenue: 0,
-    satisfactionRate: 0
+    satisfactionRate: 0,
+    totalUsers: 0
   });
+
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // We only have a few stats from the backend currently (doctors, patients, appointments, users)
-        // We will map them and keep placeholders for others until backend endpoints exist.
         const response = await api.get('/dashboard/stats');
         const data = response.data;
 
@@ -29,15 +32,16 @@ const AdminDashboard = () => {
           ...prev,
           totalPatients: data.patients || 0,
           totalDoctors: data.doctors || 0,
-          todayAppointments: data.appointments || 0, // This is total appointments for now
-          // Maintain placeholders for now or if backend sends 0
+          todayAppointments: data.appointments || 0,
           monthlyRevenue: data.revenue || 0,
+          totalUsers: data.users || 0
         }));
       } catch (error) {
         console.error("Failed to fetch dashboard stats", error);
+      } finally {
+        setLoading(false);
       }
     };
-
     fetchStats();
   }, []);
 
@@ -117,6 +121,11 @@ const AdminDashboard = () => {
 
       <div className="flex-1 p-6 ml-64">
         <div className="mb-8">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-blue-600 font-bold text-xl">Rural Siddha Hospital</span>
+            <span className="text-gray-400">|</span>
+            <span className="text-gray-600 font-medium">Thellipalai</span>
+          </div>
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="text-gray-600">Welcome back! Here's what's happening with your clinic today.</p>
         </div>
@@ -131,9 +140,9 @@ const AdminDashboard = () => {
           <div className="bg-white rounded-2xl shadow p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-gray-900">Recent Activities</h2>
-              <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+              <Link to="/admin/reports" className="text-blue-600 hover:text-blue-800 text-sm font-medium">
                 View All →
-              </button>
+              </Link>
             </div>
             <div className="space-y-4">
               {recentActivities.map((activity) => (
@@ -156,22 +165,22 @@ const AdminDashboard = () => {
           <div className="bg-white rounded-2xl shadow p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-4">
-              <a href="/admin/users" className="p-4 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition text-center block">
+              <Link to="/admin/users" className="p-4 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition text-center block">
                 <div className="text-2xl mb-2">👥</div>
                 <div className="font-medium">Add User</div>
-              </a>
-              <a href="/admin/appointments" className="p-4 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg transition text-center block">
+              </Link>
+              <Link to="/admin/appointments?action=schedule" className="p-4 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg transition text-center block">
                 <div className="text-2xl mb-2">📅</div>
                 <div className="font-medium">Schedule</div>
-              </a>
-              <a href="/admin/inventory" className="p-4 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg transition text-center block">
+              </Link>
+              <Link to="/admin/inventory" className="p-4 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg transition text-center block">
                 <div className="text-2xl mb-2">💊</div>
                 <div className="font-medium">Inventory</div>
-              </a>
-              <a href="/admin/reports" className="p-4 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 rounded-lg transition text-center block">
+              </Link>
+              <Link to="/admin/reports" className="p-4 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 rounded-lg transition text-center block">
                 <div className="text-2xl mb-2">📊</div>
                 <div className="font-medium">Reports</div>
-              </a>
+              </Link>
             </div>
 
             <div className="mt-8 pt-6 border-t border-gray-200">

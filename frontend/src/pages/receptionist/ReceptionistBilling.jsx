@@ -1,63 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
 import { FaSearch, FaPlus, FaPrint, FaFileInvoiceDollar, FaMoneyBillWave, FaCreditCard, FaCalendarAlt, FaUser, FaDownload } from 'react-icons/fa';
 
 const ReceptionistBilling = () => {
-const [bills] = useState([
-  { 
-    id: 1, 
-    invoiceNo: 'INV-2024-001',
-    patientName: 'Raja',
-    patientId: 'PAT001',
-    date: '2024-01-18',
-    services: ['Siddha Consultation', 'Herbal Medicine Dispensing'],
-    totalAmount: 1500.00,
-    paidAmount: 1500.00,
-    balance: 0.00,
-    paymentMethod: 'Credit Card',
-    status: 'Paid'
-  },
-  { 
-    id: 2, 
-    invoiceNo: 'INV-2024-002',
-    patientName: 'Sivakumar',
-    patientId: 'PAT002',
-    date: '2024-01-18',
-    services: ['Siddha Consultation', 'Varmam Therapy'],
-    totalAmount: 5500.00,
-    paidAmount: 2500.00,
-    balance: 3000.00,
-    paymentMethod: 'Cash',
-    status: 'Partial'
-  },
-  { 
-    id: 3, 
-    invoiceNo: 'INV-2024-003',
-    patientName: 'Karthikeyan',
-    patientId: 'PAT003',
-    date: '2024-01-17',
-    services: ['Siddha Consultation', 'Thokkanam (Massage Therapy)'],
-    totalAmount: 2000.00,
-    paidAmount: 0.00,
-    balance: 2000.00,
-    paymentMethod: 'Pending',
-    status: 'Unpaid'
-  },
-  { 
-    id: 4, 
-    invoiceNo: 'INV-2024-004',
-    patientName: 'Vijayalakshmi',
-    patientId: 'PAT004',
-    date: '2024-01-16',
-    services: ['Siddha Consultation', 'External Oil Application'],
-    totalAmount: 2500.00,
-    paidAmount: 2500.00,
-    balance: 0.00,
-    paymentMethod: 'Insurance',
-    status: 'Paid'
-  },
-]);
+  const [bills, setBills] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    fetchBills();
+  }, []);
+
+  const fetchBills = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/receptionist/billing', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setBills(data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -65,22 +33,27 @@ const [bills] = useState([
   const [selectedBill, setSelectedBill] = useState(null);
   const [paymentData, setPaymentData] = useState({
     amount: '',
-    paymentMethod: 'cash',
+    method: 'cash',
     referenceNo: '',
     notes: ''
   });
+  const [showInvoiceForm, setShowInvoiceForm] = useState(false);
+  const [invoiceFormData, setInvoiceFormData] = useState({
+    patientId: '',
+    services: [{ description: '', amount: '' }]
+  });
 
   const filteredBills = bills.filter(bill => {
-    const matchesSearch = bill.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         bill.invoiceNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         bill.patientId.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (bill.patient_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (bill.invoice_no || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (bill.patient_id || '').toString().includes(searchTerm);
     const matchesStatus = statusFilter === 'all' || bill.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case 'Paid': return 'bg-green-100 text-green-800';
       case 'Partial': return 'bg-yellow-100 text-yellow-800';
       case 'Unpaid': return 'bg-red-100 text-red-800';
@@ -90,7 +63,7 @@ const [bills] = useState([
   };
 
   const getPaymentMethodColor = (method) => {
-    switch(method) {
+    switch (method) {
       case 'Credit Card': return 'text-purple-600';
       case 'Cash': return 'text-green-600';
       case 'Insurance': return 'text-blue-600';
@@ -99,21 +72,143 @@ const [bills] = useState([
   };
 
   const calculateTotal = () => {
-    const total = bills.reduce((sum, bill) => sum + bill.totalAmount, 0);
-    const paid = bills.reduce((sum, bill) => sum + bill.paidAmount, 0);
-    const balance = bills.reduce((sum, bill) => sum + bill.balance, 0);
-    
+    const total = bills.reduce((sum, bill) => sum + Number(bill.total_amount || 0), 0);
+    const paid = bills.reduce((sum, bill) => sum + Number(bill.paid_amount || 0), 0);
+    const balance = bills.reduce((sum, bill) => sum + Number(bill.balance || 0), 0);
+
     return { total, paid, balance };
   };
 
   const totals = calculateTotal();
+
+  const handleExportData = () => {
+    if (filteredBills.length === 0) {
+      alert('No data to export');
+      return;
+    }
+
+    const headers = ['Invoice No', 'Date', 'Patient Name', 'Patient ID', 'Services', 'Total Amount', 'Paid Amount', 'Balance', 'Status'];
+    const csvData = filteredBills.map(bill => [
+      `"${bill.invoice_no}"`,
+      `"${new Date(bill.created_at).toLocaleDateString()}"`,
+      `"${bill.patient_name}"`,
+      `"${bill.patient_id}"`,
+      `"${(bill.services || []).join(', ')}"`,
+      `"${Number(bill.total_amount).toFixed(2)}"`,
+      `"${Number(bill.paid_amount).toFixed(2)}"`,
+      `"${Number(bill.balance).toFixed(2)}"`,
+      `"${bill.status}"`
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => row.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `billing_report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleGenerateInvoice = () => {
+    setShowInvoiceForm(true);
+    setInvoiceFormData({
+      patientId: '',
+      services: [{ description: '', amount: '' }]
+    });
+  };
+
+  const handleAddService = () => {
+    setInvoiceFormData({
+      ...invoiceFormData,
+      services: [...invoiceFormData.services, { description: '', amount: '' }]
+    });
+  };
+
+  const handleRemoveService = (index) => {
+    const newServices = invoiceFormData.services.filter((_, i) => i !== index);
+    setInvoiceFormData({ ...invoiceFormData, services: newServices });
+  };
+
+  const handleServiceChange = (index, field, value) => {
+    const newServices = [...invoiceFormData.services];
+    newServices[index][field] = value;
+    setInvoiceFormData({ ...invoiceFormData, services: newServices });
+  };
+
+  const handleCreateInvoice = async () => {
+    if (!invoiceFormData.patientId) {
+      alert('Please enter patient ID');
+      return;
+    }
+
+    const validServices = invoiceFormData.services.filter(s => s.description && s.amount);
+    if (validServices.length === 0) {
+      alert('Please add at least one service');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/receptionist/billing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          patientId: invoiceFormData.patientId,
+          services: validServices
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(`Invoice ${data.invoiceNo} created successfully!`);
+        setShowInvoiceForm(false);
+        fetchBills();
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to create invoice');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error creating invoice');
+    }
+  };
+
+  const handleProcessPayment = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/receptionist/billing/${selectedBill.id}/pay`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(paymentData)
+      });
+      if (response.ok) {
+        setShowPaymentForm(false);
+        fetchBills();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handlePrintInvoice = (bill) => {
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
       <html>
         <head>
-          <title>Invoice ${bill.invoiceNo}</title>
+          <title>Invoice ${bill.invoice_no}</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 20px; }
             .header { text-align: center; margin-bottom: 30px; }
@@ -129,12 +224,12 @@ const [bills] = useState([
         <body>
           <div class="header">
             <h1>Clinic Invoice</h1>
-            <h3>Invoice #${bill.invoiceNo}</h3>
+            <h3>Invoice #${bill.invoice_no}</h3>
           </div>
           
           <div class="details">
-            <div><strong>Date:</strong> ${bill.date}</div>
-            <div><strong>Patient:</strong> ${bill.patientName} (${bill.patientId})</div>
+            <div><strong>Date:</strong> ${new Date(bill.created_at).toLocaleDateString()}</div>
+            <div><strong>Patient:</strong> ${bill.patient_name} (ID: ${bill.patient_id})</div>
             <div><strong>Status:</strong> ${bill.status}</div>
           </div>
           
@@ -146,25 +241,25 @@ const [bills] = useState([
               </tr>
             </thead>
             <tbody>
-              ${bill.services.map(service => `
+              ${(bill.service_details || []).map(item => `
                 <tr>
-                  <td>${service}</td>
-                  <td>$100.00</td>
+                  <td>${item.name}</td>
+                  <td>$${Number(item.amount).toFixed(2)}</td>
                 </tr>
               `).join('')}
             </tbody>
             <tfoot>
               <tr>
                 <td><strong>Total Amount:</strong></td>
-                <td><strong>$${bill.totalAmount.toFixed(2)}</strong></td>
+                <td><strong>$${Number(bill.total_amount).toFixed(2)}</strong></td>
               </tr>
               <tr>
                 <td><strong>Paid Amount:</strong></td>
-                <td><strong>$${bill.paidAmount.toFixed(2)}</strong></td>
+                <td><strong>$${Number(bill.paid_amount).toFixed(2)}</strong></td>
               </tr>
               <tr>
                 <td><strong>Balance Due:</strong></td>
-                <td><strong>$${bill.balance.toFixed(2)}</strong></td>
+                <td><strong>$${Number(bill.balance).toFixed(2)}</strong></td>
               </tr>
             </tfoot>
           </table>
@@ -180,21 +275,10 @@ const [bills] = useState([
     printWindow.print();
   };
 
-  const handleReceivePayment = (bill) => {
-    setSelectedBill(bill);
-    setPaymentData({
-      amount: bill.balance.toString(),
-      paymentMethod: 'cash',
-      referenceNo: '',
-      notes: ''
-    });
-    setShowPaymentForm(true);
-  };
-
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      
+
       <div className="flex-1 ml-64 p-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
@@ -202,7 +286,10 @@ const [bills] = useState([
             <h1 className="text-3xl font-bold text-gray-900">Billing & Payments</h1>
             <p className="text-gray-600">Manage patient invoices and payments</p>
           </div>
-          <button className="mt-4 md:mt-0 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg flex items-center">
+          <button
+            onClick={handleGenerateInvoice}
+            className="mt-4 md:mt-0 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg flex items-center"
+          >
             <FaFileInvoiceDollar className="mr-2" />
             Generate Invoice
           </button>
@@ -215,29 +302,26 @@ const [bills] = useState([
               <div className="p-3 rounded-lg bg-green-100 text-green-600">
                 <FaMoneyBillWave className="text-2xl" />
               </div>
-              <span className="text-sm font-medium text-green-600">+12%</span>
             </div>
             <h3 className="text-3xl font-bold text-gray-900 mb-2">${totals.total.toFixed(2)}</h3>
             <p className="text-gray-600">Total Billing Amount</p>
           </div>
-          
+
           <div className="bg-white rounded-2xl shadow p-6">
             <div className="flex justify-between items-start mb-4">
               <div className="p-3 rounded-lg bg-blue-100 text-blue-600">
                 <FaCreditCard className="text-2xl" />
               </div>
-              <span className="text-sm font-medium text-blue-600">+8%</span>
             </div>
             <h3 className="text-3xl font-bold text-gray-900 mb-2">${totals.paid.toFixed(2)}</h3>
             <p className="text-gray-600">Total Received</p>
           </div>
-          
+
           <div className="bg-white rounded-2xl shadow p-6">
             <div className="flex justify-between items-start mb-4">
               <div className="p-3 rounded-lg bg-red-100 text-red-600">
                 <FaFileInvoiceDollar className="text-2xl" />
               </div>
-              <span className="text-sm font-medium text-red-600">-3%</span>
             </div>
             <h3 className="text-3xl font-bold text-gray-900 mb-2">${totals.balance.toFixed(2)}</h3>
             <p className="text-gray-600">Pending Balance</p>
@@ -257,7 +341,7 @@ const [bills] = useState([
                 className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
               />
             </div>
-            
+
             <div>
               <select
                 value={statusFilter}
@@ -270,7 +354,7 @@ const [bills] = useState([
                 <option value="Unpaid">Unpaid</option>
               </select>
             </div>
-            
+
             <div>
               <input
                 type="date"
@@ -278,9 +362,12 @@ const [bills] = useState([
                 placeholder="Filter by date"
               />
             </div>
-            
+
             <div>
-              <button className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg flex items-center justify-center">
+              <button
+                onClick={handleExportData}
+                className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg flex items-center justify-center"
+              >
                 <FaDownload className="mr-2" />
                 Export Data
               </button>
@@ -302,86 +389,64 @@ const [bills] = useState([
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredBills.map((bill) => (
+                {loading ? (
+                  <tr><td colSpan="5" className="text-center py-4">Loading...</td></tr>
+                ) : filteredBills.map((bill) => (
                   <tr key={bill.id} className="hover:bg-gray-50">
                     <td className="py-4 px-4">
                       <div>
-                        <p className="font-bold text-gray-900">{bill.invoiceNo}</p>
+                        <p className="font-bold text-gray-900">{bill.invoice_no}</p>
                         <div className="flex items-center text-sm text-gray-500 mt-1">
                           <FaCalendarAlt className="mr-1" />
-                          {bill.date}
+                          {new Date(bill.created_at).toLocaleDateString()}
                         </div>
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {bill.services.map((service, index) => (
-                            <span key={index} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                              {service}
-                            </span>
-                          ))}
+                      </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex items-center">
+                        <div className="h-8 w-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mr-3">
+                          <FaUser size={14} />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{bill.patient_name}</p>
+                          <p className="text-xs text-gray-500">{bill.patient_id}</p>
                         </div>
                       </div>
                     </td>
                     <td className="py-4 px-4">
                       <div>
-                        <p className="font-medium text-gray-900">{bill.patientName}</p>
-                        <p className="text-sm text-gray-500">{bill.patientId}</p>
+                        <p className="font-bold text-gray-900">${Number(bill.total_amount).toFixed(2)}</p>
+                        <p className="text-xs text-gray-500">Balance: ${Number(bill.balance).toFixed(2)}</p>
                       </div>
                     </td>
                     <td className="py-4 px-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">Total:</span>
-                          <span className="font-medium">${bill.totalAmount.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">Paid:</span>
-                          <span className="font-medium text-green-600">${bill.paidAmount.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">Balance:</span>
-                          <span className={`font-medium ${bill.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                            ${bill.balance.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="space-y-2">
-                        <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(bill.status)}`}>
+                      <div>
+                        <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(bill.status)}`}>
                           {bill.status}
                         </span>
-                        <div>
-                          <p className="text-sm text-gray-500">Method</p>
-                          <p className={`font-medium ${getPaymentMethodColor(bill.paymentMethod)}`}>
-                            {bill.paymentMethod}
-                          </p>
-                        </div>
+                        <p className={`text-xs mt-1 ${getPaymentMethodColor(bill.payment_method)}`}>
+                          {bill.payment_method}
+                        </p>
                       </div>
                     </td>
                     <td className="py-4 px-4">
-                      <div className="flex flex-col gap-2">
-                        {bill.balance > 0 && (
+                      <div className="flex gap-2">
+                        {bill.status !== 'Paid' && (
                           <button
-                            onClick={() => handleReceivePayment(bill)}
-                            className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white text-sm rounded-lg"
+                            onClick={() => { setSelectedBill(bill); setShowPaymentForm(true); }}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
+                            title="Receive Payment"
                           >
-                            Receive Payment
+                            <FaMoneyBillWave />
                           </button>
                         )}
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handlePrintInvoice(bill)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                            title="Print Invoice"
-                          >
-                            <FaPrint />
-                          </button>
-                          <button className="p-2 text-green-600 hover:bg-green-50 rounded-lg" title="View Details">
-                            <FaFileInvoiceDollar />
-                          </button>
-                          <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Delete">
-                            ×
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => handlePrintInvoice(bill)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                          title="Print Invoice"
+                        >
+                          <FaPrint />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -391,105 +456,51 @@ const [bills] = useState([
           </div>
         </div>
 
-        {/* Payment Form Modal */}
-        {showPaymentForm && selectedBill && (
+        {/* Payment Modal */}
+        {showPaymentForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-xl shadow-xl p-8 max-w-md w-full">
-              <div className="flex justify-between items-start mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Process Payment</h2>
+              <div className="space-y-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Receive Payment</h2>
-                  <p className="text-gray-600">Invoice: {selectedBill.invoiceNo}</p>
-                </div>
-                <button
-                  onClick={() => setShowPaymentForm(false)}
-                  className="text-gray-400 hover:text-gray-600 text-xl"
-                >
-                  ×
-                </button>
-              </div>
-
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600">Patient:</span>
-                  <span className="font-medium">{selectedBill.patientName}</span>
-                </div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600">Total Amount:</span>
-                  <span className="font-medium">${selectedBill.totalAmount.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600">Paid Amount:</span>
-                  <span className="font-medium text-green-600">${selectedBill.paidAmount.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Balance Due:</span>
-                  <span className="font-bold text-red-600">${selectedBill.balance.toFixed(2)}</span>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Payment Amount *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Amount to Pay</label>
                   <input
                     type="number"
                     value={paymentData.amount}
-                    onChange={(e) => setPaymentData({...paymentData, amount: e.target.value})}
+                    onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
-                    placeholder="Enter amount"
-                    max={selectedBill.balance}
                   />
-                  <p className="text-sm text-gray-500 mt-1">Maximum: ${selectedBill.balance.toFixed(2)}</p>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Payment Method *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
                   <select
-                    value={paymentData.paymentMethod}
-                    onChange={(e) => setPaymentData({...paymentData, paymentMethod: e.target.value})}
+                    value={paymentData.method}
+                    onChange={(e) => setPaymentData({ ...paymentData, method: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
                   >
                     <option value="cash">Cash</option>
-                    <option value="credit_card">Credit Card</option>
-                    <option value="debit_card">Debit Card</option>
-                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="card">Credit/Debit Card</option>
                     <option value="insurance">Insurance</option>
+                    <option value="upi">UPI/Digital</option>
                   </select>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Reference Number
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Reference No.</label>
                   <input
                     type="text"
                     value={paymentData.referenceNo}
-                    onChange={(e) => setPaymentData({...paymentData, referenceNo: e.target.value})}
+                    onChange={(e) => setPaymentData({ ...paymentData, referenceNo: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
-                    placeholder="TRX-123456"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Notes (Optional)
-                  </label>
-                  <textarea
-                    value={paymentData.notes}
-                    onChange={(e) => setPaymentData({...paymentData, notes: e.target.value})}
-                    rows="2"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
-                    placeholder="Add any notes about this payment..."
+                    placeholder="Transaction ID / Check No."
                   />
                 </div>
               </div>
-
               <div className="flex gap-3 mt-8">
-                <button className="flex-1 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg">
-                  Process Payment
+                <button
+                  onClick={handleProcessPayment}
+                  className="flex-1 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg"
+                >
+                  Confirm Payment
                 </button>
                 <button
                   onClick={() => setShowPaymentForm(false)}
@@ -501,8 +512,98 @@ const [bills] = useState([
             </div>
           </div>
         )}
+
+        {/* Generate Invoice Modal */}
+        {showInvoiceForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Generate New Invoice</h2>
+
+              <div className="space-y-6">
+                {/* Patient ID */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Patient ID *
+                  </label>
+                  <input
+                    type="text"
+                    value={invoiceFormData.patientId}
+                    onChange={(e) => setInvoiceFormData({ ...invoiceFormData, patientId: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                    placeholder="Enter patient ID"
+                  />
+                </div>
+
+                {/* Services */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Services *
+                  </label>
+                  {invoiceFormData.services.map((service, index) => (
+                    <div key={index} className="flex gap-3 mb-3">
+                      <input
+                        type="text"
+                        value={service.description}
+                        onChange={(e) => handleServiceChange(index, 'description', e.target.value)}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                        placeholder="Service description"
+                      />
+                      <input
+                        type="number"
+                        value={service.amount}
+                        onChange={(e) => handleServiceChange(index, 'amount', e.target.value)}
+                        className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                        placeholder="Amount"
+                        step="0.01"
+                      />
+                      {invoiceFormData.services.length > 1 && (
+                        <button
+                          onClick={() => handleRemoveService(index)}
+                          className="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    onClick={handleAddService}
+                    className="mt-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg text-sm"
+                  >
+                    + Add Service
+                  </button>
+                </div>
+
+                {/* Total Preview */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-gray-700">Total Amount:</span>
+                    <span className="text-2xl font-bold text-gray-900">
+                      ${invoiceFormData.services.reduce((sum, s) => sum + (Number(s.amount) || 0), 0).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-8">
+                <button
+                  onClick={handleCreateInvoice}
+                  className="flex-1 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg"
+                >
+                  Create Invoice
+                </button>
+                <button
+                  onClick={() => setShowInvoiceForm(false)}
+                  className="flex-1 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium rounded-lg"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+    </div >
   );
 };
 

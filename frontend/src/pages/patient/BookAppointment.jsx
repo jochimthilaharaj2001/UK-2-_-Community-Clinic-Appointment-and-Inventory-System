@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
 import {
     FaSearch,
@@ -8,35 +9,86 @@ import {
     FaRegCheckCircle,
     FaFilter
 } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const BookAppointment = () => {
+    const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedSpec, setSelectedSpec] = useState('All');
     const [selectedDoctor, setSelectedDoctor] = useState(null);
     const [bookingDate, setBookingDate] = useState('');
     const [bookingTime, setBookingTime] = useState('');
     const [step, setStep] = useState(1); // 1: Search, 2: Details, 3: Success
+    const [doctors, setDoctors] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
-    const doctors = [
-        { id: 1, name: 'Dr. Jane Smith', spec: 'General Physician', available: 'Mon, Wed, Fri', rating: 4.8 },
-        { id: 2, name: 'Dr. John Miller', spec: 'Pediatrician', available: 'Tue, Thu, Sat', rating: 4.9 },
-        { id: 3, name: 'Dr. Sarah Wilson', spec: 'Dermatologist', available: 'Daily', rating: 4.7 },
-        { id: 4, name: 'Dr. Robert Brown', spec: 'Cardiologist', available: 'Mon, Tue', rating: 4.6 }
-    ];
+    useEffect(() => {
+        fetchDoctors();
+    }, []);
+
+    const fetchDoctors = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('http://localhost:5000/api/patient/doctors', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setDoctors(data.map(d => ({
+                    ...d,
+                    spec: d.specialization || 'General',
+                    available: d.availability || 'Available',
+                    rating: d.rating || 5.0
+                })));
+            }
+        } catch (err) {
+            console.error("Failed to fetch doctors", err);
+        }
+    };
+
+    const handleBook = async () => {
+        if (!selectedDoctor || !bookingDate || !bookingTime) return;
+        setLoading(true);
+        setError('');
+
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('http://localhost:5000/api/patient/appointments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    doctorId: selectedDoctor.id,
+                    date: bookingDate,
+                    time: bookingTime
+                })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setStep(3);
+            } else {
+                setError(data.message || 'Failed to book appointment');
+            }
+        } catch (err) {
+            console.error(err);
+            setError('Connection error. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const specializations = ['All', ...new Set(doctors.map(d => d.spec))];
 
     const filteredDoctors = doctors.filter(doc =>
-        (doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            doc.spec.toLowerCase().includes(searchTerm.toLowerCase())) &&
+        (doc.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            doc.spec?.toLowerCase().includes(searchTerm.toLowerCase())) &&
         (selectedSpec === 'All' || doc.spec === selectedSpec)
     );
-
-    const handleBook = () => {
-        if (selectedDoctor && bookingDate && bookingTime) {
-            setStep(3);
-        }
-    };
 
     return (
         <div className="flex bg-gray-50 min-h-screen">
@@ -77,7 +129,7 @@ const BookAppointment = () => {
 
                             <div className="p-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {filteredDoctors.map((doc) => (
+                                    {filteredDoctors.length > 0 ? filteredDoctors.map((doc) => (
                                         <div key={doc.id} className="p-4 border border-gray-100 rounded-2xl hover:border-indigo-300 hover:shadow-lg transition group">
                                             <div className="flex items-center gap-4 mb-4">
                                                 <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-3xl group-hover:bg-indigo-100 transition">
@@ -99,7 +151,9 @@ const BookAppointment = () => {
                                                 Select Doctor
                                             </button>
                                         </div>
-                                    ))}
+                                    )) : (
+                                        <div className="text-center col-span-2 text-gray-500 py-8">No doctors found.</div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -119,6 +173,12 @@ const BookAppointment = () => {
                                     <p className="text-indigo-600 font-medium">{selectedDoctor?.spec}</p>
                                 </div>
                             </div>
+
+                            {error && (
+                                <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-200">
+                                    {error}
+                                </div>
+                            )}
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                                 <div>
@@ -143,23 +203,23 @@ const BookAppointment = () => {
                                             onChange={(e) => setBookingTime(e.target.value)}
                                         >
                                             <option value="">Choose a slot</option>
-                                            <option value="09:00 AM">09:00 AM</option>
-                                            <option value="10:00 AM">10:00 AM</option>
-                                            <option value="11:00 AM">11:00 AM</option>
-                                            <option value="02:00 PM">02:00 PM</option>
-                                            <option value="03:00 PM">03:00 PM</option>
-                                            <option value="04:00 PM">04:00 PM</option>
+                                            <option value="09:00:00">09:00 AM</option>
+                                            <option value="10:00:00">10:00 AM</option>
+                                            <option value="11:00:00">11:00 AM</option>
+                                            <option value="14:00:00">02:00 PM</option>
+                                            <option value="15:00:00">03:00 PM</option>
+                                            <option value="16:00:00">04:00 PM</option>
                                         </select>
                                     </div>
                                 </div>
                             </div>
 
                             <button
-                                disabled={!bookingDate || !bookingTime}
+                                disabled={!bookingDate || !bookingTime || loading}
                                 onClick={handleBook}
                                 className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold text-lg hover:bg-indigo-700 transition shadow-xl shadow-indigo-100 disabled:opacity-50"
                             >
-                                Confirm Appointment Request
+                                {loading ? 'Processing...' : 'Confirm Appointment Request'}
                             </button>
                         </div>
                     )}
@@ -172,7 +232,6 @@ const BookAppointment = () => {
                             <h2 className="text-3xl font-extrabold text-gray-800 mb-4">Request Successful!</h2>
                             <p className="text-gray-600 text-lg mb-8">
                                 Your appointment request with <span className="font-bold text-indigo-600">{selectedDoctor?.name}</span> has been sent.
-                                We will notify you via email once it is confirmed.
                             </p>
                             <div className="bg-gray-50 rounded-2xl p-6 mb-8 text-left max-w-sm mx-auto">
                                 <div className="flex justify-between mb-2">
@@ -185,10 +244,10 @@ const BookAppointment = () => {
                                 </div>
                             </div>
                             <button
-                                onClick={() => setStep(1)}
+                                onClick={() => navigate('/patient/dashboard')}
                                 className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition"
                             >
-                                Go Back Home
+                                Go To Dashboard
                             </button>
                         </div>
                     )}

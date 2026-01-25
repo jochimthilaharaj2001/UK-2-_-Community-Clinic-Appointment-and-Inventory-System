@@ -2,10 +2,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
-import { 
-  FaCalendarAlt, 
-  FaArrowLeft, 
-  FaFilter, 
+import {
+  FaCalendarAlt,
+  FaArrowLeft,
+  FaFilter,
   FaPrint,
   FaDownload,
   FaUser,
@@ -42,7 +42,7 @@ const AppointmentsCalendar = () => {
   ];
 
   const timeSlots = [
-    '08:00 AM', '08:30 AM', '09:00 AM', '09:30 AM', 
+    '08:00 AM', '08:30 AM', '09:00 AM', '09:30 AM',
     '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
     '12:00 PM', '12:30 PM', '01:00 PM', '01:30 PM',
     '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM',
@@ -50,67 +50,67 @@ const AppointmentsCalendar = () => {
   ];
 
   const appointments = [
-    { 
-      id: 1, 
-      patientName: 'John Smith', 
+    {
+      id: 1,
+      patientName: 'John Smith',
       patientId: 'PAT001',
-      time: '09:00 AM', 
-      doctor: 'Dr. Sarah Wilson', 
+      time: '09:00 AM',
+      doctor: 'Dr. Sarah Wilson',
       department: 'Cardiology',
-      type: 'Follow-up', 
-      status: 'scheduled', 
+      type: 'Follow-up',
+      status: 'scheduled',
       room: 'Room 101',
       contact: '+1 (234) 567-8901',
       notes: 'Regular blood pressure check'
     },
-    { 
-      id: 2, 
-      patientName: 'Emily Johnson', 
+    {
+      id: 2,
+      patientName: 'Emily Johnson',
       patientId: 'PAT002',
-      time: '10:30 AM', 
-      doctor: 'Dr. Michael Chen', 
+      time: '10:30 AM',
+      doctor: 'Dr. Michael Chen',
       department: 'General Medicine',
-      type: 'Consultation', 
-      status: 'confirmed', 
+      type: 'Consultation',
+      status: 'confirmed',
       room: 'Room 102',
       contact: '+1 (234) 567-8902',
       notes: 'Diabetes management review'
     },
-    { 
-      id: 3, 
-      patientName: 'Michael Brown', 
+    {
+      id: 3,
+      patientName: 'Michael Brown',
       patientId: 'PAT003',
-      time: '11:00 AM', 
-      doctor: 'Dr. Lisa Park', 
+      time: '11:00 AM',
+      doctor: 'Dr. Lisa Park',
       department: 'Pediatrics',
-      type: 'New Patient', 
-      status: 'checked-in', 
+      type: 'New Patient',
+      status: 'checked-in',
       room: 'Room 103',
       contact: '+1 (234) 567-8903',
       notes: 'Child vaccination'
     },
-    { 
-      id: 4, 
-      patientName: 'Sarah Miller', 
+    {
+      id: 4,
+      patientName: 'Sarah Miller',
       patientId: 'PAT004',
-      time: '02:00 PM', 
-      doctor: 'Dr. Sarah Wilson', 
+      time: '02:00 PM',
+      doctor: 'Dr. Sarah Wilson',
       department: 'Cardiology',
-      type: 'Check-up', 
-      status: 'scheduled', 
+      type: 'Check-up',
+      status: 'scheduled',
       room: 'Room 101',
       contact: '+1 (234) 567-8904',
       notes: 'Annual heart check'
     },
-    { 
-      id: 5, 
-      patientName: 'David Wilson', 
+    {
+      id: 5,
+      patientName: 'David Wilson',
       patientId: 'PAT005',
-      time: '03:30 PM', 
-      doctor: 'Dr. James Lee', 
+      time: '03:30 PM',
+      doctor: 'Dr. James Lee',
       department: 'Orthopedics',
-      type: 'Procedure', 
-      status: 'confirmed', 
+      type: 'Procedure',
+      status: 'confirmed',
       room: 'Room 104',
       contact: '+1 (234) 567-8905',
       notes: 'Knee examination'
@@ -126,8 +126,8 @@ const AppointmentsCalendar = () => {
   const getStatusColor = (status) => {
     const statusObj = statuses.find(s => s.id === status);
     if (!statusObj) return 'bg-gray-100 text-gray-800';
-    
-    switch(statusObj.color) {
+
+    switch (statusObj.color) {
       case 'blue': return 'bg-blue-100 text-blue-800';
       case 'green': return 'bg-green-100 text-green-800';
       case 'yellow': return 'bg-yellow-100 text-yellow-800';
@@ -212,6 +212,58 @@ const AppointmentsCalendar = () => {
     printWindow.print();
   };
 
+  const handleExportCSV = () => {
+    if (filteredAppointments.length === 0) {
+      alert('No appointments to export');
+      return;
+    }
+
+    const headers = ['Time', 'Patient Name', 'Patient ID', 'Doctor', 'Department', 'Type', 'Status', 'Room', 'Contact', 'Notes'];
+    const csvData = filteredAppointments.map(app => [
+      `"${app.time}"`,
+      `"${app.patientName}"`,
+      `"${app.patientId}"`,
+      `"${app.doctor}"`,
+      `"${app.department}"`,
+      `"${app.type}"`,
+      `"${app.status}"`,
+      `"${app.room}"`,
+      `"${app.contact}"`,
+      `"${app.notes || ''}"`
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => row.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `appointments_${selectedDate}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleViewToday = () => {
+    setSelectedDate(new Date().toISOString().split('T')[0]);
+  };
+
+  const handleViewTomorrow = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    setSelectedDate(tomorrow.toISOString().split('T')[0]);
+  };
+
+  const handleViewNextWeek = () => {
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    setSelectedDate(nextWeek.toISOString().split('T')[0]);
+  };
+
   const getStatusCount = (statusId) => {
     return filteredAppointments.filter(app => app.status === statusId).length;
   };
@@ -219,7 +271,7 @@ const AppointmentsCalendar = () => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      
+
       <div className="flex-1 ml-64 p-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
@@ -227,10 +279,12 @@ const AppointmentsCalendar = () => {
             <h1 className="text-3xl font-bold text-gray-900">Appointments Calendar</h1>
             <p className="text-gray-600 mt-2">View and manage patient appointments</p>
           </div>
-          
+
           <div className="flex gap-3 mt-4 md:mt-0">
-            
-            <button className="px-4 py-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg flex items-center">
+
+            <button
+              onClick={handleExportCSV}
+              className="px-4 py-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg flex items-center">
               <FaDownload className="mr-2" />
               Export
             </button>
@@ -302,11 +356,10 @@ const AppointmentsCalendar = () => {
                   <button
                     key={v}
                     onClick={() => setView(v)}
-                    className={`flex-1 px-4 py-2 rounded-md capitalize text-sm font-medium transition-colors ${
-                      view === v 
-                        ? 'bg-amber-600 text-white shadow' 
-                        : 'text-gray-700 hover:bg-gray-200'
-                    }`}
+                    className={`flex-1 px-4 py-2 rounded-md capitalize text-sm font-medium transition-colors ${view === v
+                      ? 'bg-amber-600 text-white shadow'
+                      : 'text-gray-700 hover:bg-gray-200'
+                      }`}
                   >
                     {v}
                   </button>
@@ -348,17 +401,17 @@ const AppointmentsCalendar = () => {
           <div className="px-6 py-4 border-b bg-gray-50">
             <div className="flex flex-col md:flex-row md:items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900 mb-2 md:mb-0">
-                {view === 'day' ? 'Daily Schedule' : 
-                 view === 'week' ? 'Weekly Schedule' : 
-                 'Monthly Schedule'}
+                {view === 'day' ? 'Daily Schedule' :
+                  view === 'week' ? 'Weekly Schedule' :
+                    'Monthly Schedule'}
               </h2>
               <div className="flex items-center gap-4">
                 <div className="text-gray-600">
-                  {new Date(selectedDate).toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                  {new Date(selectedDate).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
                   })}
                 </div>
                 <button
@@ -379,7 +432,7 @@ const AppointmentsCalendar = () => {
                 const appointmentForSlot = filteredAppointments.find(
                   app => app.time === timeSlot
                 );
-                
+
                 return (
                   <div key={timeSlot} className="flex hover:bg-gray-50 transition-colors">
                     {/* Time Column */}
@@ -387,16 +440,15 @@ const AppointmentsCalendar = () => {
                       <div className="font-bold text-gray-900">{timeSlot}</div>
                       <div className="text-xs text-gray-500 mt-1">30 min</div>
                     </div>
-                    
+
                     {/* Appointment Slot */}
                     <div className="flex-1 p-4 min-h-20">
                       {appointmentForSlot ? (
-                        <div className={`p-4 rounded-xl border-l-4 ${
-                          appointmentForSlot.status === 'checked-in' ? 'border-l-yellow-500 bg-yellow-50' :
+                        <div className={`p-4 rounded-xl border-l-4 ${appointmentForSlot.status === 'checked-in' ? 'border-l-yellow-500 bg-yellow-50' :
                           appointmentForSlot.status === 'confirmed' ? 'border-l-green-500 bg-green-50' :
-                          appointmentForSlot.status === 'scheduled' ? 'border-l-blue-500 bg-blue-50' :
-                          'border-l-gray-500 bg-gray-50'
-                        }`}>
+                            appointmentForSlot.status === 'scheduled' ? 'border-l-blue-500 bg-blue-50' :
+                              'border-l-gray-500 bg-gray-50'
+                          }`}>
                           <div className="flex flex-col md:flex-row md:items-center justify-between">
                             <div className="mb-3 md:mb-0">
                               <div className="flex items-center gap-2 mb-1">
@@ -418,21 +470,21 @@ const AppointmentsCalendar = () => {
                                 <p className="text-sm text-gray-500 mt-2 ml-6">{appointmentForSlot.notes}</p>
                               )}
                             </div>
-                            
+
                             <div className="flex flex-col items-start md:items-end gap-2">
                               <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(appointmentForSlot.status)}`}>
                                 {statuses.find(s => s.id === appointmentForSlot.status)?.name || appointmentForSlot.status}
                               </span>
                               <div className="flex gap-2">
                                 {appointmentForSlot.status === 'confirmed' && (
-                                  <button 
+                                  <button
                                     onClick={() => handleCheckIn(appointmentForSlot.id)}
                                     className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white text-sm rounded-lg"
                                   >
                                     Check-in
                                   </button>
                                 )}
-                                <button 
+                                <button
                                   onClick={() => navigate(`/receptionist/appointments/${appointmentForSlot.id}`)}
                                   className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg flex items-center"
                                 >
@@ -514,10 +566,18 @@ const AppointmentsCalendar = () => {
                               Check-in
                             </button>
                           )}
-                          <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                          <button
+                            onClick={() => navigate(`/receptionist/appointments/${appointment.id}`)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                            title="View Details"
+                          >
                             <FaEye />
                           </button>
-                          <button className="p-2 text-gray-600 hover:bg-gray-200 rounded-lg">
+                          <button
+                            onClick={() => window.location.href = `tel:${appointment.contact}`}
+                            className="p-2 text-gray-600 hover:bg-gray-200 rounded-lg"
+                            title="Call Patient"
+                          >
                             <FaPhone />
                           </button>
                         </div>
@@ -564,13 +624,22 @@ const AppointmentsCalendar = () => {
             Showing {filteredAppointments.length} appointment{filteredAppointments.length !== 1 ? 's' : ''} for {selectedDate}
           </div>
           <div className="flex gap-3">
-            <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm">
+            <button
+              onClick={handleViewToday}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm"
+            >
               View Today
             </button>
-            <button className="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm">
+            <button
+              onClick={handleViewTomorrow}
+              className="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm"
+            >
               View Tomorrow
             </button>
-            <button className="px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg text-sm">
+            <button
+              onClick={handleViewNextWeek}
+              className="px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg text-sm"
+            >
               Next Week
             </button>
           </div>

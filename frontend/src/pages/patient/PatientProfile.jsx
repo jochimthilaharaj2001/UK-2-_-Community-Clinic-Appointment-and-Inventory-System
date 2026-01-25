@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
 import {
@@ -14,13 +15,13 @@ import {
 
 const PatientProfile = () => {
     const [user, setUser] = useState({
-        name: 'John Doe',
-        email: 'patient@example.com',
-        phone: '+1 234 567 890',
-        address: '123 Main St, Candy City',
-        dob: '1990-05-15',
-        gender: 'Male',
-        bloodType: 'O+',
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        dob: '',
+        gender: '',
+        bloodType: '',
         profileImage: null
     });
 
@@ -30,6 +31,28 @@ const PatientProfile = () => {
     const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
     const [passwordStatus, setPasswordStatus] = useState(null); // 'success' | 'error' | null
     const [errorMessage, setErrorMessage] = useState('');
+
+    useEffect(() => {
+        fetchProfile();
+    }, []);
+
+    const fetchProfile = async () => {
+        const token = localStorage.getItem('token');
+        try {
+            const res = await fetch('http://localhost:5000/api/patient/profile', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setUser({
+                    ...data,
+                    dob: data.dob ? new Date(data.dob).toISOString().split('T')[0] : ''
+                });
+            }
+        } catch (err) {
+            console.error("Failed to fetch profile", err);
+        }
+    };
 
     const handlePhotoChange = (e) => {
         const file = e.target.files[0];
@@ -42,39 +65,79 @@ const PatientProfile = () => {
         }
     };
 
-    const handleSave = () => {
-        setIsEditing(false);
-        setShowSuccess(true);
-        setTimeout(() => setShowSuccess(false), 3000);
+    const handleSave = async () => {
+        const token = localStorage.getItem('token');
+        try {
+            const res = await fetch('http://localhost:5000/api/patient/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(user)
+            });
+
+            if (res.ok) {
+                setIsEditing(false);
+                setShowSuccess(true);
+                setTimeout(() => setShowSuccess(false), 3000);
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
 
-    const handlePasswordChange = (e) => {
+    const handlePasswordChange = async (e) => {
         e.preventDefault();
+        setErrorMessage('');
+        setPasswordStatus(null);
 
         // Basic Client-side Validation
         if (passwords.new !== passwords.confirm) {
             setPasswordStatus('error');
             setErrorMessage('New passwords do not match!');
-            setTimeout(() => setPasswordStatus(null), 3000);
             return;
         }
 
         if (passwords.new.length < 6) {
             setPasswordStatus('error');
             setErrorMessage('Password must be at least 6 characters.');
-            setTimeout(() => setPasswordStatus(null), 3000);
             return;
         }
 
-        // Simulate API call
-        setPasswordStatus('success');
-        setPasswords({ current: '', new: '', confirm: '' });
-        setTimeout(() => {
-            setShowPasswordModal(false);
-            setPasswordStatus(null);
-            setShowSuccess(true);
-            setTimeout(() => setShowSuccess(false), 3000);
-        }, 1500);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('http://localhost:5000/api/patient/change-password', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    currentPassword: passwords.current,
+                    newPassword: passwords.new
+                })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setPasswordStatus('success');
+                setPasswords({ current: '', new: '', confirm: '' });
+                setTimeout(() => {
+                    setShowPasswordModal(false);
+                    setPasswordStatus(null);
+                    setShowSuccess(true);
+                    setTimeout(() => setShowSuccess(false), 3000);
+                }, 1500);
+            } else {
+                setPasswordStatus('error');
+                setErrorMessage(data.message || 'Failed to update password');
+            }
+        } catch (err) {
+            setPasswordStatus('error');
+            setErrorMessage('Server connection error');
+        }
     };
 
     return (
@@ -111,7 +174,7 @@ const PatientProfile = () => {
 
                     {showSuccess && (
                         <div className="mb-6 p-4 bg-green-100 text-green-700 rounded-xl flex items-center gap-3 animate-slideDown">
-                            <FaCheckCircle /> Profile updated successfully!
+                            <FaCheckCircle /> Action completed successfully!
                         </div>
                     )}
 
@@ -146,16 +209,16 @@ const PatientProfile = () => {
                                     )}
                                 </div>
                                 <h2 className="text-2xl font-bold text-gray-800">{user.name}</h2>
-                                <p className="text-gray-500 font-medium mb-6">Patient ID: #PAT-88120</p>
+                                <p className="text-gray-500 font-medium mb-6">Patient ID: #PAT-{user.id}</p>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="bg-indigo-50 p-3 rounded-2xl">
                                         <p className="text-[10px] uppercase font-extrabold text-indigo-400 tracking-widest mb-1">Blood Type</p>
-                                        <p className="font-bold text-indigo-700">{user.bloodType}</p>
+                                        <p className="font-bold text-indigo-700">{user.bloodType || 'N/A'}</p>
                                     </div>
                                     <div className="bg-green-50 p-3 rounded-2xl">
                                         <p className="text-[10px] uppercase font-extrabold text-green-400 tracking-widest mb-1">Gender</p>
-                                        <p className="font-bold text-green-700">{user.gender}</p>
+                                        <p className="font-bold text-green-700">{user.gender || 'N/A'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -198,10 +261,9 @@ const PatientProfile = () => {
                                             <FaEnvelope className="absolute left-4 top-4 text-gray-300" />
                                             <input
                                                 type="email"
-                                                disabled={!isEditing}
-                                                className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 transition ${isEditing ? 'bg-white border-indigo-100 focus:border-indigo-500' : 'bg-gray-50 border-transparent text-gray-600'}`}
+                                                disabled={true}
+                                                className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 bg-gray-50 border-transparent text-gray-500 cursor-not-allowed`}
                                                 value={user.email}
-                                                onChange={(e) => setUser({ ...user, email: e.target.value })}
                                             />
                                         </div>
                                     </div>
