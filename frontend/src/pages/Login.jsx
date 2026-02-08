@@ -10,80 +10,61 @@ import {
   FaEye,
   FaEyeSlash
 } from 'react-icons/fa';
-import API_BASE_URL from '../services/api';
-
+import api from '../services/api';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const role = queryParams.get('role') || 'admin'; // Default to admin
+  const currentRole = queryParams.get('role') || 'admin';
 
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-
 
   const roleConfigs = {
     admin: {
       title: 'Admin Login',
-      icon: <FaUserShield className="text-5xl text-blue-600" />,
-      color: 'from-blue-600 to-blue-700',
-      hoverColor: 'from-blue-700 to-blue-800',
       demoEmail: 'admin@clinic.com',
-      demoPassword: '123456',
+      demoPassword: 'admin123',
       redirectPath: '/admin',
       description: 'Sign in to clinic admin portal'
     },
     pharmacist: {
       title: 'Pharmacist Login',
-      icon: <FaPills className="text-5xl text-purple-600" />,
-      color: 'from-purple-600 to-purple-700',
-      hoverColor: 'from-purple-700 to-purple-800',
-      demoEmail: 'pharmacist@test.com',
-      demoPassword: '123456',
+      demoEmail: 'pharmacist@clinic.com',
+      demoPassword: 'pharma123',
       redirectPath: '/pharmacist/dashboard',
       description: 'Sign in to pharmacy management portal'
     },
     doctor: {
       title: 'Doctor Login',
-      icon: <FaUserMd className="text-5xl text-green-600" />,
-      color: 'from-[#1a5f35] to-[#124a29]', // Dark Green
-      hoverColor: 'from-[#124a29] to-[#0d381f]',
-      demoColor: 'bg-[#10b981] hover:bg-[#059669]', // Vibrant Green
-      demoEmail: 'sarah@example.com',
-      demoPassword: '123456',
+      demoEmail: 'doctor@clinic.com',
+      demoPassword: 'doctor123',
       redirectPath: '/doctor/dashboard',
       description: 'Sign in to doctor portal'
     },
-
     receptionist: {
       title: 'Receptionist Login',
-      icon: <FaUserTie className="text-5xl text-teal-600" />,
-      color: 'from-teal-600 to-teal-700',
-      hoverColor: 'from-teal-700 to-teal-800',
-      demoEmail: 'reception@example.com',
-      demoPassword: '123456',
+      demoEmail: 'reception@clinic.com',
+      demoPassword: 'reception123',
       redirectPath: '/receptionist/dashboard',
       description: 'Sign in to reception desk portal'
     },
     patient: {
       title: 'Patient Login',
-      icon: <FaUser className="text-5xl text-indigo-600" />,
-      color: 'from-indigo-600 to-indigo-700',
-      hoverColor: 'from-indigo-700 to-indigo-800',
-      demoEmail: 'patient@example.com',
-      demoPassword: '123456',
+      demoEmail: 'patient@clinic.com',
+      demoPassword: 'password123',
       redirectPath: '/patient/dashboard',
       description: 'Sign in to access your health records and appointments'
     }
   };
 
-  const config = roleConfigs[role] || roleConfigs.admin;
+  const config = roleConfigs[currentRole] || roleConfigs.admin;
 
   const handleChange = (e) => {
     setFormData({
@@ -93,85 +74,37 @@ const Login = () => {
     setError('');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const performLogin = async (email, password) => {
     setLoading(true);
     setError('');
 
     try {
-      let response;
-      let data;
+      const response = await api.post('/auth/login', {
+        email: email,
+        password: password,
+        role: currentRole
+      });
 
-      // Patient Login (Real Backend)
-      if (role === 'patient') {
-        try {
-          response = await fetch(`${API_BASE_URL}/patient/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-          });
-          data = await response.json();
+      const { token, user, role: userRole } = response.data;
+      const userWithRole = { ...user, role: userRole };
 
-          if (response.ok) {
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify({ ...data.patient, role: 'patient' }));
-            localStorage.setItem('role', 'patient');
-            navigate('/patient/dashboard');
-            return;
-          } else {
-            setError(data.message || 'Login failed');
-            return;
-          }
-        } catch (err) {
-          console.error("Backend connection error", err);
-          setError('Connection to server failed. Ensure backend is running.');
-          return;
-        }
-      }
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userWithRole));
+      localStorage.setItem('role', userRole);
 
-      // Admin, Doctor, Receptionist Login (Real Backend)
-      try {
-        response = await fetch(`${API_BASE_URL}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
-        });
-        data = await response.json();
-
-        if (response.ok) {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
-          localStorage.setItem('role', data.user.role);
-
-          // Verify that the logged in role matches the selected portal role
-          if (data.user.role !== role) {
-            setError(`This account is registered as ${data.user.role}, but you are trying to login to the ${role} portal.`);
-            localStorage.clear();
-            return;
-          }
-
-          navigate(config.redirectPath);
-          return;
-        } else {
-          // USER REQUEST: for doctor login show invalid email and password
-          if (role === 'doctor') {
-            setError('Invalid email or password');
-          } else {
-            setError(data.message || 'Login failed');
-          }
-          return;
-        }
-      } catch (err) {
-        console.error("Backend connection error", err);
-        setError('Connection to server failed. Ensure backend is running.');
-        return;
-      }
+      navigate(config.redirectPath);
     } catch (err) {
       console.error('Login error:', err);
-      setError('Login failed. Please try again.');
+      const message = err.response?.data?.message || 'Login failed. Please check your credentials.';
+      setError(message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    performLogin(formData.email, formData.password);
   };
 
   const handleDemoLogin = () => {
@@ -179,190 +112,160 @@ const Login = () => {
       email: config.demoEmail,
       password: config.demoPassword,
     });
-    setError('');
+    performLogin(config.demoEmail, config.demoPassword);
   };
 
   const switchRole = (newRole) => {
-    navigate(`/login?role=${newRole}`);
+    navigate(`/?role=${newRole}`);
     setFormData({ email: '', password: '' });
     setError('');
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="inline-block p-4 bg-white rounded-2xl shadow-lg mb-4">
-            {config.icon}
+    <div className="min-h-screen flex items-center justify-center bg-[#F3F4F6] p-4 font-sans select-none">
+      <div className="max-w-xl w-full flex flex-col items-center">
+
+        {/* Top Icon Card */}
+        <div className="bg-white p-5 rounded-2xl shadow-sm mb-6 border border-gray-100">
+          <div className="bg-[#EEF2FF] p-3 rounded-xl">
+            <FaUser className="text-4xl text-[#4F46E5]" />
           </div>
-          <div className="mb-2">
-            <h1 className="text-2xl font-bold text-gray-900">Rural Siddha Hospital</h1>
-            <p className="text-blue-600 font-semibold text-lg">Thellipalai</p>
-          </div>
-          <h3 className="text-2xl font-semibold text-gray-800 mt-4">{config.title}</h3>
-          <p className="text-gray-600 mt-2">{config.description}</p>
         </div>
 
-        {/* Role Selector */}
-        <div className="flex justify-center gap-2 mb-6 flex-wrap">
-          <button
-            onClick={() => switchRole('admin')}
-            className={`px-3 py-2 rounded-lg transition ${role === 'admin' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-          >
-            Admin
-          </button>
-          <button
-            onClick={() => switchRole('pharmacist')}
-            className={`px-3 py-2 rounded-lg transition ${role === 'pharmacist' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-          >
-            Pharmacist
-          </button>
-          <button
-            onClick={() => switchRole('doctor')}
-            className={`px-3 py-2 rounded-lg transition ${role === 'doctor' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-          >
-            Doctor
-          </button>
-          <button
-            onClick={() => switchRole('receptionist')}
-            className={`px-3 py-2 rounded-lg transition ${role === 'receptionist' ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-          >
-            Receptionist
-          </button>
+        {/* Branding */}
+        <div className="text-center mb-4">
+          <h2 className="text-2xl font-bold text-[#1F2937] mb-1">Rural Siddha Hospital</h2>
+          <p className="text-[#3B82F6] font-bold text-sm tracking-wide">Thellipalai</p>
+        </div>
+
+        {/* Title & Subtitle */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-extrabold text-[#111827] mb-2">{config.title}</h1>
+          <p className="text-gray-500 text-sm font-medium">
+            {config.description}
+          </p>
+        </div>
+
+        {/* Role Selector Grid - Exactly as image */}
+        <div className="w-full flex flex-col items-center gap-2 mb-10">
+          <div className="flex flex-wrap justify-center gap-2">
+            {['admin', 'pharmacist', 'doctor', 'receptionist'].map((roleKey) => (
+              <button
+                key={roleKey}
+                onClick={() => switchRole(roleKey)}
+                className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${currentRole === roleKey
+                    ? 'bg-[#4F46E5] text-white shadow-lg'
+                    : 'bg-[#E5E7EB] text-gray-600 hover:bg-gray-300'
+                  }`}
+              >
+                {roleKey.charAt(0).toUpperCase() + roleKey.slice(1)}
+              </button>
+            ))}
+          </div>
           <button
             onClick={() => switchRole('patient')}
-            className={`px-3 py-2 rounded-lg transition ${role === 'patient' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${currentRole === 'patient'
+                ? 'bg-[#4F46E5] text-white shadow-lg'
+                : 'bg-[#E5E7EB] text-gray-600 hover:bg-gray-300'
+              }`}
           >
             Patient
           </button>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <form id="loginForm" onSubmit={handleSubmit}>
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaUser className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                    placeholder={`Enter ${role} email`}
-                  />
+        {/* Main Card */}
+        <div className="bg-white rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] border border-gray-50 p-10 w-full max-w-[440px]">
+          <form onSubmit={handleSubmit} className="space-y-7">
+
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-gray-700 ml-1">
+                Email Address
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <FaUser className="h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                 </div>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  className="pl-12 w-full px-4 py-4 bg-white border border-gray-200 rounded-2xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all text-gray-900 placeholder-gray-400 font-medium"
+                  placeholder={`Enter ${currentRole} email`}
+                />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaLock className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    className="pl-10 pr-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                    placeholder="Enter password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
-                  >
-                    {showPassword ? <FaEyeSlash /> : <FaEye />}
-                  </button>
-                </div>
-              </div>
-
-
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className={`w-full py-3 px-4 bg-gradient-to-r ${config.color} text-white font-semibold rounded-lg hover:bg-gradient-to-r ${config.hoverColor} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200`}
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Signing in...
-                  </span>
-                ) : (
-                  'Sign In'
-                )}
-              </button>
             </div>
+
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-gray-700 ml-1">
+                Password
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <FaLock className="h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  className="pl-12 w-full px-4 py-4 bg-white border border-gray-200 rounded-2xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all text-gray-900 placeholder-gray-400 font-medium"
+                  placeholder="Enter password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? <FaEyeSlash className="h-5 w-5" /> : <FaEye className="h-5 w-5" />}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 text-red-600 py-3 px-4 rounded-2xl text-xs font-bold text-center border border-red-100">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 bg-[#3730A3] text-white font-extrabold rounded-2xl hover:bg-[#312E81] transition-all shadow-md text-base uppercase tracking-wider"
+            >
+              {loading ? 'Please wait...' : 'Sign In'}
+            </button>
           </form>
 
-          <div className="mt-6">
+          <div className="mt-6 flex flex-col items-center">
             <button
               onClick={handleDemoLogin}
-              className={`w-full py-3 px-4 ${config.demoColor || 'bg-green-600 hover:bg-green-700'} text-white font-semibold rounded-lg transition`}
+              className="w-full py-4 bg-[#10B981] text-white font-extrabold rounded-2xl hover:bg-[#059669] transition-all shadow-md text-base uppercase tracking-wider mb-4"
             >
-              Use Demo {role.charAt(0).toUpperCase() + role.slice(1)} Account
+              Use Demo Account
             </button>
-            <p className="text-center text-gray-600 text-sm mt-2">
-
-              Email: {config.demoEmail} | Password: {config.demoPassword}
+            <p className="text-gray-400 text-[11px] font-bold text-center uppercase tracking-widest leading-loose">
+              Email: {config.demoEmail} <span className="mx-1 text-gray-200">|</span> Password: {config.demoPassword}
             </p>
           </div>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 text-sm mb-2">Need to access a different portal?</p>
+          <div className="mt-10 pt-8 border-t border-gray-100 text-center">
+            <p className="text-gray-400 text-xs font-bold mb-6 tracking-tight">Need to access a different portal?</p>
             <div className="flex flex-wrap justify-center gap-2">
-              <button
-                onClick={() => switchRole('admin')}
-                className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg text-sm"
-              >
-                Admin Portal
-              </button>
-              <button
-                onClick={() => switchRole('pharmacist')}
-                className="px-3 py-1 bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-lg text-sm"
-              >
-                Pharmacy Portal
-              </button>
-              <button
-                onClick={() => switchRole('doctor')}
-                className="px-3 py-1 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg text-sm"
-              >
-                Doctor Portal
-              </button>
-              <button
-                onClick={() => switchRole('receptionist')}
-                className="px-3 py-1 bg-amber-100 text-amber-700 hover:bg-amber-200 rounded-lg text-sm"
-              >
-                Receptionist Portal
-              </button>
-              <button
-                onClick={() => switchRole('patient')}
-                className="px-3 py-1 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-lg text-sm"
-              >
-                Patient Portal
-              </button>
+              <button onClick={() => switchRole('admin')} className="px-4 py-2 bg-blue-50 text-[#3B82F6] rounded-xl text-[10px] font-black hover:bg-blue-100 transition-colors uppercase tracking-tight">Admin Portal</button>
+              <button onClick={() => switchRole('pharmacist')} className="px-4 py-2 bg-purple-50 text-[#8B5CF6] rounded-xl text-[10px] font-black hover:bg-purple-100 transition-colors uppercase tracking-tight">Pharmacy Portal</button>
+              <button onClick={() => switchRole('doctor')} className="px-4 py-2 bg-emerald-50 text-[#10B981] rounded-xl text-[10px] font-black hover:bg-emerald-100 transition-colors uppercase tracking-tight">Doctor Portal</button>
+              <button onClick={() => switchRole('receptionist')} className="px-4 py-2 bg-orange-50 text-[#F59E0B] rounded-xl text-[10px] font-black hover:bg-orange-100 transition-colors uppercase tracking-tight">Receptionist Portal</button>
+              <button onClick={() => switchRole('patient')} className="px-4 py-2 bg-indigo-50 text-[#6366F1] rounded-xl text-[10px] font-black hover:bg-indigo-100 transition-colors uppercase tracking-tight">Patient Portal</button>
             </div>
           </div>
         </div>
+
+        <p className="mt-12 text-center text-gray-400/60 text-[10px] font-bold tracking-[0.2em] uppercase">
+          Rural Siddha Hospital Management System &copy; 2026
+        </p>
       </div>
     </div>
   );

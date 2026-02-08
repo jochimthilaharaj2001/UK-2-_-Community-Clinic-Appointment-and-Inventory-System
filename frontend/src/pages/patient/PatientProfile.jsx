@@ -1,56 +1,104 @@
-
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
-import {
-    FaUser,
-    FaEnvelope,
-    FaPhone,
-    FaMapMarkerAlt,
-    FaBirthdayCake,
-    FaEdit,
-    FaSave,
-    FaLock,
-    FaCheckCircle
-} from 'react-icons/fa';
+import { FaUser, FaPhone, FaMapMarkerAlt, FaLock, FaCamera, FaEnvelope, FaBirthdayCake, FaVenusMars } from 'react-icons/fa';
+import { toast } from 'react-hot-toast';
+import api from '../../services/api';
 
 const PatientProfile = () => {
-    const [user, setUser] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        address: '',
-        dob: '',
-        gender: '',
-        bloodType: '',
-        profileImage: null
+    const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')) || {});
+    const [isEditing, setIsEditing] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const [formData, setFormData] = useState({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        phone: user.phone || '',
+        address: user.address || '',
+        email: user.email || '',
+        gender: user.gender || '',
+        dateOfBirth: user.dateOfBirth ? user.dateOfBirth.split('T')[0] : ''
     });
 
-    const [isEditing, setIsEditing] = useState(false);
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [showPasswordModal, setShowPasswordModal] = useState(false);
-    const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
-    const [passwordStatus, setPasswordStatus] = useState(null); // 'success' | 'error' | null
-    const [errorMessage, setErrorMessage] = useState('');
+    const [passwordData, setPasswordData] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
 
     useEffect(() => {
         fetchProfile();
     }, []);
 
     const fetchProfile = async () => {
-        const token = localStorage.getItem('token');
         try {
-            const res = await fetch('http://localhost:5000/api/patient/profile', {
-                headers: { 'Authorization': `Bearer ${token}` }
+            setLoading(true);
+            const response = await api.get('/patient/profile');
+            const userData = response.data;
+            setUser(userData);
+            setFormData({
+                firstName: userData.firstName || '',
+                lastName: userData.lastName || '',
+                phone: userData.phone || '',
+                address: userData.address || '',
+                email: userData.email || '',
+                gender: userData.gender || '',
+                dateOfBirth: userData.dateOfBirth ? userData.dateOfBirth.split('T')[0] : ''
             });
-            if (res.ok) {
-                const data = await res.json();
-                setUser({
-                    ...data,
-                    dob: data.dob ? new Date(data.dob).toISOString().split('T')[0] : ''
-                });
-            }
-        } catch (err) {
-            console.error("Failed to fetch profile", err);
+            // Update local storage too to keep it consistent
+            localStorage.setItem('user', JSON.stringify(userData));
+        } catch (error) {
+            console.error('Error fetching profile:', error);
+            // toast.error('Failed to load profile data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleProfileUpdate = async (e) => {
+        e.preventDefault();
+        try {
+            const updateData = {
+                ...user,
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                phone: formData.phone,
+                address: formData.address,
+                gender: formData.gender,
+                dateOfBirth: formData.dateOfBirth
+            };
+
+            await api.put('/patient/profile', updateData);
+
+            const updatedUser = { ...user, ...formData };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            setUser(updatedUser);
+            setIsEditing(false);
+            toast.success('Profile updated successfully');
+        } catch (error) {
+            console.error('Update error:', error);
+            toast.error('Failed to update profile');
+        }
+    };
+
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            return toast.error('Passwords do not match');
+        }
+        if (passwordData.newPassword.length < 6) {
+            return toast.error('Password must be at least 6 characters');
+        }
+
+        try {
+            await api.post('/patient/change-password', {
+                currentPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword
+            });
+
+            toast.success('Password changed successfully');
+            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to change password');
         }
     };
 
@@ -59,327 +107,244 @@ const PatientProfile = () => {
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
-                setUser({ ...user, profileImage: reader.result });
+                const updatedUser = { ...user, profilePhoto: reader.result };
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+                setUser(updatedUser);
+                toast.success('Profile photo updated');
             };
             reader.readAsDataURL(file);
         }
     };
 
-    const handleSave = async () => {
-        const token = localStorage.getItem('token');
-        try {
-            const res = await fetch('http://localhost:5000/api/patient/profile', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(user)
-            });
-
-            if (res.ok) {
-                setIsEditing(false);
-                setShowSuccess(true);
-                setTimeout(() => setShowSuccess(false), 3000);
-            }
-        } catch (err) {
-            console.error(err);
+    const getDisplayName = () => {
+        if (user.firstName && user.lastName) {
+            return `${user.firstName} ${user.lastName}`;
         }
-    };
-
-    const handlePasswordChange = async (e) => {
-        e.preventDefault();
-        setErrorMessage('');
-        setPasswordStatus(null);
-
-        // Basic Client-side Validation
-        if (passwords.new !== passwords.confirm) {
-            setPasswordStatus('error');
-            setErrorMessage('New passwords do not match!');
-            return;
-        }
-
-        if (passwords.new.length < 6) {
-            setPasswordStatus('error');
-            setErrorMessage('Password must be at least 6 characters.');
-            return;
-        }
-
-        try {
-            const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:5000/api/patient/change-password', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    currentPassword: passwords.current,
-                    newPassword: passwords.new
-                })
-            });
-
-            const data = await res.json();
-
-            if (res.ok) {
-                setPasswordStatus('success');
-                setPasswords({ current: '', new: '', confirm: '' });
-                setTimeout(() => {
-                    setShowPasswordModal(false);
-                    setPasswordStatus(null);
-                    setShowSuccess(true);
-                    setTimeout(() => setShowSuccess(false), 3000);
-                }, 1500);
-            } else {
-                setPasswordStatus('error');
-                setErrorMessage(data.message || 'Failed to update password');
-            }
-        } catch (err) {
-            setPasswordStatus('error');
-            setErrorMessage('Server connection error');
-        }
+        return user.name || 'Patient';
     };
 
     return (
-        <div className="flex bg-gray-50 min-h-screen">
+        <div className="flex min-h-screen bg-gray-50">
             <Sidebar />
-            <div className="flex-1 ml-64 p-8">
-                <div className="max-w-4xl mx-auto">
-                    <div className="flex justify-between items-center mb-8">
-                        <h1 className="text-3xl font-bold text-gray-800">My Profile</h1>
-                        {!isEditing ? (
-                            <button
-                                onClick={() => setIsEditing(true)}
-                                className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-100"
-                            >
-                                <FaEdit /> Edit Profile
-                            </button>
-                        ) : (
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setIsEditing(false)}
-                                    className="px-6 py-2.5 bg-white border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSave}
-                                    className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition shadow-lg shadow-green-100"
-                                >
-                                    <FaSave /> Save Changes
-                                </button>
-                            </div>
-                        )}
-                    </div>
 
-                    {showSuccess && (
-                        <div className="mb-6 p-4 bg-green-100 text-green-700 rounded-xl flex items-center gap-3 animate-slideDown">
-                            <FaCheckCircle /> Action completed successfully!
-                        </div>
-                    )}
+            <div className="flex-1 p-6 ml-64">
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
+                    <p className="text-gray-600">Manage your personal information and security settings.</p>
+                </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Profile Card */}
-                        <div className="lg:col-span-1">
-                            <div className="bg-white rounded-3xl shadow-xl p-8 text-center border border-gray-100">
-                                <div className="relative inline-block mb-6">
-                                    <div className="w-32 h-32 bg-indigo-100 rounded-full flex items-center justify-center text-5xl text-indigo-600 mx-auto border-4 border-indigo-50 shadow-inner overflow-hidden">
-                                        {user.profileImage ? (
-                                            <img src={user.profileImage} alt="Profile" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <FaUser />
-                                        )}
-                                    </div>
-                                    {isEditing && (
-                                        <>
-                                            <input
-                                                type="file"
-                                                id="photo-upload"
-                                                className="hidden"
-                                                accept="image/*"
-                                                onChange={handlePhotoChange}
-                                            />
-                                            <button
-                                                onClick={() => document.getElementById('photo-upload').click()}
-                                                className="absolute bottom-0 right-0 p-2 bg-white border border-gray-200 rounded-full text-indigo-600 shadow-md hover:scale-110 transition"
-                                            >
-                                                <FaEdit size={14} />
-                                            </button>
-                                        </>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Left Column: Basic Info Card */}
+                    <div className="lg:col-span-1">
+                        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden text-center p-8">
+                            <div className="relative inline-block mb-6">
+                                <div className="w-32 h-32 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-4xl font-bold border-4 border-white shadow-xl overflow-hidden">
+                                    {user.profilePhoto ? (
+                                        <img src={user.profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                                    ) : (
+                                        getDisplayName().charAt(0)
                                     )}
                                 </div>
-                                <h2 className="text-2xl font-bold text-gray-800">{user.name}</h2>
-                                <p className="text-gray-500 font-medium mb-6">Patient ID: #PAT-{user.id}</p>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-indigo-50 p-3 rounded-2xl">
-                                        <p className="text-[10px] uppercase font-extrabold text-indigo-400 tracking-widest mb-1">Blood Type</p>
-                                        <p className="font-bold text-indigo-700">{user.bloodType || 'N/A'}</p>
-                                    </div>
-                                    <div className="bg-green-50 p-3 rounded-2xl">
-                                        <p className="text-[10px] uppercase font-extrabold text-green-400 tracking-widest mb-1">Gender</p>
-                                        <p className="font-bold text-green-700">{user.gender || 'N/A'}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Security Card */}
-                            <div className="mt-6 bg-white rounded-3xl shadow-sm p-6 border border-gray-100">
-                                <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                    <FaLock className="text-gray-400" /> Security
-                                </h3>
+                                <input
+                                    type="file"
+                                    id="photoInput"
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={handlePhotoChange}
+                                />
                                 <button
-                                    onClick={() => setShowPasswordModal(true)}
-                                    className="w-full py-3 border-2 border-dashed border-gray-200 text-gray-500 font-bold rounded-xl hover:border-indigo-300 hover:text-indigo-600 transition"
+                                    onClick={() => document.getElementById('photoInput').click()}
+                                    className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full border-4 border-white hover:bg-blue-700 transition"
                                 >
-                                    Change Password
+                                    <FaCamera size={16} />
                                 </button>
                             </div>
-                        </div>
+                            <h2 className="text-2xl font-bold text-gray-900">{getDisplayName()}</h2>
+                            <p className="text-blue-600 font-medium mb-4">Patient Profile</p>
 
-                        {/* Form Box */}
-                        <div className="lg:col-span-2">
-                            <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
-                                <h3 className="text-xl font-bold text-gray-800 mb-6 border-b border-gray-50 pb-4">Personal Information</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4 text-left mt-8 border-t border-gray-50 pt-8">
+                                <div className="flex items-center gap-3 text-gray-600">
+                                    <span className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
+                                        <FaEnvelope size={14} />
+                                    </span>
                                     <div>
-                                        <label className="block text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-2">Full Name</label>
-                                        <div className="relative">
-                                            <FaUser className="absolute left-4 top-4 text-gray-300" />
-                                            <input
-                                                type="text"
-                                                disabled={!isEditing}
-                                                className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 transition ${isEditing ? 'bg-white border-indigo-100 focus:border-indigo-500' : 'bg-gray-50 border-transparent text-gray-600'}`}
-                                                value={user.name}
-                                                onChange={(e) => setUser({ ...user, name: e.target.value })}
-                                            />
-                                        </div>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Email</p>
+                                        <p className="font-medium">{user.email}</p>
                                     </div>
+                                </div>
+                                <div className="flex items-center gap-3 text-gray-600">
+                                    <span className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
+                                        <FaPhone size={14} />
+                                    </span>
                                     <div>
-                                        <label className="block text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-2">Email Address</label>
-                                        <div className="relative">
-                                            <FaEnvelope className="absolute left-4 top-4 text-gray-300" />
-                                            <input
-                                                type="email"
-                                                disabled={true}
-                                                className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 bg-gray-50 border-transparent text-gray-500 cursor-not-allowed`}
-                                                value={user.email}
-                                            />
-                                        </div>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Phone</p>
+                                        <p className="font-medium">{user.phone}</p>
                                     </div>
+                                </div>
+                                <div className="flex items-center gap-3 text-gray-600">
+                                    <span className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
+                                        <FaBirthdayCake size={14} />
+                                    </span>
                                     <div>
-                                        <label className="block text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-2">Phone Number</label>
-                                        <div className="relative">
-                                            <FaPhone className="absolute left-4 top-4 text-gray-300" />
-                                            <input
-                                                type="text"
-                                                disabled={!isEditing}
-                                                className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 transition ${isEditing ? 'bg-white border-indigo-100 focus:border-indigo-500' : 'bg-gray-50 border-transparent text-gray-600'}`}
-                                                value={user.phone}
-                                                onChange={(e) => setUser({ ...user, phone: e.target.value })}
-                                            />
-                                        </div>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Birth Date</p>
+                                        <p className="font-medium">{user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : 'Not specified'}</p>
                                     </div>
+                                </div>
+                                <div className="flex items-center gap-3 text-gray-600">
+                                    <span className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
+                                        <FaVenusMars size={14} />
+                                    </span>
                                     <div>
-                                        <label className="block text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-2">Date of Birth</label>
-                                        <div className="relative">
-                                            <FaBirthdayCake className="absolute left-4 top-4 text-gray-300" />
-                                            <input
-                                                type="date"
-                                                disabled={!isEditing}
-                                                className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 transition ${isEditing ? 'bg-white border-indigo-100 focus:border-indigo-500' : 'bg-gray-50 border-transparent text-gray-600'}`}
-                                                value={user.dob}
-                                                onChange={(e) => setUser({ ...user, dob: e.target.value })}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-2">Primary Address</label>
-                                        <div className="relative">
-                                            <FaMapMarkerAlt className="absolute left-4 top-4 text-gray-300" />
-                                            <textarea
-                                                disabled={!isEditing}
-                                                rows="3"
-                                                className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 transition ${isEditing ? 'bg-white border-indigo-100 focus:border-indigo-500' : 'bg-gray-50 border-transparent text-gray-600'}`}
-                                                value={user.address}
-                                                onChange={(e) => setUser({ ...user, address: e.target.value })}
-                                            />
-                                        </div>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Gender</p>
+                                        <p className="font-medium">{user.gender || 'Not specified'}</p>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column: Edit Forms */}
+                    <div className="lg:col-span-2 space-y-8">
+                        {/* Edit Personal Info */}
+                        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                    <FaUser className="text-blue-500" /> Personal Details
+                                </h3>
+                                <button
+                                    onClick={() => setIsEditing(!isEditing)}
+                                    className="text-blue-600 font-bold hover:underline"
+                                >
+                                    {isEditing ? 'Cancel' : 'Edit Profile'}
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleProfileUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">First Name</label>
+                                    <input
+                                        type="text"
+                                        disabled={!isEditing}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
+                                        value={formData.firstName}
+                                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Last Name</label>
+                                    <input
+                                        type="text"
+                                        disabled={!isEditing}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
+                                        value={formData.lastName}
+                                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
+                                    <input
+                                        type="text"
+                                        disabled={!isEditing}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
+                                        value={formData.phone}
+                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                        placeholder="+94 77 123 4567"
+                                    />
+                                    {isEditing && (
+                                        <p className="mt-1 text-[10px] text-gray-500">
+                                            Format: +94 77 123 4567 or 07X XXX XXXX
+                                        </p>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Gender</label>
+                                    <select
+                                        disabled={!isEditing}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
+                                        value={formData.gender}
+                                        onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                                    >
+                                        <option value="">Select Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Date of Birth</label>
+                                    <input
+                                        type="date"
+                                        disabled={!isEditing}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
+                                        value={formData.dateOfBirth}
+                                        onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Address</label>
+                                    <textarea
+                                        rows="3"
+                                        disabled={!isEditing}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
+                                        value={formData.address}
+                                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                    ></textarea>
+                                </div>
+                                {isEditing && (
+                                    <div className="md:col-span-2 pt-4">
+                                        <button type="submit" className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition">
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                )}
+                            </form>
+                        </div>
+
+                        {/* Change Password */}
+                        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+                            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-6">
+                                <FaLock className="text-red-500" /> Security Settings
+                            </h3>
+                            <form onSubmit={handleChangePassword} className="space-y-6 max-w-md">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Current Password</label>
+                                    <input
+                                        type="password"
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500"
+                                        value={passwordData.currentPassword}
+                                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">New Password</label>
+                                        <input
+                                            type="password"
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500"
+                                            value={passwordData.newPassword}
+                                            onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Confirm New Password</label>
+                                        <input
+                                            type="password"
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500"
+                                            value={passwordData.confirmPassword}
+                                            onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="pt-2">
+                                    <button type="submit" className="px-8 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition">
+                                        Update Password
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
             </div>
-
-            {/* Password Modal */}
-            {showPasswordModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 animate-scaleIn">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                            <FaLock className="text-indigo-600" /> Change Password
-                        </h2>
-                        <form onSubmit={handlePasswordChange} className="space-y-4">
-                            {passwordStatus === 'error' && (
-                                <div className="p-3 bg-red-50 text-red-600 rounded-xl text-sm font-bold animate-shake">
-                                    {errorMessage}
-                                </div>
-                            )}
-                            {passwordStatus === 'success' && (
-                                <div className="p-3 bg-green-50 text-green-600 rounded-xl text-sm font-bold flex items-center gap-2">
-                                    <FaCheckCircle /> Password changed successfully!
-                                </div>
-                            )}
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Current Password</label>
-                                <input
-                                    type="password"
-                                    required
-                                    value={passwords.current}
-                                    onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-100 focus:border-indigo-500 outline-none transition"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">New Password</label>
-                                <input
-                                    type="password"
-                                    required
-                                    value={passwords.new}
-                                    onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-100 focus:border-indigo-500 outline-none transition"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Confirm New Password</label>
-                                <input
-                                    type="password"
-                                    required
-                                    value={passwords.confirm}
-                                    onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-100 focus:border-indigo-500 outline-none transition"
-                                />
-                            </div>
-                            <div className="flex gap-4 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPasswordModal(false)}
-                                    className="flex-1 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-100"
-                                >
-                                    Update Password
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

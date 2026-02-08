@@ -1,73 +1,91 @@
-import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useState } from 'react';
 import Sidebar from '../../components/Sidebar';
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaCalendarCheck, FaUserMd, FaClock, FaCheck, FaTimes } from 'react-icons/fa';
 
 const ReceptionistAppointments = () => {
-  const location = useLocation();
-  const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchAppointments();
-
-    // Check if we have patient data from navigation state
-    if (location.state?.patientId) {
-      setNewAppointment(prev => ({
-        ...prev,
-        patientId: `PAT${String(location.state.patientId).padStart(3, '0')}`,
-        patientName: location.state.patientName || '',
-      }));
-      setShowForm(true);
-    }
-  }, [location.state]);
-
-  const fetchAppointments = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/receptionist/appointments', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setAppointments(data);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [appointments] = useState([
+    {
+      id: 1,
+      patientName: 'John Smith',
+      patientId: 'PAT001',
+      doctor: 'Dr. Jane Smith',
+      department: 'Cardiology',
+      date: '2024-01-18',
+      time: '09:00 AM',
+      duration: '30 min',
+      type: 'Follow-up',
+      status: 'confirmed',
+      contact: '+94 77 123 4567'
+    },
+    {
+      id: 2,
+      patientName: 'Emily Johnson',
+      patientId: 'PAT002',
+      doctor: 'Dr. Mark Wilson',
+      department: 'General Medicine',
+      date: '2024-01-18',
+      time: '09:30 AM',
+      duration: '45 min',
+      type: 'Consultation',
+      status: 'waiting',
+      contact: '+94 77 123 4567'
+    },
+    {
+      id: 3,
+      patientName: 'Michael Brown',
+      patientId: 'PAT003',
+      doctor: 'Dr. Sarah Lee',
+      department: 'Pediatrics',
+      date: '2024-01-18',
+      time: '10:00 AM',
+      duration: '60 min',
+      type: 'New Patient',
+      status: 'checked-in',
+      contact: '+94 77 123 4567'
+    },
+    {
+      id: 4,
+      patientName: 'Sarah Miller',
+      patientId: 'PAT004',
+      doctor: 'Dr. Robert Chen',
+      department: 'Orthopedics',
+      date: '2024-01-19',
+      time: '11:00 AM',
+      duration: '30 min',
+      type: 'Check-up',
+      status: 'pending',
+      contact: '+94 77 123 4567'
+    },
+  ]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
   const [newAppointment, setNewAppointment] = useState({
-    patientId: '',
     patientName: '',
+    patientId: '',
     doctor: '',
     department: '',
     date: '',
     time: '',
     duration: '30',
     type: 'Consultation',
-    contact: '',
-    notes: ''
+    contact: ''
   });
 
   const filteredAppointments = appointments.filter(app => {
-    const matchesSearch = (app.patient_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (app.patient_id || '').toString().includes(searchTerm) ||
-      (app.doctor_name || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || app.status.toLowerCase() === statusFilter.toLowerCase();
-    const matchesDate = dateFilter === 'all' || app.appointment_date === dateFilter;
+    const matchesSearch = app.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.patientId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.doctor.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
+    const matchesDate = dateFilter === 'all' || app.date === dateFilter;
 
     return matchesSearch && matchesStatus && matchesDate;
   });
 
   const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
+    switch (status) {
       case 'confirmed': return 'bg-green-100 text-green-800';
       case 'waiting': return 'bg-yellow-100 text-yellow-800';
       case 'checked-in': return 'bg-blue-100 text-blue-800';
@@ -87,81 +105,8 @@ const ReceptionistAppointments = () => {
     }
   };
 
-  const handleStatusUpdate = async (id, newStatus) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/receptionist/appointments/${id}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ status: newStatus })
-      });
-      if (response.ok) {
-        fetchAppointments();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleScheduleAppointment = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/receptionist/appointments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(newAppointment)
-      });
-      if (response.ok) {
-        setShowForm(false);
-        fetchAppointments();
-        setNewAppointment({
-          patientId: '', patientName: '', doctor: '', department: '',
-          date: '', time: '', duration: '30', type: 'Consultation',
-          contact: '', notes: ''
-        });
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleExport = () => {
-    if (filteredAppointments.length === 0) {
-      alert('No data to export');
-      return;
-    }
-
-    const headers = ['Patient Name', 'Patient ID', 'Doctor', 'Date', 'Time', 'Type', 'Status'];
-    const csvData = filteredAppointments.map(app => [
-      `"${app.patient_name || app.patient_id}"`,
-      `"${app.patient_id}"`,
-      `"${app.doctor_name}"`,
-      `"${app.appointment_date}"`,
-      `"${app.appointment_time}"`,
-      `"${app.type}"`,
-      `"${app.status}"`
-    ]);
-
-    const csvContent = [
-      headers.join(','),
-      ...csvData.map(row => row.join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `appointments_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleStatusUpdate = (id, newStatus) => {
+    alert(`Appointment ${id} status updated to ${newStatus}`);
   };
 
   return (
@@ -205,10 +150,10 @@ const ReceptionistAppointments = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
               >
                 <option value="all">All Status</option>
-                <option value="pending">Pending</option>
                 <option value="confirmed">Confirmed</option>
                 <option value="waiting">Waiting</option>
                 <option value="checked-in">Checked-in</option>
+                <option value="pending">Pending</option>
                 <option value="cancelled">Cancelled</option>
               </select>
             </div>
@@ -220,15 +165,14 @@ const ReceptionistAppointments = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
               >
                 <option value="all">All Dates</option>
-                <option value={new Date().toISOString().split('T')[0]}>Today</option>
+                <option value="2024-01-18">Today (Jan 18)</option>
+                <option value="2024-01-19">Tomorrow (Jan 19)</option>
+                <option value="2024-01-20">Jan 20</option>
               </select>
             </div>
 
             <div>
-              <button
-                onClick={handleExport}
-                className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg"
-              >
+              <button className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg">
                 Export List
               </button>
             </div>
@@ -250,29 +194,27 @@ const ReceptionistAppointments = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {loading ? (
-                  <tr><td colSpan="6" className="text-center py-4">Loading...</td></tr>
-                ) : filteredAppointments.map((appointment) => (
+                {filteredAppointments.map((appointment) => (
                   <tr key={appointment.id} className="hover:bg-gray-50">
                     <td className="py-4 px-4">
                       <div>
-                        <p className="font-medium text-gray-900">{appointment.patient_name || appointment.patient_id}</p>
-                        <p className="text-sm text-gray-500">{appointment.patient_id}</p>
+                        <p className="font-medium text-gray-900">{appointment.patientName}</p>
+                        <p className="text-sm text-gray-500">{appointment.patientId}</p>
                         <p className="text-xs text-gray-400">{appointment.contact}</p>
                       </div>
                     </td>
                     <td className="py-4 px-4">
                       <div>
-                        <p className="font-medium text-gray-900">{appointment.doctor_name}</p>
+                        <p className="font-medium text-gray-900">{appointment.doctor}</p>
                         <p className="text-sm text-gray-500">{appointment.department}</p>
                       </div>
                     </td>
                     <td className="py-4 px-4">
                       <div>
-                        <p className="font-medium text-gray-900">{appointment.appointment_date}</p>
+                        <p className="font-medium text-gray-900">{appointment.date}</p>
                         <div className="flex items-center text-sm text-gray-500">
                           <FaClock className="mr-1" />
-                          {appointment.appointment_time} • {appointment.duration} min
+                          {appointment.time} • {appointment.duration}
                         </div>
                       </div>
                     </td>
@@ -288,7 +230,7 @@ const ReceptionistAppointments = () => {
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex gap-2">
-                        {appointment.status.toLowerCase() === 'pending' && (
+                        {appointment.status === 'pending' && (
                           <button
                             onClick={() => handleStatusUpdate(appointment.id, 'confirmed')}
                             className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg flex items-center"
@@ -296,15 +238,7 @@ const ReceptionistAppointments = () => {
                             <FaCheck className="mr-1" /> Confirm
                           </button>
                         )}
-                        {appointment.status.toLowerCase() === 'confirmed' && (
-                          <button
-                            onClick={() => handleStatusUpdate(appointment.id, 'waiting')}
-                            className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white text-sm rounded-lg"
-                          >
-                            Arrived
-                          </button>
-                        )}
-                        {appointment.status.toLowerCase() === 'waiting' && (
+                        {appointment.status === 'waiting' && (
                           <button
                             onClick={() => handleStatusUpdate(appointment.id, 'checked-in')}
                             className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg"
@@ -312,7 +246,7 @@ const ReceptionistAppointments = () => {
                             Check-in
                           </button>
                         )}
-                        {appointment.status.toLowerCase() !== 'cancelled' && appointment.status.toLowerCase() !== 'checked-in' && (
+                        {appointment.status !== 'cancelled' && (
                           <button
                             onClick={() => handleStatusUpdate(appointment.id, 'cancelled')}
                             className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg flex items-center"
@@ -334,8 +268,8 @@ const ReceptionistAppointments = () => {
 
         {/* New Appointment Form Modal */}
         {showForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+            <div className="bg-white rounded-[2rem] shadow-2xl border border-gray-100 p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-start mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">Schedule New Appointment</h2>
                 <button
@@ -434,7 +368,7 @@ const ReceptionistAppointments = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Duration (min)
+                      Duration
                     </label>
                     <select
                       value={newAppointment.duration}
@@ -476,17 +410,17 @@ const ReceptionistAppointments = () => {
                       value={newAppointment.contact}
                       onChange={(e) => setNewAppointment({ ...newAppointment, contact: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
-                      placeholder="+1 (234) 567-8900"
+                      placeholder="+94 77 123 4567"
                     />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Format: +94 77 123 4567 or 07X XXX XXXX
+                    </p>
                   </div>
                 </div>
               </div>
 
               <div className="flex gap-3 mt-8">
-                <button
-                  onClick={handleScheduleAppointment}
-                  className="flex-1 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg"
-                >
+                <button className="flex-1 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg">
                   Schedule Appointment
                 </button>
                 <button

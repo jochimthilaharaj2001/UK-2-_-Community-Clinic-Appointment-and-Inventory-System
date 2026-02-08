@@ -1,6 +1,7 @@
 // pages/doctor/DoctorProfile.jsx
 import { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
+import api from '../../services/api';
 import {
   FaUserMd,
   FaEnvelope,
@@ -15,10 +16,8 @@ import {
   FaEdit,
   FaTimes,
   FaUser,
-  FaHospital,
-  FaLock
+  FaHospital
 } from 'react-icons/fa';
-
 
 const DoctorProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -26,13 +25,34 @@ const DoctorProfile = () => {
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(true);
   const [successMessage, setSuccessMessage] = useState('');
-  const [error, setError] = useState('');
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
 
+  // Initial doctor profile data
+  const initialProfileData = {
+    id: '3',
+    name: 'Dr. S.Murugesan',
+    email: 'dr.murugesan@siddhahospital.com',
+    phone: '+94 77 123 4567',
+    specialization: 'Siddha Medicine',
+    department: 'Department of Siddha & Indigenous Medicine',
+    qualifications: ['BSMS - Bachelor of Siddha Medicine and Surgery'],
+    experience: '11 years',
+    licenseNumber: 'SL-SMC/BSMS/23456',
+    hospital: 'Government Siddha Teaching Hospital, Jaffna',
+    address: 'No.45, Hospital Road, Jaffna,Sri Lanka',
+    consultationFee: 'LKR 1,500',
+    availability: 'Mon-Fri: 9 AM - 5 PM',
+    bio: 'Experienced Siddha Medical Practitioner with over 11 years of clinical experience in treating chronic and lifestyle-related diseases using traditional Siddha medicine. Specialized in Varmam therapy, herbal and mineral-based formulations, and holistic patient care.Dedicated to preserving and practicing authentic Siddha medical traditions.',
+    education: [
+      { degree: 'BSMS', institution: 'University of Jaffna', year: '2011' },
+
+    ],
+    certifications: [
+      'Registered Siddha Medical Practitioner - Sri Lanka Siddha Medical Council',
+      'Certificate in Varmam Therapy - National Institute of Siddha'
+    ],
+    languages: ['Tamil', 'English', 'Sinhala'],
+    joinDate: '2015-06-01'
+  };
 
   useEffect(() => {
     fetchProfile();
@@ -40,34 +60,19 @@ const DoctorProfile = () => {
 
   const fetchProfile = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/doctor/profile', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch profile');
-
-      const data = await response.json();
-
-      // Map backend fields to frontend expectations if necessary
-      // Ensure JSON fields are arrays
-      const formattedData = {
-        ...data,
-        licenseNumber: data.license || '',
-        education: typeof data.education === 'string' ? JSON.parse(data.education) : (data.education || []),
-        certifications: typeof data.certifications === 'string' ? JSON.parse(data.certifications) : (data.certifications || []),
-        languages: typeof data.languages === 'string' ? JSON.parse(data.languages) : (data.languages || []),
-        qualifications: typeof data.qualifications === 'string' ? JSON.parse(data.qualifications) : (data.qualifications || []),
-      };
-
-      setProfileData(formattedData);
-      setFormData(formattedData);
-      setLoading(false);
-    } catch (err) {
-      console.error(err);
-      setError('Failed to load profile');
+      setLoading(true);
+      const res = await api.get('/doctor/profile');
+      setProfileData(res.data);
+      setFormData(res.data);
+    } catch (error) {
+      console.error('Error fetching doctor profile:', error);
+      // Fallback to local storage if API fails, or show error
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (user) {
+        setProfileData(user);
+        setFormData(user);
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -97,14 +102,16 @@ const DoctorProfile = () => {
   };
 
   const addArrayItem = (field, defaultValue = '') => {
+    const currentArray = formData[field] || [];
     setFormData({
       ...formData,
-      [field]: [...(formData[field] || []), defaultValue]
+      [field]: [...currentArray, defaultValue]
     });
   };
 
   const removeArrayItem = (field, index) => {
-    const newArray = formData[field].filter((_, i) => i !== index);
+    const currentArray = formData[field] || [];
+    const newArray = currentArray.filter((_, i) => i !== index);
     setFormData({
       ...formData,
       [field]: newArray
@@ -112,91 +119,42 @@ const DoctorProfile = () => {
   };
 
   const handleSaveProfile = async () => {
-    setLoading(true);
-    setError('');
-
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/doctor/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
+      setLoading(true);
+      await api.put('/doctor/profile', formData);
 
-      if (!res.ok) throw new Error('Failed to update profile');
-
-      // Update locally
+      // Update local state
       setProfileData(formData);
+
+      // Update user data in localStorage to keep sidebar consistent
+      const user = JSON.parse(localStorage.getItem('user'));
+      const updatedUser = {
+        ...user,
+        name: formData.name,
+        specialization: formData.specialization,
+        department: formData.department
+      };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+
       setIsEditing(false);
       setSuccessMessage('Profile updated successfully!');
 
-      // Update user in local storage to keep name/email in sync
-      const user = JSON.parse(localStorage.getItem('user'));
-      if (user) {
-        localStorage.setItem('user', JSON.stringify({ ...user, name: formData.name, email: formData.email }));
-      }
-
+      // Clear success message after 3 seconds
       setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (err) {
-      console.error(err);
-      setError('Failed to save profile');
+    } catch (error) {
+      console.error('Error updating doctor profile:', error);
+      alert('Failed to update profile. Please try again.');
     } finally {
       setLoading(false);
     }
   };
-
-  const handleChangePassword = async () => {
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setError('New passwords do not match');
-      return;
-    }
-
-    if (!passwordData.currentPassword || !passwordData.newPassword) {
-      setError('Please fill in all password fields');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/doctor/change-password', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword
-        })
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to change password');
-
-      setSuccessMessage('Password updated successfully!');
-      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (err) {
-      console.error(err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
 
   const handleCancelEdit = () => {
     setFormData(profileData);
     setIsEditing(false);
   };
 
-  if (loading && !profileData) {
+  if (!profileData) {
     return (
       <div className="flex min-h-screen bg-gray-50">
         <Sidebar />
@@ -323,13 +281,19 @@ const DoctorProfile = () => {
                 <div className="flex items-center text-gray-600">
                   <FaPhone className="mr-3 text-gray-400" />
                   {isEditing ? (
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
-                    />
+                    <div className="flex-1">
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                        placeholder="+94 77 123 4567"
+                      />
+                      <p className="mt-1 text-[10px] text-gray-500">
+                        Format: +94 77 123 4567 or 07X XXX XXXX
+                      </p>
+                    </div>
                   ) : (
                     <span>{profileData.phone}</span>
                   )}
@@ -337,17 +301,75 @@ const DoctorProfile = () => {
 
                 <div className="flex items-center text-gray-600">
                   <FaBriefcaseMedical className="mr-3 text-gray-400" />
-                  <span>Experience: {profileData.experience}</span>
+                  {isEditing ? (
+                    <div className="flex-1">
+                      <label className="text-xs text-gray-500">Experience</label>
+                      <input
+                        type="text"
+                        name="experience"
+                        value={formData.experience || ''}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-1 border border-gray-300 rounded-lg"
+                        placeholder="e.g. 10 years"
+                      />
+                    </div>
+                  ) : (
+                    <span>Experience: {profileData.experience}</span>
+                  )}
                 </div>
 
                 <div className="flex items-center text-gray-600">
                   <FaFileMedical className="mr-3 text-gray-400" />
-                  <span>License: {profileData.licenseNumber}</span>
+                  {isEditing ? (
+                    <div className="flex-1">
+                      <label className="text-xs text-gray-500">License Number</label>
+                      <input
+                        type="text"
+                        name="licenseNumber"
+                        value={formData.licenseNumber || ''}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-1 border border-gray-300 rounded-lg"
+                      />
+                    </div>
+                  ) : (
+                    <span>License: {profileData.licenseNumber}</span>
+                  )}
                 </div>
 
                 <div className="flex items-center text-gray-600">
                   <FaHospital className="mr-3 text-gray-400" />
-                  <span>{profileData.hospital}</span>
+                  {isEditing ? (
+                    <div className="flex-1">
+                      <label className="text-xs text-gray-500">Hospital</label>
+                      <input
+                        type="text"
+                        name="hospital"
+                        value={formData.hospital || ''}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-1 border border-gray-300 rounded-lg"
+                      />
+                    </div>
+                  ) : (
+                    <span>{profileData.hospital}</span>
+                  )}
+                </div>
+
+                <div className="flex items-center text-gray-600">
+                  <FaMapMarkerAlt className="mr-3 text-gray-400" />
+                  {isEditing ? (
+                    <div className="flex-1">
+                      <label className="text-xs text-gray-500">Address</label>
+                      <textarea
+                        name="address"
+                        value={formData.address || ''}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-1 border border-gray-300 rounded-lg"
+                        rows="2"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-sm">{profileData.address}</span>
+                  )}
                 </div>
 
                 <div className="pt-4 border-t border-gray-200">
@@ -579,63 +601,8 @@ const DoctorProfile = () => {
                 <p className="text-gray-700">{profileData.address}</p>
               )}
             </div>
-
-            {/* Change Password */}
-            <div className="bg-white rounded-2xl shadow p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                <FaLock className="mr-2" />
-                Change Password
-              </h3>
-
-              {error && error.includes('password') && (
-                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-                  {error}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
-                  <input
-                    type="password"
-                    value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter current password"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-                  <input
-                    type="password"
-                    value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter new password"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
-                  <input
-                    type="password"
-                    value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="Confirm new password"
-                  />
-                </div>
-              </div>
-              <button
-                onClick={handleChangePassword}
-                disabled={loading}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
-              >
-                {loading ? 'Updating...' : 'Update Password'}
-              </button>
-            </div>
           </div>
         </div>
-
       </div>
     </div>
   );

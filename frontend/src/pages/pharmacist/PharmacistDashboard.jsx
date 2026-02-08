@@ -1,7 +1,5 @@
 import Sidebar from "../../components/Sidebar";
 import StatsCard from "../../components/StatsCard";
-import { useState, useEffect } from "react";
-import API_BASE_URL from "../../config/apiConfig";
 import {
   FaPills,
   FaClipboardList,
@@ -11,115 +9,38 @@ import {
 } from "react-icons/fa";
 
 const PharmacistDashboard = () => {
-  const [dashboardStats, setDashboardStats] = useState([
+  const dashboardStats = [
     {
       title: "Prescriptions Today",
-      value: 0,
+      value: 18,
       icon: <FaClipboardList />,
       color: "bg-blue-100 text-blue-700",
     },
     {
       title: "Medicines in Stock",
-      value: 0,
+      value: 245,
       icon: <FaPills />,
       color: "bg-green-100 text-green-700",
     },
     {
       title: "Low Stock Alerts",
-      value: 0,
+      value: 6,
       icon: <FaExclamationTriangle />,
       color: "bg-red-100 text-red-700",
     },
     {
-      title: "Expired Medicines",
-      value: 0,
+      title: "Reports Generated",
+      value: 12,
       icon: <FaFileAlt />,
-      color: "bg-orange-100 text-orange-700",
+      color: "bg-purple-100 text-purple-700",
     },
-  ]);
+  ];
 
-  const [lowStockMedicines, setLowStockMedicines] = useState([]);
-  const [inventoryTotal, setInventoryTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("token");
-
-      // Fetch inventory data
-      const inventoryRes = await fetch(`${API_BASE_URL}/pharmacist/inventory`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const inventoryData = await inventoryRes.json();
-
-      // Fetch low stock report
-      const lowStockRes = await fetch(`${API_BASE_URL}/reports/low-stock`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const lowStockData = await lowStockRes.json();
-
-      // Fetch dispensed prescriptions
-      const dispensedRes = await fetch(`${API_BASE_URL}/reports/dispensed`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const dispensedData = await dispensedRes.json();
-
-      // Calculate statistics
-      const totalMedicines = Array.isArray(inventoryData) ? inventoryData.length : 0;
-      const lowStockCount = Array.isArray(lowStockData) ? lowStockData.length : 0;
-      const expiredCount = Array.isArray(inventoryData) 
-        ? inventoryData.filter(item => {
-            const expiry = new Date(item.expiry_date);
-            return expiry < new Date();
-          }).length 
-        : 0;
-      const dispensedCount = Array.isArray(dispensedData) ? dispensedData.length : 0;
-
-      // Update stats
-      setDashboardStats([
-        {
-          title: "Dispensed Today",
-          value: dispensedCount,
-          icon: <FaClipboardList />,
-          color: "bg-blue-100 text-blue-700",
-        },
-        {
-          title: "Total Medicines",
-          value: totalMedicines,
-          icon: <FaPills />,
-          color: "bg-green-100 text-green-700",
-        },
-        {
-          title: "Low Stock Alerts",
-          value: lowStockCount,
-          icon: <FaExclamationTriangle />,
-          color: "bg-red-100 text-red-700",
-        },
-        {
-          title: "Expired Medicines",
-          value: expiredCount,
-          icon: <FaFileAlt />,
-          color: "bg-orange-100 text-orange-700",
-        },
-      ]);
-
-      // Set low stock medicines
-      if (Array.isArray(lowStockData)) {
-        setLowStockMedicines(lowStockData);
-      }
-
-      setInventoryTotal(totalMedicines);
-    } catch (error) {
-      console.error("Failed to fetch dashboard data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const lowStockMedicines = [
+    { id: 1, name: "Paracetamol 500mg", quantity: 8 },
+    { id: 2, name: "Amoxicillin 250mg", quantity: 5 },
+    { id: 3, name: "Cetirizine", quantity: 4 },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -127,7 +48,7 @@ const PharmacistDashboard = () => {
       <Sidebar role="pharmacist" />
 
       {/* Main Content */}
-      <div className="ml-64 p-6 relative z-10">
+      <div className="ml-64 p-6">
         {/* Header */}
         <h1 className="text-3xl font-bold text-gray-800 mb-6">
           Pharmacist Dashboard
@@ -187,41 +108,27 @@ const PharmacistDashboard = () => {
               <FaExclamationTriangle /> Low Stock Alerts
             </h2>
 
-            {loading ? (
-              <p className="text-gray-500">Loading...</p>
-            ) : lowStockMedicines.length === 0 ? (
-              <p className="text-green-600 font-medium">✓ All medicines have sufficient stock!</p>
+            {lowStockMedicines.length === 0 ? (
+              <p className="text-gray-500">No low-stock medicines.</p>
             ) : (
               <ul className="space-y-3">
-                {lowStockMedicines.slice(0, 5).map((med, idx) => (
+                {lowStockMedicines.map((med) => (
                   <li
-                    key={med.id || idx}
-                    className="flex justify-between items-center border-b pb-2 hover:bg-gray-50 p-2 rounded"
+                    key={med.id}
+                    className="flex justify-between items-center border-b pb-2"
                   >
-                    <div className="flex-1">
-                      <p className="font-medium">{med.generic_name || med.name}</p>
-                      <div className="flex gap-4 text-sm text-gray-600">
-                        <span>Brand: {med.brand_name || 'N/A'}</span>
-                        <span>Batch: {med.batch_number || 'N/A'}</span>
-                      </div>
-                      <p className="text-sm text-red-600 font-semibold">
-                        Qty: {med.quantity} | Status: {med.status || 'Low Stock'}
+                    <div>
+                      <p className="font-medium">{med.name}</p>
+                      <p className="text-sm text-red-600">
+                        Remaining: {med.quantity}
                       </p>
                     </div>
-                    <button 
-                      onClick={() => alert(`Order request for ${med.generic_name || med.name} sent to admin`)}
-                      className="flex items-center gap-2 bg-orange-500 text-white px-3 py-2 rounded hover:bg-orange-600 whitespace-nowrap"
-                    >
+                    <button className="flex items-center gap-2 bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600">
                       <FaTruck /> Order
                     </button>
                   </li>
                 ))}
               </ul>
-            )}
-            {lowStockMedicines.length > 5 && (
-              <p className="text-sm text-gray-500 mt-3">
-                And {lowStockMedicines.length - 5} more low stock items...
-              </p>
             )}
           </div>
 

@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import ProtectedRoute from './components/ProtectedRoutes';
+import PortalAccess from './pages/PortalAccess';
 import Login from './pages/Login';
 
 // Admin Pages
@@ -23,36 +25,33 @@ import DoctorPatients from './pages/doctor/DoctorPatients';
 import DoctorPrescriptions from './pages/doctor/DoctorPrescriptions';
 import DoctorSchedule from './pages/doctor/DoctorSchedule';
 import DoctorProfile from './pages/doctor/DoctorProfile';
-import Teleconsultation from './pages/doctor/Teleconsultation';
-
+import DoctorTeleconsult from './pages/doctor/DoctorTeleconsult';
 
 
 // Receptionist Pages
 import ReceptionistDashboard from './pages/receptionist/ReceptionistDashboard';
-import ReceptionistProfile from './pages/receptionist/ReceptionistProfile';
 import PatientSearch from './pages/receptionist/PatientSearch';
-import BookAppointment from './pages/receptionist/ReceptionistAppointments';
+import BookAppointment from './pages/receptionist/BookAppointment';
+import PatientRegistration from './pages/receptionist/PatientRegistration';
 import AppointmentsCalendar from './pages/receptionist/AppointmentsCalendar';
 import ReceptionistBilling from './pages/receptionist/ReceptionistBilling';
-import ReceptionistPatients from './pages/receptionist/ReceptionistPatients';
-import PatientRegistration from './pages/receptionist/PatientRegistration';
 
 // Patient Pages
+import PatientLogin from './pages/patient/PatientLogin';
 import PatientDashboard from './pages/patient/PatientDashboard';
-import BookPatientAppointment from './pages/patient/BookAppointment';
+import PatientAppointments from './pages/patient/PatientAppointments';
 import MedicalRecords from './pages/patient/MedicalRecords';
 import PatientProfile from './pages/patient/PatientProfile';
-import PatientAppointments from './pages/patient/Appointments';
-import Notifications from './pages/patient/Notifications';
 
 function App() {
   return (
     <Router>
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/pharmacist/login" element={<PharmacistLogin />} />
+        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Navigate to="/" replace />} />
+        <Route path="/pharmacist/login" element={<Navigate to="/" replace />} />
+        <Route path="/patient/login" element={<Navigate to="/" replace />} />
 
         {/* Admin Protected Routes */}
         <Route path="/admin" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
@@ -102,6 +101,14 @@ function App() {
           }
         />
         <Route
+          path="/doctor/teleconsult"
+          element={
+            <ProtectedRoute role="doctor">
+              <DoctorTeleconsult />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/doctor/profile"
           element={
             <ProtectedRoute role="doctor">
@@ -109,15 +116,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/doctor/teleconsult"
-          element={
-            <ProtectedRoute role="doctor">
-              <Teleconsultation />
-            </ProtectedRoute>
-          }
-        />
-
 
         {/* Receptionist Protected Routes */}
         <Route
@@ -128,16 +126,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
-        <Route
-          path="/receptionist/profile"
-          element={
-            <ProtectedRoute role="receptionist">
-              <ReceptionistProfile />
-            </ProtectedRoute>
-          }
-        />
-
         <Route
           path="/receptionist/patient-search"
           element={
@@ -154,7 +142,14 @@ function App() {
             </ProtectedRoute>
           }
         />
-
+        <Route
+          path="/receptionist/patient-registration"
+          element={
+            <ProtectedRoute role="receptionist">
+              <PatientRegistration />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/receptionist/appointments-calendar"
           element={
@@ -168,22 +163,6 @@ function App() {
           element={
             <ProtectedRoute role="receptionist">
               <ReceptionistBilling />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/receptionist/patients"
-          element={
-            <ProtectedRoute role="receptionist">
-              <ReceptionistPatients />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/receptionist/register-patient"
-          element={
-            <ProtectedRoute role="receptionist">
-              <PatientRegistration />
             </ProtectedRoute>
           }
         />
@@ -206,14 +185,6 @@ function App() {
           }
         />
         <Route
-          path="/patient/book-appointment"
-          element={
-            <ProtectedRoute role="patient">
-              <BookPatientAppointment />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/patient/medical-records"
           element={
             <ProtectedRoute role="patient">
@@ -229,18 +200,11 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/patient/notifications"
-          element={
-            <ProtectedRoute role="patient">
-              <Notifications />
-            </ProtectedRoute>
-          }
-        />
 
         {/* Catch all route */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <Toaster position="top-right" />
     </Router>
   );
 }

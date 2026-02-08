@@ -1,64 +1,39 @@
 import { useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import { FaSearch, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
-import API_BASE_URL from "../../config/apiConfig";
+import api from "../../services/api";
 
 const DispenseMedicine = () => {
   const [prescriptionId, setPrescriptionId] = useState("");
   const [prescription, setPrescription] = useState(null);
   const [error, setError] = useState("");
 
- const handleRetrieve = async () => {
-  try {
-    const res = await fetch(
-      `${API_BASE_URL}/prescriptions/${prescriptionId}`
-    );
-    const data = await res.json();
-
-    if (!res.ok || !data) {
-      setError("Prescription not found");
-      return;
+  const handleRetrieve = async () => {
+    try {
+      const res = await api.get(`/prescriptions/${prescriptionId}`);
+      setPrescription(res.data);
+      setError("");
+    } catch (err) {
+      setError(err.response?.data?.message || "Prescription not found");
     }
-
-    setPrescription(data);
-  } catch {
-    setError("Server error");
-  }
-};
+  };
 
 
   const handleDispense = async () => {
-  try {
-    const res = await fetch(
-      `${API_BASE_URL}/prescriptions/${prescription.id}/dispense`,
-      { 
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prescription_id: prescription.id })
-      }
-    );
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      setError(data.message);
-      return;
+    try {
+      await api.post(`/prescriptions/dispense/${prescription.id}`);
+      alert("Medicine dispensed successfully");
+      setPrescription(null);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to dispense medicine");
     }
-
-    alert("Medicine dispensed successfully");
-    setPrescription(null);
-    setPrescriptionId("");
-  } catch (error) {
-    console.error(error);
-    setError("Failed to dispense medicine");
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
       <Sidebar role="pharmacist" />
 
-      <div className="ml-64 p-6 relative z-10">
+      <div className="ml-64 p-6">
         <h1 className="text-3xl font-bold text-gray-800 mb-6">
           Dispense Medicine
         </h1>
@@ -95,59 +70,16 @@ const DispenseMedicine = () => {
               Prescription Details
             </h2>
 
-            {/* Prescription Header */}
-            <div className="grid grid-cols-2 gap-4 mb-6 pb-4 border-b">
-              <p><strong>Prescription ID:</strong> {prescription.id}</p>
-              <p><strong>Patient:</strong> {prescription.patientName || 'N/A'}</p>
-              <p><strong>Doctor:</strong> {prescription.doctor_name || 'N/A'}</p>
-              <p><strong>Status:</strong> <span className={prescription.status === 'DISPENSED' ? 'text-green-600' : 'text-orange-600'}>{prescription.status}</span></p>
-              <p><strong>Notes:</strong> {prescription.notes || 'None'}</p>
-              <p><strong>Date:</strong> {new Date(prescription.created_at).toLocaleDateString()}</p>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <p><strong>Patient:</strong> {prescription.patientName}</p>
+              <p><strong>Medicine:</strong> {prescription.medicine}</p>
+              <p><strong>Strength:</strong> {prescription.strength}</p>
+              <p><strong>Prescribed Qty:</strong> {prescription.quantity}</p>
+              <p>
+                <strong>Available Stock:</strong>{" "}
+                {prescription.availableStock}
+              </p>
             </div>
-
-            {/* Prescription Items Table */}
-            <h3 className="text-lg font-semibold mb-3">Medicines in Prescription</h3>
-            {prescription.items && prescription.items.length > 0 ? (
-              <div className="overflow-x-auto mb-6">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="px-4 py-2 text-left">Generic Name</th>
-                      <th className="px-4 py-2 text-left">Brand Name</th>
-                      <th className="px-4 py-2 text-left">Strength</th>
-                      <th className="px-4 py-2 text-center">Qty Required</th>
-                      <th className="px-4 py-2 text-center">Available Stock</th>
-                      <th className="px-4 py-2 text-center">Price (LKR)</th>
-                      <th className="px-4 py-2 text-center">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {prescription.items.map((item, idx) => {
-                      const isAvailable = item.availableStock >= item.quantity;
-                      return (
-                        <tr key={item.id || idx} className="border-b hover:bg-gray-50">
-                          <td className="px-4 py-2">{item.generic_name || 'N/A'}</td>
-                          <td className="px-4 py-2">{item.brand_name || 'N/A'}</td>
-                          <td className="px-4 py-2">{item.strength || 'N/A'}</td>
-                          <td className="px-4 py-2 text-center font-semibold">{item.quantity || 0}</td>
-                          <td className="px-4 py-2 text-center">{item.availableStock || 0}</td>
-                          <td className="px-4 py-2 text-center">{item.selling_price || 'N/A'}</td>
-                          <td className="px-4 py-2 text-center">
-                            {isAvailable ? (
-                              <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">Available</span>
-                            ) : (
-                              <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-semibold">Out of Stock</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p className="text-gray-500 mb-6">No medicines in this prescription.</p>
-            )}
 
             <button
               onClick={handleDispense}

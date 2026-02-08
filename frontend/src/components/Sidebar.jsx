@@ -22,8 +22,18 @@ import {
 
 const Sidebar = () => {
   const location = useLocation();
-  const user = JSON.parse(localStorage.getItem('user'));
-  const role = user?.role;
+  console.log("Sidebar rendering, path:", location.pathname);
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem('user'));
+    if (!user) console.warn('User data missing in Sidebar');
+  } catch (e) {
+    console.error('Failed to parse user data:', e);
+  }
+  const storedRole = localStorage.getItem('role');
+  console.log("Sidebar: User from storage:", user, "Role from storage:", storedRole);
+  const role = user?.role || storedRole;
+  console.log("Sidebar: Final role being used:", role);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -61,9 +71,8 @@ const Sidebar = () => {
   // 🔹 RECEPTIONIST MENU
   const receptionistMenu = [
     { path: '/receptionist/dashboard', label: 'Dashboard', icon: <FaHome /> },
-    { path: '/receptionist/profile', label: 'Receptionist Desk', icon: <FaUserCircle /> },
-    { path: '/receptionist/patients', label: 'Patient Management', icon: <FaUsers /> },
-    { path: '/receptionist/register-patient', label: 'Register Patient', icon: <FaUserPlus /> },
+    { path: '/receptionist/patient-search', label: 'Search Patients', icon: <FaSearch /> },
+    { path: '/receptionist/patient-registration', label: 'New Patient', icon: <FaUserPlus /> },
     { path: '/receptionist/book-appointment', label: 'Book Appointment', icon: <FaCalendarCheck /> },
     { path: '/receptionist/appointments-calendar', label: 'Appointments Calendar', icon: <FaCalendarAlt /> },
     { path: '/receptionist/billing', label: 'Billing & Payments', icon: <FaFileInvoiceDollar /> },
@@ -73,7 +82,6 @@ const Sidebar = () => {
   const patientMenu = [
     { path: '/patient/dashboard', label: 'Dashboard', icon: <FaHome /> },
     { path: '/patient/appointments', label: 'My Appointments', icon: <FaCalendarAlt /> },
-    { path: '/patient/book-appointment', label: 'Book Appointment', icon: <FaCalendarCheck /> },
     { path: '/patient/medical-records', label: 'Medical Records', icon: <FaClipboardList /> },
     { path: '/patient/profile', label: 'My Profile', icon: <FaUserCircle /> },
   ];
@@ -118,7 +126,8 @@ const Sidebar = () => {
       case 'receptionist':
         return `Welcome, ${user.name || 'Receptionist'}`;
       case 'patient':
-        return `Hello, ${user.name || 'Patient'}`;
+        const displayName = user.firstName ? `${user.firstName} ${user.lastName}` : (user.name || 'Patient');
+        return `Welcome, ${displayName}`;
       default:
         return 'Welcome';
     }
@@ -131,7 +140,7 @@ const Sidebar = () => {
       case 'pharmacist': return 'from-purple-500 to-purple-600';
       case 'doctor': return 'from-green-500 to-green-600';
       case 'receptionist': return 'from-teal-500 to-teal-600';
-      case 'patient': return 'from-indigo-500 to-indigo-600';
+      case 'patient': return 'from-blue-500 to-blue-600';
       default: return 'from-blue-500 to-blue-600';
     }
   };
@@ -143,7 +152,7 @@ const Sidebar = () => {
       case 'pharmacist': return 'from-purple-600 to-purple-500';
       case 'doctor': return 'from-green-600 to-green-500';
       case 'receptionist': return 'from-teal-600 to-teal-500';
-      case 'patient': return 'from-indigo-600 to-indigo-500';
+      case 'patient': return 'from-blue-600 to-blue-500';
       default: return 'from-blue-600 to-blue-500';
     }
   };
@@ -151,19 +160,23 @@ const Sidebar = () => {
   return (
     <div className="w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white h-screen fixed flex flex-col shadow-xl">
 
-
       {/* Logo & User Info */}
       <div className="p-6 border-b border-gray-700">
         <div className="flex items-center gap-3 mb-3">
-          <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${getIconColor()} flex items-center justify-center`}>
-            <span className="font-bold text-lg">
-              {user?.name?.charAt(0) || role?.charAt(0).toUpperCase()}
-            </span>
+          <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${getIconColor()} flex items-center justify-center overflow-hidden`}>
+            {user?.profilePhoto ? (
+              <img src={user.profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <span className="font-bold text-lg">
+                {user?.firstName ? user.firstName.charAt(0) :
+                  user?.name ? user.name.charAt(0) :
+                    (typeof role === 'string' ? role.charAt(0).toUpperCase() : 'U')}
+              </span>
+            )}
           </div>
           <div>
-            <h1 className="text-lg font-bold leading-tight">Rural Siddha<br />Hospital</h1>
-            <p className="text-xs font-semibold text-blue-400">Thellipalai</p>
-            <p className="text-xs text-gray-400 mt-1">
+            <h1 className="text-xl font-bold">Clinic System</h1>
+            <p className="text-sm text-gray-300">
               {getPortalName()}
             </p>
           </div>
@@ -187,8 +200,9 @@ const Sidebar = () => {
       {/* Menu */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {menuItems.map((item) => {
-          const isActive = location.pathname === item.path ||
-            location.pathname.startsWith(item.path + '/');
+          const isActive = item.label === 'Dashboard'
+            ? location.pathname === item.path
+            : location.pathname === item.path || location.pathname.startsWith(item.path + '/');
 
           return (
             <Link
@@ -238,7 +252,7 @@ const Sidebar = () => {
           <div className="flex items-center justify-between text-xs text-gray-400">
             <span className="px-2 py-1 bg-gray-700 rounded">Role: {role}</span>
             <span className="px-2 py-1 bg-gray-700 rounded">
-              ID: {String(user?.id || '').substring(0, 8) || 'N/A'}
+              ID: {user?.id ? String(user.id) : 'N/A'}
             </span>
           </div>
         </div>

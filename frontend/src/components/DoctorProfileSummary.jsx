@@ -12,11 +12,11 @@ const DoctorProfileSummary = () => {
       const user = JSON.parse(localStorage.getItem('user'));
       if (user) {
         return {
-          name: user.name || 'Dr. Murugesan',
-          specialization: user.specialization || 'Siddha Medicine',
-          email: user.email || 'dr.murugesan@siddhahospital.com',
-          phone: '+94 77 123-4567',
-          consultationFee: 'LKR 1500'
+          name: user.name || 'Dr. Sarah Wilson',
+          specialization: user.specialization || 'Cardiology',
+          email: user.email || 'doctor@clinic.com',
+          phone: '+94 77 123 4567',
+          consultationFee: 'LKR 200'
         };
       }
     }

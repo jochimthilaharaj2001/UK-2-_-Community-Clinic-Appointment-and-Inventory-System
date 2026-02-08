@@ -4,20 +4,26 @@ import LoadingSpinner from "./LoadingSpinner";
 
 const ProtectedRoute = ({ children, role }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
+  console.log(`ProtectedRoute checking for role: ${role || 'any'} | Current status: ${isAuthenticated}`);
 
   useEffect(() => {
     let auth = false;
     const token = localStorage.getItem("token");
     const userStr = localStorage.getItem("user");
 
-    if (token && userStr) {
+    if (token) {
+      const storedRole = localStorage.getItem("role");
+      let userRole = null;
+
       try {
-        const user = JSON.parse(userStr);
-        if (user.role && (!role || user.role === role)) {
-          auth = true;
-        }
+        const user = JSON.parse(userStr || '{}');
+        userRole = user.role || storedRole;
       } catch (error) {
-        console.error("Invalid user data in localStorage:", error);
+        userRole = storedRole;
+      }
+
+      if (userRole && (!role || userRole === role)) {
+        auth = true;
       }
     }
 
@@ -31,7 +37,7 @@ const ProtectedRoute = ({ children, role }) => {
 
   // If not authenticated
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   // Authorized → allow access

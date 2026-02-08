@@ -1,26 +1,27 @@
 import jwt from 'jsonwebtoken';
 
-export const verifyToken = (req, res, next) => {
-  const token = req.headers['authorization']?.split(' ')[1]; // Bearer TOKEN
+export const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
-  if (!token) {
-    return res.status(403).json({ message: 'No token provided' });
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET || 'secret', (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ message: 'Unauthorized' });
+    if (!token) {
+        return res.status(401).json({ message: 'Access token required' });
     }
-    req.user = decoded;
-    next();
-  });
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secretkey');
+        req.user = decoded; // { id, role }
+        next();
+    } catch (error) {
+        return res.status(403).json({ message: 'Invalid or expired token' });
+    }
 };
 
-export const checkRole = (role) => {
-  return (req, res, next) => {
-    if (req.user.role !== role) {
-      return res.status(403).json({ message: `Requires ${role} role` });
-    }
-    next();
-  };
+export const authorizeRole = (...allowedRoles) => {
+    return (req, res, next) => {
+        if (!req.user || !allowedRoles.includes(req.user.role)) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+        next();
+    };
 };

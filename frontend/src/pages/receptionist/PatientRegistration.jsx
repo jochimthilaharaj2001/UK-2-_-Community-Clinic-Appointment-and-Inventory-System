@@ -1,6 +1,7 @@
 // pages/receptionist/PatientRegistration.jsx
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import api from '../../services/api';
 import {
   FaUserPlus,
   FaIdCard,
@@ -16,11 +17,7 @@ import {
 
 const PatientRegistration = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-  const editId = searchParams.get('edit');
-  const [isEditMode, setIsEditMode] = useState(false);
-
+  const [loading, setLoading] = useState(false);
   const [generatedId] = useState(`PAT-${Math.floor(10000 + Math.random() * 90000)}`);
   const [formData, setFormData] = useState({
     // Personal Information
@@ -54,52 +51,6 @@ const PatientRegistration = () => {
     notes: ''
   });
 
-  useEffect(() => {
-    if (editId) {
-      setIsEditMode(true);
-      fetchPatientData(editId);
-    }
-  }, [editId]);
-
-  const fetchPatientData = async (id) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/receptionist/patients/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        // Map database field names to form field names
-        setFormData({
-          firstName: data.first_name || '',
-          lastName: data.last_name || '',
-          dateOfBirth: data.date_of_birth ? data.date_of_birth.split('T')[0] : '',
-          gender: data.gender || '',
-          maritalStatus: data.marital_status || '',
-          phone: data.phone || '',
-          email: data.email || '',
-          address: data.address || '',
-          emergencyContact: data.emergency_contact || '',
-          emergencyPhone: data.emergency_phone || '',
-          bloodGroup: data.blood_group || '',
-          allergies: data.allergies || '',
-          medicalHistory: data.medical_history || '',
-          currentMedications: data.current_medications || '',
-          insuranceProvider: data.insurance_provider || '',
-          insuranceId: data.insurance_id || '',
-          policyNumber: data.policy_number || '',
-          primaryDoctor: data.primary_doctor || '',
-          referralSource: data.referral_source || '',
-          notes: data.notes || ''
-        });
-      }
-    } catch (err) {
-      console.error('Error fetching patient data:', err);
-    }
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -111,58 +62,34 @@ const PatientRegistration = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic validation
     if (!formData.firstName || !formData.lastName || !formData.phone) {
       alert('Please fill in required fields: First Name, Last Name, and Phone');
       return;
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const url = isEditMode
-        ? `http://localhost:5000/api/receptionist/patients/${editId}`
-        : 'http://localhost:5000/api/receptionist/patients';
+      setLoading(true);
+      const res = await api.post('/receptionist/patients', formData);
 
-      const response = await fetch(url, {
-        method: isEditMode ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        alert(isEditMode ? 'Patient information updated successfully!' : `Patient registered successfully!
-Patient ID: ${data.patientId}
+      alert(`Patient registered successfully!
+Patient ID: ${res.data.patientId}
 Name: ${formData.firstName} ${formData.lastName}
 You can now schedule appointments for this patient.`);
 
-        if (!isEditMode) {
-          // Reset form for new registration
-          setFormData({
-            firstName: '', lastName: '', dateOfBirth: '', gender: '', maritalStatus: '',
-            phone: '', email: '', address: '', emergencyContact: '', emergencyPhone: '',
-            bloodGroup: '', allergies: '', medicalHistory: '', currentMedications: '',
-            insuranceProvider: '', insuranceId: '', policyNumber: '',
-            primaryDoctor: '', referralSource: '', notes: ''
-          });
-
-          // Optionally navigate to book appointment
-          setTimeout(() => {
-            navigate('/receptionist/appointments');
-          }, 1500);
-        } else {
-          navigate('/receptionist/patients');
+      // Optionally navigate to book appointment
+      navigate('/receptionist/book-appointment', {
+        state: {
+          patient: {
+            id: res.data.patientId,
+            name: `${formData.firstName} ${formData.lastName}`
+          }
         }
-      } else {
-        const error = await response.json();
-        alert('Error: ' + error.message);
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Failed to save patient information. Please check your connection.');
+      });
+    } catch (error) {
+      console.error('Error registering patient:', error);
+      alert('Failed to register patient: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -173,11 +100,11 @@ You can now schedule appointments for this patient.`);
       dateOfBirth: '1985-05-15',
       gender: 'male',
       maritalStatus: 'married',
-      phone: '+1 (234) 567-8900',
+      phone: '+94 77 123 4567',
       email: 'john.doe@email.com',
       address: '123 Main St, New York, NY 10001',
       emergencyContact: 'Jane Doe',
-      emergencyPhone: '+1 (234) 567-8901',
+      emergencyPhone: '+94 77 123 4568',
       bloodGroup: 'O+',
       allergies: 'Penicillin, Peanuts',
       medicalHistory: 'Hypertension, controlled with medication',
@@ -205,17 +132,13 @@ You can now schedule appointments for this patient.`);
               Back to Dashboard
             </button>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {isEditMode ? 'Update Patient Information' : 'New Patient Registration'}
-          </h1>
-          <p className="text-gray-600 mt-2">
-            {isEditMode ? `Updating details for PAT${String(editId).padStart(3, '0')}` : 'Register a new patient in the system'}
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">New Patient Registration</h1>
+          <p className="text-gray-600 mt-2">Register a new patient in the system</p>
         </div>
 
         <div className="flex flex-col items-end">
           <div className="px-4 py-2 bg-blue-600 text-white rounded-lg mb-2">
-            {isEditMode ? `Patient ID: PAT${String(editId).padStart(3, '0')}` : `Temporary ID: ${generatedId}`}
+            Patient ID: {generatedId}
           </div>
           <button
             onClick={quickFillDemo}
@@ -377,9 +300,12 @@ You can now schedule appointments for this patient.`);
                       onChange={handleChange}
                       required
                       className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      placeholder="+1 (234) 567-8900"
+                      placeholder="+94 77 123 4567"
                     />
                   </div>
+                  <p className="mt-1 text-xs text-gray-500 pl-10">
+                    Format: +94 77 123 4567 or 07X XXX XXXX
+                  </p>
                 </div>
 
                 <div>
@@ -442,8 +368,11 @@ You can now schedule appointments for this patient.`);
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="+1 (234) 567-8901"
+                    placeholder="+94 77 123 4568"
                   />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Format: +94 77 123 4567 or 07X XXX XXXX
+                  </p>
                 </div>
               </div>
             </div>
@@ -630,10 +559,11 @@ You can now schedule appointments for this patient.`);
           <div className="mt-8 flex gap-4">
             <button
               type="submit"
-              className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center justify-center gap-2"
+              disabled={loading}
+              className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <FaSave />
-              {isEditMode ? 'Update Patient Information' : 'Register Patient'}
+              {loading ? 'Registering...' : 'Register Patient'}
             </button>
             <button
               type="button"
@@ -650,6 +580,7 @@ You can now schedule appointments for this patient.`);
           <h3 className="font-bold text-gray-900 mb-3">📝 Registration Guidelines</h3>
           <ul className="space-y-2 text-sm text-gray-600">
             <li>• All fields marked with * are required for patient registration</li>
+            <li>• Use Sri Lankan phone format: +94 77 123 4567 or 07X XXX XXXX</li>
             <li>• Double-check phone numbers and emergency contact information</li>
             <li>• Verify insurance information before submitting</li>
             <li>• After registration, you can immediately schedule an appointment</li>

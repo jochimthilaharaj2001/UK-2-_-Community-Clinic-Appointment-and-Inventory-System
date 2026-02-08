@@ -1,40 +1,51 @@
 import express from 'express';
-import { getDoctorStats } from '../controllers/doctor/dashboardController.js';
-import { getDoctorProfile, updateDoctorProfile, changePassword } from '../controllers/doctor/profileController.js';
-import { getDoctorPatients, getPatientById, createPatient, getPatientHistory } from '../controllers/doctor/patientController.js';
-import { getDoctorAppointments, updateAppointmentStatus } from '../controllers/doctor/appointmentController.js';
-import { getDoctorPrescriptions, createPrescription, updatePrescription, deletePrescription } from '../controllers/doctor/prescriptionController.js';
-import { verifyToken, checkRole } from '../middleware/authMiddleware.js'; // We need to create this
+import {
+    getDashboardStats,
+    getPatients,
+    getPatientDetails,
+    getAppointments,
+    updateAppointmentStatus,
+    createAppointment,
+    getPrescriptions,
+    createPrescription,
+    updatePrescription,
+    deletePrescription,
+    getSchedule,
+    updateSchedule,
+    getProfile,
+    updateProfile,
+    registerPatient,
+    getPatientMedicalRecords
+} from '../controllers/doctorController.js';
 
 const router = express.Router();
 
-// Middleware to ensure user is logged in and is a doctor
-router.use(verifyToken);
-// router.use(checkRole('doctor'));
-
 // Dashboard
-router.get('/dashboard/stats', getDoctorStats);
-
-// Profile
-router.get('/profile', getDoctorProfile);
-router.put('/profile', updateDoctorProfile);
-router.put('/change-password', changePassword);
-
+router.get('/dashboard/stats', getDashboardStats);
 
 // Patients
-router.get('/patients', getDoctorPatients);
-router.get('/patients/:id', getPatientById);
-router.get('/patients/:id/history', getPatientHistory);
-router.post('/patients', createPatient);
+router.get('/patients', getPatients);
+router.post('/patients/register', registerPatient);
+router.get('/patients/:id', getPatientDetails);
+router.get('/patients/:id/records', getPatientMedicalRecords);
 
 // Appointments
-router.get('/appointments', getDoctorAppointments);
-router.put('/appointments/:id/status', updateAppointmentStatus);
+router.get('/appointments', getAppointments);
+router.post('/appointments', createAppointment);
+router.put('/appointments/:id', updateAppointmentStatus);
 
 // Prescriptions
-router.get('/prescriptions', getDoctorPrescriptions);
+router.get('/prescriptions', getPrescriptions);
 router.post('/prescriptions', createPrescription);
 router.put('/prescriptions/:id', updatePrescription);
 router.delete('/prescriptions/:id', deletePrescription);
+
+// Schedule
+router.get('/schedule', getSchedule);
+router.put('/schedule', updateSchedule);
+
+// Profile
+router.get('/profile', getProfile);
+router.put('/profile', updateProfile);
 
 export default router;

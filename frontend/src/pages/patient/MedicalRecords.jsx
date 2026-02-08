@@ -1,258 +1,277 @@
-
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
+import { FaFileMedical, FaPrescriptionBottleAlt, FaDownload, FaEye } from 'react-icons/fa';
+import api from '../../services/api';
 import { jsPDF } from 'jspdf';
-import {
-    FaFilePrescription,
-    FaCalendarAlt,
-    FaUserMd,
-    FaDownload,
-    FaSearch,
-    FaFilter,
-    FaHeartbeat
-} from 'react-icons/fa';
+import autoTable from 'jspdf-autotable';
+import { toast } from 'react-hot-toast';
 
 const MedicalRecords = () => {
-    const [activeTab, setActiveTab] = useState('prescriptions');
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filter, setFilter] = useState('All');
-    const [downloading, setDownloading] = useState(false);
-    const [prescriptions, setPrescriptions] = useState([]);
-    const [medicalReports, setMedicalReports] = useState([]);
+    const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedRecord, setSelectedRecord] = useState(null);
 
     useEffect(() => {
-        fetchMedicalRecords();
+        fetchRecords();
     }, []);
 
-    const fetchMedicalRecords = async () => {
+    const fetchRecords = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:5000/api/patient/medical-records', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
+            setLoading(true);
+            // In a real app:
+            // const response = await api.get('/patient/medical-records');
+            // setRecords(response.data);
 
-                // Map Prescriptions
-                if (data.prescriptions) {
-                    setPrescriptions(data.prescriptions.map(p => ({
-                        id: p.id,
-                        doctor: p.doctor || 'Unknown Doctor',
-                        date: p.date ? new Date(p.date).toISOString().split('T')[0] : 'N/A',
-                        meds: p.meds || 'Medicine',
-                        diagnostic: p.diagnostic || 'General',
-                        status: p.status || 'Completed'
-                    })));
-                }
-
-                // Map Reports
-                if (data.reports) {
-                    setMedicalReports(data.reports.map(r => ({
-                        id: r.id,
-                        title: r.title || 'Medical Report',
-                        date: r.date ? new Date(r.date).toISOString().split('T')[0] : 'N/A',
-                        clinic: r.clinic || 'Community Clinic',
-                        type: r.type || 'General'
-                    })));
-                }
-            }
-        } catch (err) {
-            console.error("Failed to fetch records", err);
-        } finally {
+            // Mocking for demonstration
+            setTimeout(() => {
+                setRecords([
+                    {
+                        id: 1,
+                        doctor: 'Dr. Sarah Wilson',
+                        date: '2025-12-15',
+                        diagnosis: 'Seasonal Influenza',
+                        treatment: 'Bed rest and fluids',
+                        prescriptions: [
+                            { medicine: 'Paracetamol', dosage: '500mg', frequency: 'Thrice a day', duration: '5 days' },
+                            { medicine: 'Vitamin C', dosage: '1000mg', frequency: 'Once a day', duration: '10 days' }
+                        ]
+                    },
+                    {
+                        id: 2,
+                        doctor: 'Dr. James Davis',
+                        date: '2025-11-02',
+                        diagnosis: 'Allergic Rhinitis',
+                        treatment: 'Anti-histamines and avoiding dust',
+                        prescriptions: [
+                            { medicine: 'Cetirizine', dosage: '10mg', frequency: 'At night', duration: '7 days' }
+                        ]
+                    }
+                ]);
+                setLoading(false);
+            }, 500);
+        } catch (error) {
+            console.error('Failed to fetch records');
             setLoading(false);
         }
     };
 
-    const filteredPrescriptions = prescriptions.filter(p =>
-        (p.meds.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.doctor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.diagnostic.toLowerCase().includes(searchTerm.toLowerCase())) &&
-        (filter === 'All' || p.status === filter)
-    );
+    const handleDownloadPDF = () => {
+        console.log("Download requested for record:", selectedRecord);
+        if (!selectedRecord) {
+            toast.error("Please select a record first");
+            return;
+        }
 
-    const filteredReports = medicalReports.filter(r =>
-        (r.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            r.clinic.toLowerCase().includes(searchTerm.toLowerCase())) &&
-        (filter === 'All' || r.type === filter)
-    );
-
-    const handleDownload = (name, content) => {
-        setDownloading(true);
         try {
+            const loadingToast = toast.loading("Preparing your medical record...");
+
+            // Initialize jsPDF
             const doc = new jsPDF();
+            const user = JSON.parse(localStorage.getItem('user')) || { name: 'Patient' };
 
-            // Add Title
+            // Set Title
             doc.setFontSize(22);
-            doc.setTextColor(79, 70, 229); // Indigo 600
-            doc.text("COMMUNITY CLINIC", 105, 20, { align: "center" });
+            doc.setTextColor(33, 150, 243);
+            doc.text('COMMUNITY CLINIC', 105, 20, { align: 'center' });
 
-            doc.setFontSize(16);
-            doc.setTextColor(0, 0, 0);
-            doc.text("Medical Document", 105, 30, { align: "center" });
+            doc.setFontSize(14);
+            doc.setTextColor(100);
+            doc.text('OFFICIAL MEDICAL RECORD', 105, 30, { align: 'center' });
 
-            doc.setDrawColor(200, 200, 200);
+            doc.setDrawColor(200);
             doc.line(20, 35, 190, 35);
 
-            // Add Body Content
+            // Information Section
             doc.setFontSize(12);
-            const splitText = doc.splitTextToSize(content, 170);
-            doc.text(splitText, 20, 50);
+            doc.setTextColor(0);
+            doc.text(`Patient Name: ${user.name}`, 20, 45);
+            doc.text(`Record ID: REC-${selectedRecord.id}-${Date.now().toString().slice(-6)}`, 130, 45);
+            doc.text(`Visit Date: ${selectedRecord.date}`, 20, 52);
+            doc.text(`Doctor: ${selectedRecord.doctor}`, 130, 52);
 
-            // Add Footer
+            // Clinical Summary
+            doc.setFontSize(14);
+            doc.setTextColor(33, 150, 243);
+            doc.text('Diagnosis', 20, 65);
+            doc.setFontSize(11);
+            doc.setTextColor(50);
+            const diagnosisLines = doc.splitTextToSize(selectedRecord.diagnosis || "No diagnosis recorded", 170);
+            doc.text(diagnosisLines, 20, 72);
+
+            const treatmentY = 75 + (diagnosisLines.length * 5);
+            doc.setFontSize(14);
+            doc.setTextColor(33, 150, 243);
+            doc.text('Treatment Plan', 20, treatmentY);
+            doc.setFontSize(11);
+            doc.setTextColor(50);
+            const treatmentLines = doc.splitTextToSize(selectedRecord.treatment || "Follow standard care", 170);
+            doc.text(treatmentLines, 20, treatmentY + 7);
+
+            // Prescriptions Table
+            const tableY = treatmentY + 15 + (treatmentLines.length * 5);
+            doc.setFontSize(14);
+            doc.setTextColor(33, 150, 243);
+            doc.text('Prescriptions', 20, tableY);
+
+            const tableData = (selectedRecord.prescriptions || []).map(p => [
+                p.medicine,
+                p.dosage,
+                p.frequency,
+                p.duration
+            ]);
+
+            autoTable(doc, {
+                startY: tableY + 5,
+                head: [['Medicine', 'Dosage', 'Frequency', 'Duration']],
+                body: tableData,
+                theme: 'grid',
+                headStyles: { fillColor: [33, 150, 243], fontStyle: 'bold' },
+                styles: { fontSize: 10, cellPadding: 3 },
+                margin: { left: 20, right: 20 }
+            });
+
+            // Calculate footer position based on table end
+            const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : 250;
+
             doc.setFontSize(10);
-            doc.setTextColor(150, 150, 150);
-            doc.text(`Generated on: ${new Date().toLocaleString()}`, 105, 280, { align: "center" });
+            doc.setTextColor(150);
+            doc.setFont('helvetica', 'italic');
+            doc.text('This document is a digital copy of your consultation summary.', 105, finalY, { align: 'center' });
+            doc.text(`Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, 105, finalY + 7, { align: 'center' });
 
-            doc.save(name.endsWith('.pdf') ? name : `${name}.pdf`);
+            // Final Save
+            const safeFileName = `Medical_Record_${selectedRecord.date.replace(/\//g, '-')}.pdf`;
+            doc.save(safeFileName);
+
+            toast.dismiss(loadingToast);
+            toast.success("Medical record downloaded successfully!");
+            console.log("PDF successfully saved as:", safeFileName);
         } catch (error) {
             console.error("PDF Generation Error:", error);
-            alert("Failed to generate PDF. Please try again.");
-        } finally {
-            setTimeout(() => setDownloading(false), 500);
+            toast.dismiss();
+            toast.error("Could not generate PDF. Please try again.");
         }
     };
 
     return (
-        <div className="flex bg-gray-50 min-h-screen">
+        <div className="flex min-h-screen bg-gray-50">
             <Sidebar />
-            <div className="flex-1 ml-64 p-8">
-                <div className="max-w-5xl mx-auto">
-                    <div className="flex justify-between items-end mb-8">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-800">Medical Records</h1>
-                            <p className="text-gray-600">Access your health history, prescriptions, and reports.</p>
-                        </div>
-                        <div className="flex gap-2">
-                            <div className="relative">
-                                <FaSearch className="absolute left-3 top-3 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Search records..."
-                                    className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 w-64"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
+
+            <div className="flex-1 p-6 ml-64">
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-gray-900">Medical Records</h1>
+                    <p className="text-gray-600">Access your past consultation records and prescriptions.</p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* History List */}
+                    <div className="lg:col-span-1 space-y-4">
+                        <h2 className="text-xl font-bold text-gray-800 mb-4">Visit History</h2>
+                        {records.map(record => (
+                            <div
+                                key={record.id}
+                                onClick={() => setSelectedRecord(record)}
+                                className={`p-5 rounded-2xl border cursor-pointer transition-all ${selectedRecord?.id === record.id
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-200'
+                                    : 'bg-white text-gray-900 border-gray-100 hover:border-blue-300'
+                                    }`}
+                            >
+                                <div className="flex justify-between items-start mb-2">
+                                    <p className="font-bold text-lg">{record.date}</p>
+                                    <FaFileMedical className={selectedRecord?.id === record.id ? 'text-blue-100' : 'text-blue-500'} />
+                                </div>
+                                <p className={`text-sm ${selectedRecord?.id === record.id ? 'text-blue-50' : 'text-gray-500'}`}>
+                                    Consulted with {record.doctor}
+                                </p>
+                                <p className={`mt-3 font-medium ${selectedRecord?.id === record.id ? 'text-white' : 'text-gray-800'}`}>
+                                    {record.diagnosis}
+                                </p>
                             </div>
-                            <div className="relative flex items-center gap-2 bg-white border border-gray-200 rounded-lg shadow-sm px-3">
-                                <FaFilter className="text-gray-400 text-sm" />
-                                <select
-                                    className="bg-transparent border-none text-sm font-bold text-gray-600 focus:ring-0 cursor-pointer py-2 outline-none"
-                                    value={filter}
-                                    onChange={(e) => {
-                                        setFilter(e.target.value);
-                                    }}
-                                >
-                                    <option value="All">All {activeTab === 'prescriptions' ? 'Status' : 'Types'}</option>
-                                    {activeTab === 'prescriptions' ? (
-                                        <>
-                                            <option value="Active">Active</option>
-                                            <option value="Completed">Completed</option>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <option value="Laboratory">Laboratory</option>
-                                            <option value="Radiology">Radiology</option>
-                                        </>
-                                    )}
-                                </select>
-                            </div>
-                        </div>
+                        ))}
                     </div>
 
-                    {/* Tabs */}
-                    <div className="flex gap-4 mb-8 p-1 bg-gray-200/50 rounded-xl w-fit">
-                        <button
-                            onClick={() => { setActiveTab('prescriptions'); setFilter('All'); }}
-                            className={`px-6 py-2.5 rounded-lg font-bold text-sm transition ${activeTab === 'prescriptions' ? 'bg-white text-indigo-600 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            Prescriptions
-                        </button>
-                        <button
-                            onClick={() => { setActiveTab('reports'); setFilter('All'); }}
-                            className={`px-6 py-2.5 rounded-lg font-bold text-sm transition ${activeTab === 'reports' ? 'bg-white text-indigo-600 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            Reports & Results
-                        </button>
+                    {/* Record Details */}
+                    <div className="lg:col-span-2">
+                        {selectedRecord ? (
+                            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
+                                <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-8 text-white">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <h2 className="text-2xl font-bold">Consultation Summary</h2>
+                                            <p className="opacity-80">Reference ID: #REC-{selectedRecord.id}0923</p>
+                                        </div>
+                                        <button
+                                            onClick={handleDownloadPDF}
+                                            className="bg-white/20 hover:bg-white/30 p-3 rounded-xl transition"
+                                            title="Download as PDF"
+                                        >
+                                            <FaDownload />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="p-8 space-y-8 text-gray-800">
+                                    <div className="grid grid-cols-2 gap-8">
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Physician</p>
+                                            <p className="font-bold text-lg">{selectedRecord.doctor}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Date of Visit</p>
+                                            <p className="font-bold text-lg">{selectedRecord.date}</p>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Diagnosis</p>
+                                        <div className="p-4 bg-blue-50 rounded-xl text-blue-900 font-medium">
+                                            {selectedRecord.diagnosis}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Treatment Plan</p>
+                                        <p className="text-gray-600 leading-relaxed">{selectedRecord.treatment}</p>
+                                    </div>
+
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <FaPrescriptionBottleAlt className="text-red-500" />
+                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Prescriptions</p>
+                                        </div>
+                                        <div className="overflow-hidden border border-gray-100 rounded-2xl">
+                                            <table className="w-full text-left">
+                                                <thead className="bg-gray-50 border-b border-gray-100">
+                                                    <tr>
+                                                        <th className="px-4 py-3 text-xs font-bold text-gray-500">Medicine</th>
+                                                        <th className="px-4 py-3 text-xs font-bold text-gray-500">Dosage</th>
+                                                        <th className="px-4 py-3 text-xs font-bold text-gray-500">Frequency</th>
+                                                        <th className="px-4 py-3 text-xs font-bold text-gray-500">Duration</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-50">
+                                                    {selectedRecord.prescriptions.map((p, i) => (
+                                                        <tr key={i}>
+                                                            <td className="px-4 py-3 font-bold text-sm">{p.medicine}</td>
+                                                            <td className="px-4 py-3 text-sm">{p.dosage}</td>
+                                                            <td className="px-4 py-3 text-sm">{p.frequency}</td>
+                                                            <td className="px-4 py-3 text-sm">{p.duration}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-white rounded-3xl border-2 border-dashed border-gray-200 h-96 flex flex-col items-center justify-center text-gray-400">
+                                <FaEye size={48} className="mb-4 opacity-50" />
+                                <p className="font-medium text-lg">Select a record to view details</p>
+                                <p className="text-sm">Your full medical history is protected and private.</p>
+                            </div>
+                        )}
                     </div>
-
-                    {activeTab === 'prescriptions' && (
-                        <div className="space-y-4">
-                            {filteredPrescriptions.length > 0 ? (
-                                filteredPrescriptions.map((p) => (
-                                    <div key={p.id} className="bg-white rounded-2xl p-6 shadow-sm border border-transparent hover:border-indigo-200 transition group">
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex gap-4">
-                                                <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-2xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
-                                                    <FaFilePrescription />
-                                                </div>
-                                                <div>
-                                                    <div className="flex items-center gap-3 mb-1">
-                                                        <h3 className="text-xl font-bold text-gray-800">{p.meds}</h3>
-                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider ${p.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                                                            {p.status}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex gap-4 text-sm text-gray-500">
-                                                        <span className="flex items-center gap-1"><FaUserMd className="text-gray-400" /> {p.doctor}</span>
-                                                        <span className="flex items-center gap-1"><FaCalendarAlt className="text-gray-400" /> {p.date}</span>
-                                                    </div>
-                                                    <p className="mt-3 text-gray-600 text-sm">
-                                                        <span className="font-bold text-gray-400 uppercase text-[10px] tracking-widest block mb-1">Diagnostic</span>
-                                                        {p.diagnostic}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <button
-                                                disabled={downloading}
-                                                onClick={() => handleDownload(`Prescription-${p.id}.pdf`, `Prescription ID: ${p.id}\nDoctor: ${p.doctor}\nDate: ${p.date}\nMedicines: ${p.meds}\nDiagnostic: ${p.diagnostic}\nStatus: ${p.status}`)}
-                                                className="flex items-center gap-2 px-4 py-2 border-2 border-indigo-600 text-indigo-600 font-bold rounded-xl hover:bg-indigo-600 hover:text-white transition shadow-sm hover:shadow-indigo-100 disabled:opacity-50"
-                                            >
-                                                {downloading ? '...' : <FaDownload />} PDF
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="text-center py-12 text-gray-400 font-medium">No prescription history found.</div>
-                            )}
-                        </div>
-                    )}
-
-                    {activeTab === 'reports' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {filteredReports.length > 0 ? (
-                                filteredReports.map((report) => (
-                                    <div key={report.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-blue-200 transition group">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-xl text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition">
-                                                <FaHeartbeat />
-                                            </div>
-                                            <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                                                {report.type}
-                                            </span>
-                                        </div>
-                                        <h3 className="text-lg font-bold text-gray-800 mb-1">{report.title}</h3>
-                                        <p className="text-sm text-gray-500 mb-4">{report.clinic}</p>
-                                        <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                                            <span className="text-xs text-gray-400 font-medium flex items-center gap-1">
-                                                <FaCalendarAlt size={10} /> {report.date}
-                                            </span>
-                                            <button
-                                                disabled={downloading}
-                                                onClick={() => handleDownload(`${report.title}.pdf`, `MEDICAL REPORT\nTitle: ${report.title}\nDate: ${report.date}\nClinic: ${report.clinic}\nType: ${report.type}\nStatus: Verified Result`)}
-                                                className="text-blue-600 font-bold text-sm flex items-center gap-1 hover:underline disabled:opacity-50"
-                                            >
-                                                {downloading ? 'Preparing...' : <>View Report <FaDownload size={12} /></>}
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="col-span-full text-center py-12 text-gray-400 font-medium">No reports found.</div>
-                            )}
-                        </div>
-                    )}
                 </div>
             </div>
         </div>

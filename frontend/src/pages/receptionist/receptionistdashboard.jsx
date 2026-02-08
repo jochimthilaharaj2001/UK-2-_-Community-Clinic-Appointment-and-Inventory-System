@@ -1,310 +1,364 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
+import api from '../../services/api';
 import {
-  FaCalendarCheck,
-  FaUserInjured,
-  FaMoneyBillWave,
-  FaClock,
   FaSearch,
-  FaBell,
-  FaUserCircle,
+  FaCalendarPlus,
+  FaUserPlus,
+  FaFileInvoiceDollar,
+  FaCalendarAlt,
+  FaUsers,
+  FaClock,
 } from 'react-icons/fa';
 
 const ReceptionistDashboard = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [notifications, setNotifications] = useState([]);
-  const [showNotifications, setShowNotifications] = useState(false);
-
-  const notificationsRef = useRef(null);
-
-  const [stats, setStats] = useState({
-    todayAppointments: 0,
-    totalPatients: 0,
-    pendingPayments: 0,
-    waitingRoom: 0,
-    completedAppointments: 0,
+  const [todayDate, setTodayDate] = useState('');
+  const [currentTime, setCurrentTime] = useState('');
+  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
+  const [quickStats, setQuickStats] = useState({
+    totalAppointments: 0,
+    waitingPatients: 0,
     newPatients: 0,
+    pendingPayments: 0
   });
 
-  // Appointments data
-  const [appointments, setAppointments] = useState([]);
-
-  // Waiting room patients
-  const [waitingPatients, setWaitingPatients] = useState([]);
-
-  // Pending payments
-  const [pendingPayments, setPendingPayments] = useState([
-    { id: 1, patient: 'Aravind', amount: 150, dueDate: '2024-01-20', status: 'Overdue' },
-    { id: 2, patient: 'Priya Nadarajah', amount: 85, dueDate: '2024-01-22', status: 'Pending' },
-    { id: 3, patient: 'Kumaravel', amount: 200, dueDate: '2024-01-25', status: 'Pending' },
-  ]);
-
-
   useEffect(() => {
-    fetchDashboardData();
-    setNotifications([
-      { id: 1, message: 'New appointment booked for 10:30 AM', time: '5 min ago', read: false },
-      { id: 2, message: 'Patient checked in - Sarah Johnson', time: '15 min ago', read: false },
-      { id: 3, message: 'Payment received from John Doe', time: '1 hour ago', read: true },
-    ]);
+    // Set current date and time
+    const now = new Date();
+    setTodayDate(now.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }));
+
+    // Update time every minute
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+      }));
+    }, 60000);
+
+    setCurrentTime(now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    }));
+
+    const fetchReceptionStats = async () => {
+      try {
+        const statsRes = await api.get('/receptionist/dashboard/stats');
+        setQuickStats({
+          totalAppointments: statsRes.data.todayAppointments,
+          waitingPatients: 0, // Backend could provide this later
+          newPatients: statsRes.data.totalPatients, // Using total for now or backend could limit to 'today'
+          pendingPayments: statsRes.data.pendingPayments
+        });
+
+        const appointmentsRes = await api.get('/receptionist/appointments?date=' + new Date().toISOString().split('T')[0]);
+        setUpcomingAppointments(appointmentsRes.data.map(app => ({
+          id: app.id,
+          patientName: app.patient_name,
+          patientPhone: app.patient_phone,
+          time: app.appointment_time,
+          doctor: app.doctor_name,
+          status: app.status
+        })));
+      } catch (error) {
+        console.error('Error fetching receptionist dashboard data:', error);
+      }
+    };
+
+    fetchReceptionStats();
+
+    return () => clearInterval(timer);
   }, []);
 
-  const fetchDashboardData = async () => {
+  const handleCheckIn = async (appointmentId) => {
     try {
-      const token = localStorage.getItem('token');
-      // Stats
-      const statsRes = await fetch('http://localhost:5000/api/receptionist/dashboard/stats', {
-        headers: { 'Authorization': `Bearer ${token}` }
+      await api.put(`/receptionist/appointments/${appointmentId}`, {
+        status: 'checked-in'
       });
-      if (statsRes.ok) {
-        const data = await statsRes.json();
-        setStats({
-          todayAppointments: data.totalAppointments,
-          totalPatients: data.totalPatients,
-          pendingPayments: data.pendingPayments,
-          waitingRoom: data.waitingPatients,
-          completedAppointments: 0,
-          newPatients: data.newPatients,
-        });
-      }
-
-      // Appointments
-      const appRes = await fetch('http://localhost:5000/api/receptionist/appointments/today', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (appRes.ok) {
-        const data = await appRes.json();
-        setAppointments(data);
-        setWaitingPatients(data.filter(a => a.status === 'checked-in' || a.status === 'waiting'));
-      }
-
-      // Pending Payments
-      const payRes = await fetch('http://localhost:5000/api/receptionist/dashboard/pending-payments', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (payRes.ok) {
-        const data = await payRes.json();
-        setPendingPayments(data);
-      }
-    } catch (err) {
-      console.error(err);
+      alert('Patient checked in successfully!');
+      // Refresh appointments
+      const appointmentsRes = await api.get('/receptionist/appointments?date=' + new Date().toISOString().split('T')[0]);
+      setUpcomingAppointments(appointmentsRes.data.map(app => ({
+        id: app.id,
+        patientName: app.patient_name,
+        patientPhone: app.patient_phone,
+        time: app.appointment_time,
+        doctor: app.doctor_name,
+        status: app.status
+      })));
+    } catch (error) {
+      console.error('Error checking in:', error);
+      alert('Failed to check in patient');
     }
   };
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
-        setShowNotifications(false);
+  const handleQuickSearch = async (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    if (query.length > 2) {
+      try {
+        const res = await api.get(`/receptionist/patients?search=${query}`);
+        setSearchResults(res.data);
+      } catch (error) {
+        console.error('Error in quick search:', error);
       }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const unreadNotifications = notifications.filter(n => !n.read).length;
+    } else {
+      setSearchResults([]);
+    }
+  };
 
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     navigate('/login');
+  };
+
+  const quickActions = [
+    {
+      icon: <FaSearch />,
+      label: 'Search Patient',
+      description: 'Find patient records',
+      path: '/receptionist/patient-search',
+      color: 'bg-blue-500'
+    },
+    {
+      icon: <FaCalendarPlus />,
+      label: 'Book Appointment',
+      description: 'Schedule new appointment',
+      path: '/receptionist/book-appointment',
+      color: 'bg-green-500'
+    },
+    {
+      icon: <FaUserPlus />,
+      label: 'New Patient',
+      description: 'Register new patient',
+      path: '/receptionist/patient-registration',
+      color: 'bg-purple-500'
+    },
+    {
+      icon: <FaFileInvoiceDollar />,
+      label: 'Billing',
+      description: 'Process payments',
+      path: '/receptionist/billing',
+      color: 'bg-yellow-500'
+    },
+  ];
+
+  const statCards = [
+    {
+      title: "Today's Appointments",
+      value: quickStats.totalAppointments,
+      icon: <FaCalendarAlt className="text-2xl" />,
+      color: "from-blue-500 to-blue-600",
+      change: "+4",
+    },
+    {
+      title: "Patients Waiting",
+      value: quickStats.waitingPatients,
+      icon: <FaClock className="text-2xl" />,
+      color: "from-yellow-500 to-yellow-600",
+      change: "-1",
+    },
+    {
+      title: "New Patients",
+      value: quickStats.newPatients,
+      icon: <FaUsers className="text-2xl" />,
+      color: "from-green-500 to-green-600",
+      change: "+2",
+    },
+    {
+      title: "Pending Payments",
+      value: quickStats.pendingPayments,
+      icon: <FaFileInvoiceDollar className="text-2xl" />,
+      color: "from-red-500 to-red-600",
+      change: "3",
+    },
+  ];
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'waiting': return 'bg-yellow-100 text-yellow-800';
+      case 'checked-in': return 'bg-green-100 text-green-800';
+      case 'scheduled': return 'bg-blue-100 text-blue-800';
+      case 'confirmed': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
+      <div className="flex-1 p-6 ml-64">
+        {/* Welcome Section */}
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-gray-900">Welcome back!</h2>
+          <p className="text-gray-600 mt-2">Here's what's happening at the reception today.</p>
+        </div>
 
-      <div className="flex-1 p-6 md:ml-64">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-teal-600 font-bold">Rural Siddha Hospital</span>
-              <span className="text-gray-300">|</span>
-              <span className="text-gray-500 text-sm">Thellipalai</span>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900">Reception Dashboard</h1>
-            <p className="text-gray-600 mt-1">Welcome back! Here's what's happening today.</p>
-          </div>
-          <div className="flex items-center gap-4">
-            {/* Search */}
-            <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search patients, appointments..."
-                className="pl-10 pr-4 py-2 border rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-              />
-            </div>
-
-            {/* Notifications */}
-            <div className="relative">
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 hover:bg-gray-100 rounded-full"
-              >
-                <FaBell className="text-xl text-gray-600" />
-                {unreadNotifications > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {unreadNotifications}
-                  </span>
-                )}
-              </button>
-
-              {/* Notifications dropdown */}
-              <div
-                ref={notificationsRef}
-                className={`absolute right-0 mt-2 w-80 bg-white border rounded-lg shadow-lg overflow-hidden z-50 transform transition-all duration-300 ease-out
-                  ${showNotifications ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}
-              >
-                <div className="p-4 border-b font-semibold text-gray-700">Notifications</div>
-                <div className="max-h-64 overflow-y-auto">
-                  {notifications.length === 0 ? (
-                    <p className="text-gray-500 text-sm p-4">No notifications</p>
-                  ) : (
-                    notifications.map((n, index) => (
-                      <div
-                        key={n.id}
-                        className={`px-4 py-3 border-b cursor-pointer transform transition-all duration-300 ease-out
-                          ${!n.read ? 'bg-blue-50' : ''}
-                          ${showNotifications ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}
-                        style={{ transitionDelay: `${index * 50}ms` }} // staggered animation
-                      >
-                        <p className="text-sm text-gray-700">{n.message}</p>
-                        <p className="text-xs text-gray-400 mt-1">{n.time}</p>
-                      </div>
-                    ))
-                  )}
-                </div>
-                <div
-                  className="p-2 text-center text-sm text-blue-600 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => setNotifications(prev => prev.map(n => ({ ...n, read: true })))}
-                >
-                  Mark all as read
-                </div>
-              </div>
-            </div>
-
-            {/* Profile */}
-            <div className="flex items-center gap-2">
-              <FaUserCircle className="text-2xl text-gray-600" />
-              <div>
-                <p className="font-medium">Receptionist</p>
-                <p className="text-sm text-gray-500">Front Desk</p>
-              </div>
-            </div>
-
-            {/* Logout */}
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {quickActions.map((action, index) => (
+            <Link
+              key={index}
+              to={action.path}
+              className="bg-white rounded-xl shadow-sm border p-6 hover:shadow-md transition-shadow"
             >
-              Logout
-            </button>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <StatCard icon={<FaCalendarCheck className="text-blue-600 text-3xl" />} value={stats.todayAppointments} label="Today's Appointments" />
-          <StatCard icon={<FaUserInjured className="text-green-600 text-3xl" />} value={stats.totalPatients} label="Total Patients" />
-          <StatCard icon={<FaMoneyBillWave className="text-purple-600 text-3xl" />} value={stats.pendingPayments} label="Pending Payments" />
-          <StatCard icon={<FaClock className="text-amber-600 text-3xl" />} value={stats.waitingRoom} label="Waiting Room" />
-        </div>
-
-        {/* Appointments Table */}
-        <div className="bg-white p-6 rounded-xl shadow mb-6">
-          <h2 className="text-xl font-semibold mb-4">Today's Appointments</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-left text-gray-500 text-sm border-b">
-                  <th className="pb-3">Patient</th>
-                  <th className="pb-3">Doctor</th>
-                  <th className="pb-3">Time</th>
-                  <th className="pb-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appointments.length === 0 ? (
-                  <tr><td colSpan="4" className="text-center py-4 text-gray-500">No appointments for today</td></tr>
-                ) : appointments.map(a => (
-                  <tr key={a.id} className="border-b hover:bg-gray-50">
-                    <td className="py-3">{a.patient_name || a.patient_id}</td>
-                    <td className="py-3">{a.doctor_name}</td>
-                    <td className="py-3">{a.appointment_time}</td>
-                    <td className="py-3"><StatusBadge status={a.status} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Waiting Room */}
-        <div className="bg-white p-6 rounded-xl shadow mb-6">
-          <h2 className="text-xl font-semibold mb-4">Waiting Room ({waitingPatients.length})</h2>
-          {waitingPatients.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">No patients in waiting room</p>
-          ) : waitingPatients.map(p => (
-            <div key={p.id} className="p-3 border rounded-lg mb-2 flex justify-between items-center">
-              <div>
-                <p className="font-medium">{p.patient_name || p.patient_id}</p>
-                <p className="text-sm text-gray-500">
-                  Time: {p.appointment_time} • Status: {p.status}
-                </p>
+              <div className={`${action.color} w-12 h-12 rounded-lg flex items-center justify-center mb-4`}>
+                <span className="text-white text-xl">{action.icon}</span>
               </div>
-              <span className={`px-2 py-1 rounded-full text-xs ${p.status === 'checked-in' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                {p.status}
-              </span>
+              <h3 className="font-bold text-gray-900 text-lg mb-2">{action.label}</h3>
+              <p className="text-gray-600 text-sm">{action.description}</p>
+            </Link>
+          ))}
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {statCards.map((stat, index) => (
+            <div key={index} className="bg-white rounded-xl shadow-sm border p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div className={`p-3 rounded-lg bg-gradient-to-r ${stat.color} text-white`}>
+                  {stat.icon}
+                </div>
+                <span className={`text-sm font-medium ${stat.change.startsWith('+') ? 'text-green-600' :
+                  stat.change.startsWith('-') ? 'text-red-600' : 'text-gray-600'
+                  }`}>
+                  {stat.change}
+                </span>
+              </div>
+              <h3 className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</h3>
+              <p className="text-gray-600">{stat.title}</p>
             </div>
           ))}
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h2 className="text-xl font-semibold mb-4">Pending Payments</h2>
-          {pendingPayments.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">No pending payments</p>
-          ) : pendingPayments.map(p => (
-            <div key={p.id} className="p-3 border rounded-lg mb-2 flex justify-between items-center hover:bg-gray-50 cursor-pointer" onClick={() => navigate('/receptionist/billing')}>
-              <div>
-                <p className="font-medium">{p.patient_name}</p>
-                <p className="text-sm text-gray-500">Invoice: {p.invoice_no} • Due: {new Date(p.created_at).toLocaleDateString()}</p>
-              </div>
-              <p className="font-bold text-red-600">${Number(p.total_amount).toFixed(2)}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Upcoming Appointments */}
+          <div className="bg-white rounded-xl shadow-sm border p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Upcoming Appointments</h2>
+              <Link
+                to="/receptionist/appointments-calendar"
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              >
+                View All →
+              </Link>
             </div>
-          ))}
+
+            <div className="space-y-4">
+              {upcomingAppointments.map((appointment) => (
+                <div key={appointment.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                  <div>
+                    <div className="flex items-center gap-3 mb-1">
+                      <p className="font-bold text-gray-900">{appointment.patientName}</p>
+                      <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(appointment.status)}`}>
+                        {appointment.status}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600">{appointment.doctor}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-gray-900">{appointment.time}</p>
+                    <div className="flex gap-2 mt-2">
+                      {appointment.patientPhone && (
+                        <a
+                          href={`tel:${appointment.patientPhone}`}
+                          className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded hover:bg-blue-200"
+                        >
+                          Call
+                        </a>
+                      )}
+                      {appointment.status !== 'checked-in' && (
+                        <button
+                          onClick={() => handleCheckIn(appointment.id)}
+                          className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded hover:bg-green-200"
+                        >
+                          Check-in
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick Patient Search */}
+          <div className="bg-white rounded-xl shadow-sm border p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Patient Search</h2>
+
+            <div className="mb-6">
+              <div className="relative">
+                <FaSearch className="absolute left-3 top-3.5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by name, phone, or ID..."
+                  value={searchQuery}
+                  onChange={handleQuickSearch}
+                  className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={() => navigate(`/receptionist/patient-search?q=${searchQuery}`)}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm"
+                >
+                  Search
+                </button>
+                <button
+                  onClick={() => navigate('/receptionist/patient-search')}
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-sm"
+                >
+                  Advanced Search
+                </button>
+              </div>
+            </div>
+
+            {/* Search Results / Recent Searches */}
+            <div>
+              <h3 className="font-medium text-gray-900 mb-4">
+                {searchResults.length > 0 ? 'Search Results' : 'Recent Patients'}
+              </h3>
+              <div className="space-y-3">
+                {(searchResults.length > 0 ? searchResults.slice(0, 5) : ['John Smith', 'Emily Johnson', 'Michael Brown']).map((patient, index) => {
+                  const name = typeof patient === 'string' ? patient : patient.name;
+                  const id = typeof patient === 'string' ? null : patient.id;
+
+                  return (
+                    <div key={index} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                          <span className="text-blue-600 font-medium text-sm">
+                            {name.split(' ').map(n => n[0]).join('')}
+                          </span>
+                        </div>
+                        <span className="font-medium">{name}</span>
+                      </div>
+                      <Link
+                        to={id ? `/receptionist/patient-search?id=${id}` : `/receptionist/patient-search?q=${name}`}
+                        className="text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        View →
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
-};
-
-/* Reusable Stat Card */
-const StatCard = ({ icon, value, label }) => (
-  <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
-    <div className="flex items-center gap-4">
-      {icon}
-      <div>
-        <h2 className="text-2xl font-bold">{value}</h2>
-        <p className="text-gray-600 text-sm">{label}</p>
-      </div>
-    </div>
-  </div>
-);
-
-/* Status Badge */
-const StatusBadge = ({ status }) => {
-  const colors = {
-    confirmed: 'bg-green-100 text-green-800',
-    waiting: 'bg-amber-100 text-amber-800',
-    pending: 'bg-gray-100 text-gray-800',
-    cancelled: 'bg-red-100 text-red-800',
-  };
-  return <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[status] || colors.pending}`}>{status}</span>;
 };
 
 export default ReceptionistDashboard;

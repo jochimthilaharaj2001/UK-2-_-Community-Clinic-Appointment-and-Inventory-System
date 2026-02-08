@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaUserMd, FaLock } from 'react-icons/fa';
-import API_BASE_URL from "../../config/apiConfig";
+import api from "../../services/api";
 
 const PharmacistLogin = () => {
   const navigate = useNavigate();
@@ -13,9 +13,6 @@ const PharmacistLogin = () => {
   const handleLogin = async (e) => {
     e.preventDefault(); // Prevent form refresh
 
-  console.log("LOGIN CLICKED");
-  console.log("API URL:", `${API_BASE_URL}/pharmacist/login`);
-
     // Validate fields before sending API request
     if (!email || !password) {
       setError('Please enter all fields');
@@ -23,26 +20,12 @@ const PharmacistLogin = () => {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/pharmacist/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.message || "Login failed");
-        return;
-      }
+      const res = await api.post('/pharmacist/login', { email, password });
+      const data = res.data;
 
       // Store token and user correctly
       localStorage.setItem('token', data.token);
-      localStorage.setItem(
-        "user",
-        JSON.stringify({ ...data.pharmacist, role: "pharmacist" })
-);
-
+      localStorage.setItem('user', JSON.stringify(data.pharmacist));
 
       // Redirect to dashboard
       navigate("/pharmacist/dashboard");
@@ -119,7 +102,7 @@ const PharmacistLogin = () => {
             Contact Administrator for Pharmacist Account creation.
           </p>
         </div>
-          
+
         {/* Footer */}
         <div className="text-center mt-5">
           <Link to="/" className="text-sm text-green-600 hover:underline">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import { FaSearch, FaPlus, FaEdit, FaTrash } from "react-icons/fa";
-import API_BASE_URL from "../../config/apiConfig";
+import api from "../../services/api";
 
 const InventoryManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,14 +23,16 @@ const InventoryManagement = () => {
     fetchInventory();
   }, []);
 
-  const fetchInventory = () => {
-    fetch(`${API_BASE_URL}/pharmacist/inventory`)
-      .then((res) => res.json())
-      .then((data) => setInventoryData(data))
-      .catch(() => alert("Failed to load inventory"));
+  const fetchInventory = async () => {
+    try {
+      const res = await api.get('/inventory');
+      setInventoryData(res.data);
+    } catch (error) {
+      alert("Failed to load inventory");
+    }
   };
 
-  
+
   const handleAddClick = () => {
     setEditingId(null);
     setFormData({
@@ -41,7 +43,7 @@ const InventoryManagement = () => {
       manufacturer: "",
       expiry_date: "",
       quantity: "",
-      selling_price: "",
+      selling_price: "0",
     });
     setShowModal(true);
   };
@@ -56,15 +58,7 @@ const InventoryManagement = () => {
     if (!window.confirm("Are you sure you want to delete this medicine?")) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/pharmacist/inventory/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) {
-        alert("Failed to delete medicine");
-        return;
-      }
-
+      await api.delete(`/inventory/${id}`);
       alert("Medicine deleted successfully");
       fetchInventory();
     } catch (error) {
@@ -85,23 +79,13 @@ const InventoryManagement = () => {
     }
 
     try {
-      const url = editingId
-        ? `${API_BASE_URL}/pharmacist/inventory/${editingId}`
-        : `${API_BASE_URL}/pharmacist/inventory`;
-      const method = editingId ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      if (!res.ok) {
-        alert("Failed to save medicine");
-        return;
+      if (editingId) {
+        await api.put(`/inventory/${editingId}`, formData);
+        alert("Medicine updated successfully");
+      } else {
+        await api.post('/inventory', formData);
+        alert("Medicine added successfully");
       }
-
-      alert(editingId ? "Medicine updated successfully" : "Medicine added successfully");
       setShowModal(false);
       fetchInventory();
     } catch (error) {
@@ -145,13 +129,13 @@ const InventoryManagement = () => {
     <div className="min-h-screen bg-gray-100">
       <Sidebar role="pharmacist" />
 
-      <div className="ml-64 p-6 relative z-10">
+      <div className="ml-64 p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">
             Inventory Management
           </h1>
-          <button 
+          <button
             onClick={handleAddClick}
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
             <FaPlus /> Add Medicine
@@ -224,12 +208,12 @@ const InventoryManagement = () => {
                         </span>
                       </td>
                       <td className="px-4 py-3 flex justify-center gap-3">
-                        <button 
+                        <button
                           onClick={() => handleEditClick(item)}
                           className="text-blue-600 hover:text-blue-800">
                           <FaEdit />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDeleteClick(item.id)}
                           className="text-red-600 hover:text-red-800">
                           <FaTrash />
@@ -245,8 +229,8 @@ const InventoryManagement = () => {
 
         {/* Add/Edit Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center z-50">
+            <div className="bg-white rounded-[2rem] shadow-2xl border border-gray-100 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <h2 className="text-2xl font-bold mb-6">
                 {editingId ? "Update Medicine" : "Add New Medicine"}
               </h2>

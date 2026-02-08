@@ -1,27 +1,12 @@
 import { useState, useEffect } from 'react';
-import api from '../../services/api';
 import Sidebar from '../../components/Sidebar';
+import api from '../../services/api';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaBox, FaExclamationTriangle, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 
 const InventoryManagement = () => {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchInventory();
-  }, []);
-
-  const fetchInventory = async () => {
-    try {
-      const response = await api.get('/inventory');
-      setInventory(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.error('Failed to fetch inventory', error);
-      // alert('Failed to load inventory');
-      setLoading(false);
-    }
-  };
 
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -41,6 +26,45 @@ const InventoryManagement = () => {
     expiryDate: '',
     location: ''
   });
+
+  const fetchInventory = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/inventory');
+      setInventory(res.data.map(item => ({
+        ...item,
+        name: item.generic_name,
+        stock: item.quantity,
+        price: Number(item.selling_price),
+        reorderLevel: item.reorder_level,
+        expiryDate: item.expiry_date ? item.expiry_date.split('T')[0] : 'N/A',
+        supplier: item.manufacturer,
+        status: getStatus(item)
+      })));
+    } catch (error) {
+      console.error('Error fetching inventory:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInventory();
+  }, []);
+
+  const getStatus = (item) => {
+    const stock = item.quantity || item.stock;
+    const reorder = item.reorder_level || item.reorderLevel;
+    const expiry = new Date(item.expiry_date || item.expiryDate);
+    const today = new Date();
+    const threeMonths = new Date(today.getTime() + 90 * 86400000);
+
+    if (stock === 0) return 'out-of-stock';
+    if (stock <= reorder) return 'low-stock';
+    if (expiry < today) return 'expired';
+    if (expiry < threeMonths) return 'expiring-soon';
+    return 'in-stock';
+  };
 
   const filteredAndSortedInventory = [...inventory]
     .filter(item => {
@@ -96,53 +120,39 @@ const InventoryManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      await api.post('/inventory', formData);
-      alert('Inventory item added successfully!');
-      fetchInventory();
+      const payload = {
+        generic_name: formData.name,
+        category: formData.category,
+        quantity: parseInt(formData.stock),
+        unit: formData.unit,
+        reorder_level: parseInt(formData.reorderLevel),
+        selling_price: parseFloat(formData.price),
+        manufacturer: formData.supplier,
+        expiry_date: formData.expiryDate,
+        location: formData.location
+      };
+
+      if (editingItem) {
+        await api.put(`/inventory/${editingItem.id}`, payload);
+        alert('Inventory item updated successfully!');
+      } else {
+        await api.post('/inventory', payload);
+        alert('Inventory item added successfully!');
+      }
+
       setShowForm(false);
+      setEditingItem(null);
       setFormData({
-        name: '',
-        category: '',
-        stock: '',
-        unit: '',
-        reorderLevel: '',
-        price: '',
-        supplier: '',
-        expiryDate: '',
-        location: ''
+        name: '', category: '', stock: '', unit: '',
+        reorderLevel: '', price: '', supplier: '',
+        expiryDate: '', location: ''
       });
+      fetchInventory();
     } catch (error) {
-      console.error('Error adding inventory', error);
-      alert('Failed to add item');
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      try {
-        await api.delete(`/inventory/${id}`);
-        setInventory(inventory.filter(i => i.id !== id));
-        alert('Item deleted successfully');
-      } catch (error) {
-        console.error('Error deleting item', error);
-        alert('Failed to delete item');
-      }
-    }
-  };
-
-  const handleUpdateStock = async (item) => {
-    const newStock = parseInt(prompt(`Enter new stock quantity for ${item.name}:`, item.stock));
-    if (!isNaN(newStock) && newStock >= 0) {
-      try {
-        const updatedItem = { ...item, stock: newStock };
-        await api.put(`/inventory/${item.id}`, updatedItem);
-        fetchInventory();
-        alert('Stock updated successfully');
-      } catch (error) {
-        console.error('Error updating stock', error);
-        alert('Failed to update stock');
-      }
+      console.error('Error saving inventory:', error);
+      alert('Failed to save item');
     }
   };
 
@@ -162,6 +172,15 @@ const InventoryManagement = () => {
       : <FaSortDown className="text-blue-600 ml-1" />;
   };
 
+  const stats = {
+    total: inventory.length,
+    lowStock: inventory.filter(item => item.status === 'low-stock').length,
+    totalValue: inventory.reduce((acc, item) => acc + (item.stock * item.price), 0),
+    expiringSoon: inventory.filter(item => item.status === 'expiring-soon').length
+  };
+
+  if (loading) return <LoadingSpinner />;
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
@@ -173,7 +192,15 @@ const InventoryManagement = () => {
             <p className="text-gray-600">Manage medical supplies, drugs, and equipment</p>
           </div>
           <button
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              setEditingItem(null);
+              setFormData({
+                name: '', category: '', stock: '', unit: '',
+                reorderLevel: '', price: '', supplier: '',
+                expiryDate: '', location: ''
+              });
+              setShowForm(true);
+            }}
             className="mt-4 md:mt-0 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center"
           >
             <FaPlus className="mr-2" />
@@ -186,7 +213,7 @@ const InventoryManagement = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-bold text-green-900 mb-2">Total Items</h3>
-                <p className="text-3xl font-bold text-green-700">{inventory.length}</p>
+                <p className="text-3xl font-bold text-green-700">{stats.total}</p>
               </div>
               <FaBox className="text-3xl text-green-600" />
             </div>
@@ -197,7 +224,7 @@ const InventoryManagement = () => {
               <div>
                 <h3 className="text-lg font-bold text-yellow-900 mb-2">Low Stock</h3>
                 <p className="text-3xl font-bold text-yellow-700">
-                  {inventory.filter(item => item.status === 'low-stock').length}
+                  {stats.lowStock}
                 </p>
               </div>
               <FaExclamationTriangle className="text-3xl text-yellow-600" />
@@ -209,7 +236,7 @@ const InventoryManagement = () => {
               <div>
                 <h3 className="text-lg font-bold text-blue-900 mb-2">Total Value</h3>
                 <p className="text-3xl font-bold text-blue-700">
-                  ${inventory.reduce((acc, item) => acc + (item.stock * item.price), 0).toFixed(2)}
+                  LKR {stats.totalValue.toLocaleString()}
                 </p>
               </div>
               <FaBox className="text-3xl text-blue-600" />
@@ -221,7 +248,7 @@ const InventoryManagement = () => {
               <div>
                 <h3 className="text-lg font-bold text-red-900 mb-2">Expiring Soon</h3>
                 <p className="text-3xl font-bold text-red-700">
-                  {inventory.filter(item => item.status === 'expiring-soon').length}
+                  {stats.expiringSoon}
                 </p>
               </div>
               <FaExclamationTriangle className="text-3xl text-red-600" />
@@ -273,9 +300,11 @@ const InventoryManagement = () => {
         </div>
 
         {showForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-xl p-8 max-w-2xl w-full">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Add New Inventory Item</h2>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[9999] backdrop-blur-sm">
+            <div className="bg-white rounded-[2rem] shadow-2xl p-8 max-w-2xl w-full border border-gray-100">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                {editingItem ? 'Edit Inventory Item' : 'Add New Inventory Item'}
+              </h2>
               <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -366,7 +395,7 @@ const InventoryManagement = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Price per Unit ($)
+                      Price per Unit (LKR )
                     </label>
                     <input
                       type="number"
@@ -430,7 +459,7 @@ const InventoryManagement = () => {
                     type="submit"
                     className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
                   >
-                    Add Item
+                    {editingItem ? 'Update Item' : 'Add Item'}
                   </button>
                   <button
                     type="button"
@@ -516,10 +545,10 @@ const InventoryManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        ${item.price.toFixed(2)}/{item.unit}
+                        LKR {item.price.toFixed(2)}/{item.unit}
                       </div>
                       <div className="text-xs text-gray-500">
-                        Total: ${(item.stock * item.price).toFixed(2)}
+                        Total: LKR {(item.stock * item.price).toFixed(2)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -545,7 +574,7 @@ const InventoryManagement = () => {
                               reorderLevel: item.reorderLevel,
                               price: item.price,
                               supplier: item.supplier,
-                              expiryDate: item.expiryDate,
+                              expiryDate: item.expiry_date ? item.expiry_date.split('T')[0] : '',
                               location: item.location
                             });
                             setShowForm(true);
@@ -556,14 +585,43 @@ const InventoryManagement = () => {
                           <FaEdit />
                         </button>
                         <button
-                          onClick={() => handleDelete(item.id)}
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to delete this item?')) {
+                              api.delete(`/inventory/${item.id}`).then(() => {
+                                alert('Item deleted successfully');
+                                fetchInventory();
+                              }).catch(err => {
+                                console.error(err);
+                                alert('Failed to delete item');
+                              });
+                            }
+                          }}
                           className="text-red-600 hover:text-red-900"
                           title="Delete"
                         >
                           <FaTrash />
                         </button>
                         <button
-                          onClick={() => handleUpdateStock(item)}
+                          onClick={() => {
+                            const newStock = parseInt(prompt(`Enter new stock quantity for ${item.name}:`, item.stock));
+                            if (!isNaN(newStock) && newStock >= 0) {
+                              api.put(`/inventory/${item.id}`, {
+                                ...item,
+                                generic_name: item.name,
+                                quantity: newStock,
+                                selling_price: item.price,
+                                reorder_level: item.reorderLevel,
+                                manufacturer: item.supplier,
+                                expiry_date: item.expiryDate
+                              }).then(() => {
+                                alert('Stock updated successfully');
+                                fetchInventory();
+                              }).catch(err => {
+                                console.error(err);
+                                alert('Failed to update stock');
+                              });
+                            }
+                          }}
                           className="text-blue-600 hover:text-blue-900 px-2 py-1 border border-blue-600 rounded text-xs"
                         >
                           Update Stock
@@ -612,7 +670,7 @@ const InventoryManagement = () => {
             )}
           </div>
         </div>
-      </div >
+      </div>
     </div >
   );
 };

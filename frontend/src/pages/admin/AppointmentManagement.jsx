@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import api from '../../services/api';
-import { useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
+import api from '../../services/api';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import {
   FaSearch,
   FaCalendarPlus,
@@ -27,41 +28,11 @@ import {
 import { format, addDays } from 'date-fns';
 
 const AppointmentManagement = () => {
-  const location = useLocation();
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [doctors, setDoctors] = useState([]);
+  const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const fetchAppointments = async () => {
-    try {
-      const response = await api.get('/appointments');
-      const data = response.data;
-      if (Array.isArray(data)) {
-        const mapped = data.map(app => ({
-          ...app,
-          patientName: app.patient_name || app.patientName || 'N/A',
-          doctorName: app.doctor_name || app.doctorName || 'N/A',
-          date: app.appointment_date ? new Date(app.appointment_date).toISOString().split('T')[0] : (app.date || ''),
-          time: app.appointment_time || app.time || '',
-          patientId: app.patient_id ? `P${app.patient_id}` : (app.patientId || 'N/A')
-        }));
-        setAppointments(mapped);
-      }
-    } catch (error) {
-      console.error('Failed to fetch appointments', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchDoctors = async () => {
-    try {
-      const response = await api.get('/doctors');
-      setDoctors(response.data);
-    } catch (error) {
-      console.error('Failed to fetch doctors', error);
-    }
-  };
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -93,16 +64,49 @@ const AppointmentManagement = () => {
   };
   const [formData, setFormData] = useState(defaultFormData);
 
-  useEffect(() => {
-    fetchAppointments();
-    fetchDoctors();
+  const formatTimeTo12h = (timeStr) => {
+    if (!timeStr) return '';
+    // If it's already in 12h format, return it
+    if (timeStr.includes('AM') || timeStr.includes('PM')) return timeStr;
 
-    // Handle quick action from dashboard
-    const queryParams = new URLSearchParams(location.search);
-    if (queryParams.get('action') === 'schedule') {
-      setShowForm(true);
+    const [hours, minutes] = timeStr.split(':');
+    let h = parseInt(hours, 10);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${h.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+  };
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [apptRes, doctorRes, patientRes] = await Promise.all([
+        api.get('/admin/appointments'),
+        api.get('/admin/doctors'),
+        api.get('/admin/patients')
+      ]);
+
+      setAppointments(apptRes.data.map(app => ({
+        ...app,
+        patientName: app.patient_name,
+        doctorName: app.doctor_name,
+        doctorSpecialization: app.doctor_specialization,
+        date: app.appointment_date.split('T')[0],
+        time: formatTimeTo12h(app.appointment_time),
+        contact: app.patient_phone || 'N/A'
+      })));
+      setDoctors(doctorRes.data);
+      setPatients(patientRes.data);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      // alert('Failed to load appointment data');
+    } finally {
+      setLoading(false);
     }
-  }, [location]);
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const appointmentTypes = [
     { value: 'regular', label: 'Regular Checkup', color: 'bg-green-100 text-green-800' },
@@ -125,20 +129,20 @@ const AppointmentManagement = () => {
     setEditingAppointment(appointment);
     setFormData({
       patientName: appointment.patientName,
-      patientId: appointment.patientId,
-      patientAge: appointment.patientAge,
-      patientGender: appointment.patientGender,
+      patientId: appointment.patient_id,
+      patientAge: appointment.patientAge || '',
+      patientGender: appointment.patientGender || 'Male',
       doctorName: appointment.doctorName,
-      doctorId: appointment.doctorId,
+      doctorId: appointment.doctor_id,
       doctorSpecialization: appointment.doctorSpecialization,
       date: appointment.date,
       time: appointment.time,
-      duration: appointment.duration,
-      type: appointment.type,
+      duration: appointment.duration || '30 mins',
+      type: appointment.type || 'regular',
       reason: appointment.reason || '',
       notes: appointment.notes || '',
       contact: appointment.contact,
-      email: appointment.email,
+      email: appointment.email || '',
       room: appointment.room || ''
     });
     setShowForm(true);
@@ -146,32 +150,32 @@ const AppointmentManagement = () => {
 
   const filteredAppointments = appointments
     .filter(app => {
-      const matchesSearch = (app.patientName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (app.doctorName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (app.patientId?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (app.contact || '').includes(searchTerm) ||
-        (app.reason?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+      const matchesSearch = app.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.doctorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.patientId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.contact.includes(searchTerm) ||
+        app.reason.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
-      const matchesDate = dateFilter === 'all' || app.date === dateFilter; // might need more robust date compare for ranges
-      const matchesDoctor = doctorFilter === 'all' || app.doctorId == doctorFilter; // loose compare for string/int mismatch
+      const matchesDate = dateFilter === 'all' || app.date === dateFilter;
+      const matchesDoctor = doctorFilter === 'all' || app.doctorId === doctorFilter;
       const matchesType = typeFilter === 'all' || app.type === typeFilter;
       return matchesSearch && matchesStatus && matchesDate && matchesDoctor && matchesType;
     })
     .sort((a, b) => {
       if (sortBy === 'date') {
-        const dateA = new Date(a.date + ' ' + (a.time || '00:00'));
-        const dateB = new Date(b.date + ' ' + (b.time || '00:00'));
+        const dateA = new Date(a.date + ' ' + a.time);
+        const dateB = new Date(b.date + ' ' + b.time);
         return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
       }
       if (sortBy === 'patientName') {
         return sortOrder === 'asc'
-          ? (a.patientName || '').localeCompare(b.patientName || '')
-          : (b.patientName || '').localeCompare(a.patientName || '');
+          ? a.patientName.localeCompare(b.patientName)
+          : b.patientName.localeCompare(a.patientName);
       }
       if (sortBy === 'doctorName') {
         return sortOrder === 'asc'
-          ? (a.doctorName || '').localeCompare(b.doctorName || '')
-          : (b.doctorName || '').localeCompare(a.doctorName || '');
+          ? a.doctorName.localeCompare(b.doctorName)
+          : b.doctorName.localeCompare(a.doctorName);
       }
       return 0;
     });
@@ -221,53 +225,74 @@ const AppointmentManagement = () => {
     });
   };
 
-  const handleDoctorSelect = (doctorId) => {
-    const doctor = doctors.find(d => d.id == doctorId);
-    if (doctor) {
+  const handlePatientSelect = (patientId) => {
+    const patient = patients.find(p => p.id === parseInt(patientId));
+    if (patient) {
       setFormData({
         ...formData,
-        doctorId: doctor.id,
-        doctorName: doctor.name,
-        doctorSpecialization: doctor.specialization // ensure backend doc obj has specialization
+        patientId: patient.id,
+        patientName: `${patient.firstName} ${patient.lastName}`,
+        contact: patient.phone,
+        email: patient.email
       });
     }
   };
 
   const generatePatientId = () => {
-    // Should likely be handled by backend, but keeping purely cosmetic for now
-    const newId = `P${String(appointments.length + 1).padStart(3, '0')}`;
-    setFormData({ ...formData, patientId: newId });
+    // This function will be called if adding a brand new patient, 
+    // but typically we'd select from existing ones or use a separate "Add Patient" flow.
+    alert('Select an existing patient from the dropdown.');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
+      const pId = parseInt(formData.patientId);
+      const dId = parseInt(formData.doctorId);
+
+      if (isNaN(pId) || isNaN(dId)) {
+        alert('Please select a valid patient and doctor from the lists.');
+        return;
+      }
+
+      const payload = {
+        patient_id: pId,
+        doctor_id: dId,
+        appointment_date: formData.date,
+        appointment_time: formData.time,
+        status: formData.status || 'scheduled',
+        reason: formData.reason,
+        notes: formData.notes
+      };
+
       if (editingAppointment) {
-        await api.put(`/appointments/${editingAppointment.id}`, formData);
+        await api.put(`/admin/appointments/${editingAppointment.id}`, payload);
         alert('Appointment updated successfully!');
       } else {
-        await api.post('/appointments', formData);
+        await api.post('/admin/appointments', payload);
         alert('Appointment scheduled successfully!');
       }
 
-      fetchAppointments();
       setShowForm(false);
       setEditingAppointment(null);
       setFormData(defaultFormData);
-    } catch (error) {
-      console.error('Error saving appointment', error);
-      alert('Failed to save appointment. ' + (error.response?.data?.message || ''));
+      fetchData();
+    } catch (err) {
+      console.error('Error saving appointment:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to save appointment.';
+      alert(`Error: ${errorMessage}`);
     }
   };
 
   const handleDelete = async (appointmentId) => {
     if (window.confirm('Are you sure you want to delete this appointment?')) {
       try {
-        await api.delete(`/appointments/${appointmentId}`);
-        setAppointments(appointments.filter(app => app.id !== appointmentId));
+        await api.delete(`/admin/appointments/${appointmentId}`);
         alert('Appointment deleted successfully!');
-      } catch (error) {
-        console.error('Error deleting appointment', error);
+        fetchData();
+      } catch (err) {
+        console.error('Error deleting appointment:', err);
         alert('Failed to delete appointment');
       }
     }
@@ -275,13 +300,19 @@ const AppointmentManagement = () => {
 
   const handleStatusChange = async (appointmentId, newStatus) => {
     try {
-      await api.put(`/appointments/${appointmentId}/status`, { status: newStatus });
-      setAppointments(appointments.map(app =>
-        app.id === appointmentId ? { ...app, status: newStatus } : app
-      ));
+      // Find the appointment to get the other required fields
+      const app = appointments.find(a => a.id === appointmentId);
+      await api.put(`/admin/appointments/${appointmentId}`, {
+        appointment_date: app.date,
+        appointment_time: app.time,
+        status: newStatus,
+        reason: app.reason,
+        notes: app.notes
+      });
+      fetchData();
       alert(`Appointment status changed to ${newStatus}`);
-    } catch (error) {
-      console.error('Error update status', error);
+    } catch (err) {
+      console.error('Error updating status:', err);
       alert('Failed to update status');
     }
   };
@@ -333,6 +364,8 @@ const AppointmentManagement = () => {
 
   const stats = getStats();
   const timeSlots = getTimeSlots();
+
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -483,8 +516,8 @@ const AppointmentManagement = () => {
 
         {/* Add/Edit Appointment Form Modal */}
         {showForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[9999] backdrop-blur-sm">
+            <div className="bg-white rounded-[2rem] shadow-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-100">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">
                   {editingAppointment ? 'Edit Appointment' : 'Schedule New Appointment'}
@@ -508,17 +541,21 @@ const AppointmentManagement = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Patient Name *
+                      Select Patient *
                     </label>
-                    <input
-                      type="text"
-                      name="patientName"
-                      value={formData.patientName}
-                      onChange={handleInputChange}
+                    <select
+                      value={formData.patientId}
+                      onChange={(e) => handlePatientSelect(e.target.value)}
                       required
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter patient name"
-                    />
+                    >
+                      <option value="">Choose Patient</option>
+                      {patients.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.firstName} {p.lastName} ({p.phone})
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>
@@ -585,8 +622,11 @@ const AppointmentManagement = () => {
                       onChange={handleInputChange}
                       required
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="+1234567890"
+                      placeholder="+94 77 123 4567"
                     />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Format: +94 77 123 4567 or 07X XXX XXXX
+                    </p>
                   </div>
 
                   <div>
@@ -613,7 +653,16 @@ const AppointmentManagement = () => {
                     </label>
                     <select
                       value={formData.doctorId}
-                      onChange={(e) => handleDoctorSelect(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const doc = doctors.find(d => d.id === parseInt(val));
+                        setFormData({
+                          ...formData,
+                          doctorId: val,
+                          doctorName: doc?.name || '',
+                          doctorSpecialization: doc?.specialization || ''
+                        });
+                      }}
                       required
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
@@ -765,8 +814,8 @@ const AppointmentManagement = () => {
 
         {/* Appointment Details View Modal */}
         {viewingAppointment && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[9999] backdrop-blur-sm">
+            <div className="bg-white rounded-[2rem] shadow-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-100">
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">Appointment Details</h2>
@@ -1153,7 +1202,7 @@ const AppointmentManagement = () => {
               <div className="font-medium">Follow-up Appointment</div>
             </button>
             <button
-              onClick={() => alert('Bulk scheduling coming soon!')}
+              onClick={() => navigate('/admin/appointments')}
               className="p-4 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg transition text-center"
             >
               <FaCalendarPlus className="text-2xl mx-auto mb-2" />

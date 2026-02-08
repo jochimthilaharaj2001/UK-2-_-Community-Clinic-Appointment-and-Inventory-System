@@ -1,12 +1,12 @@
 import express from 'express';
 import {
-  getPrescriptionById,
+  getPrescriptions,
   dispenseMedicine
 } from '../controllers/Pharmacist/prescriptionController.js';
 
 const router = express.Router();
 
-router.get('/:id', getPrescriptionById);
-router.post('/:id/dispense', dispenseMedicine);
+router.get('/', getPrescriptions);
+router.post('/dispense', dispenseMedicine);
 
 export default router;

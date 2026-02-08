@@ -3,26 +3,21 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
 export const loginPharmacist = async (req, res) => {
+  const { email, password } = req.body;
+
   try {
-    console.log("LOGIN API HIT");
-    console.log("BODY:", req.body);
-
-    const { email, password } = req.body;
-
-    const [rows] = await db.query(
+    const [result] = await db.query(
       'SELECT * FROM pharmacists WHERE email = ?',
       [email]
     );
 
-    console.log("DB CALLBACK HIT");
-
-    if (!rows || rows.length === 0) {
+    if (result.length === 0) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const pharmacist = rows[0];
-
+    const pharmacist = result[0];
     const isMatch = await bcrypt.compare(password, pharmacist.password);
+
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -33,18 +28,9 @@ export const loginPharmacist = async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    res.json({
-      token,
-      pharmacist: {
-        id: pharmacist.id,
-        email: pharmacist.email,
-        name: pharmacist.name,
-        role: 'pharmacist'
-      }
-    });
-
+    res.json({ token, pharmacist });
   } catch (error) {
-    console.error("LOGIN ERROR:", error);
+    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 };
