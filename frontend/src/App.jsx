@@ -12,13 +12,6 @@ import InventoryManagement from './pages/admin/InventoryManagement';
 import Reports from './pages/admin/Reports';
 import AppointmentManagement from './pages/admin/AppointmentManagement';
 
-// Pharmacist Pages
-import PharmacistDashboard from './pages/pharmacist/PharmacistDashboard';
-import DispenseMedicine from './pages/pharmacist/DispenseMedicine';
-import PharmacistInventoryManagement from './pages/pharmacist/InventoryManagement';
-import PharmacistReports from './pages/pharmacist/Reports';
-import PharmacistLogin from './pages/pharmacist/PharmacistLogin';
-
 // Doctor Pages
 import DoctorDashboard from './pages/doctor/DoctorDashboard';
 import DoctorPatients from './pages/doctor/DoctorPatients';
@@ -34,6 +27,8 @@ import PatientSearch from './pages/receptionist/PatientSearch';
 import BookAppointment from './pages/receptionist/BookAppointment';
 import PatientRegistration from './pages/receptionist/PatientRegistration';
 import AppointmentsCalendar from './pages/receptionist/AppointmentsCalendar';
+import ReceptionistAppointments from './pages/receptionist/ReceptionistAppointments';
+import ReceptionistDoctors from './pages/receptionist/ReceptionistDoctors';
 import ReceptionistBilling from './pages/receptionist/ReceptionistBilling';
 
 // Patient Pages
@@ -43,6 +38,13 @@ import PatientAppointments from './pages/patient/PatientAppointments';
 import MedicalRecords from './pages/patient/MedicalRecords';
 import PatientProfile from './pages/patient/PatientProfile';
 
+// Pharmacist Pages
+import PharmacistDashboard from './pages/pharmacist/PharmacistDashboard';
+import DispenseMedicine from './pages/pharmacist/DispenseMedicine';
+import PharmacistInventory from './pages/pharmacist/InventoryManagement';
+import PharmacistReports from './pages/pharmacist/Reports';
+import PharmacistLogin from './pages/pharmacist/PharmacistLogin';
+
 function App() {
   return (
     <Router>
@@ -50,7 +52,7 @@ function App() {
         {/* Public Routes */}
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Navigate to="/" replace />} />
-        <Route path="/pharmacist/login" element={<Navigate to="/" replace />} />
+        <Route path="/pharmacist/login" element={<PharmacistLogin />} />
         <Route path="/patient/login" element={<Navigate to="/" replace />} />
 
         {/* Admin Protected Routes */}
@@ -60,12 +62,6 @@ function App() {
         <Route path="/admin/appointments" element={<ProtectedRoute role="admin"><AppointmentManagement /></ProtectedRoute>} />
         <Route path="/admin/inventory" element={<ProtectedRoute role="admin"><InventoryManagement /></ProtectedRoute>} />
         <Route path="/admin/reports" element={<ProtectedRoute role="admin"><Reports /></ProtectedRoute>} />
-
-        {/* Pharmacist Protected Routes */}
-        <Route path="/pharmacist/dashboard" element={<ProtectedRoute role="pharmacist"><PharmacistDashboard /></ProtectedRoute>} />
-        <Route path="/pharmacist/dispense" element={<ProtectedRoute role="pharmacist"><DispenseMedicine /></ProtectedRoute>} />
-        <Route path="/pharmacist/inventory" element={<ProtectedRoute role="pharmacist"><PharmacistInventoryManagement /></ProtectedRoute>} />
-        <Route path="/pharmacist/reports" element={<ProtectedRoute role="pharmacist"><PharmacistReports /></ProtectedRoute>} />
 
         {/* Doctor Protected Routes */}
         <Route
@@ -159,6 +155,22 @@ function App() {
           }
         />
         <Route
+          path="/receptionist/appointments"
+          element={
+            <ProtectedRoute role="receptionist">
+              <ReceptionistAppointments />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/receptionist/doctors"
+          element={
+            <ProtectedRoute role="receptionist">
+              <ReceptionistDoctors />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/receptionist/billing"
           element={
             <ProtectedRoute role="receptionist">
@@ -197,6 +209,40 @@ function App() {
           element={
             <ProtectedRoute role="patient">
               <PatientProfile />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Pharmacist Protected Routes */}
+        <Route
+          path="/pharmacist/dashboard"
+          element={
+            <ProtectedRoute role="pharmacist">
+              <PharmacistDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/pharmacist/dispense"
+          element={
+            <ProtectedRoute role="pharmacist">
+              <DispenseMedicine />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/pharmacist/inventory"
+          element={
+            <ProtectedRoute role="pharmacist">
+              <PharmacistInventory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/pharmacist/reports"
+          element={
+            <ProtectedRoute role="pharmacist">
+              <PharmacistReports />
             </ProtectedRoute>
           }
         />

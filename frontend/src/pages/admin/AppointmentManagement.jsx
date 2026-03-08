@@ -54,8 +54,7 @@ const AppointmentManagement = () => {
     doctorSpecialization: '',
     date: format(new Date(), 'yyyy-MM-dd'),
     time: '',
-    duration: '30 mins',
-    type: 'regular',
+    type: 'general-consultation',
     reason: '',
     notes: '',
     contact: '',
@@ -109,12 +108,16 @@ const AppointmentManagement = () => {
   }, []);
 
   const appointmentTypes = [
-    { value: 'regular', label: 'Regular Checkup', color: 'bg-green-100 text-green-800' },
-    { value: 'emergency', label: 'Emergency', color: 'bg-red-100 text-red-800' },
-    { value: 'follow-up', label: 'Follow-up', color: 'bg-blue-100 text-blue-800' },
-    { value: 'consultation', label: 'Consultation', color: 'bg-purple-100 text-purple-800' },
-    { value: 'vaccination', label: 'Vaccination', color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'surgery', label: 'Surgery', color: 'bg-indigo-100 text-indigo-800' }
+    { value: 'general-consultation', label: 'General Consultation', color: 'bg-green-100 text-green-800' },
+    { value: 'follow-up', label: 'Follow-Up Appointment', color: 'bg-blue-100 text-blue-800' },
+    { value: 'naadi-pariksha', label: 'Naadi Pariksha (Pulse Diagnosis)', color: 'bg-purple-100 text-purple-800' },
+    { value: 'varmam-therapy', label: 'Varmam Therapy Appointment', color: 'bg-orange-100 text-orange-800' },
+    { value: 'thokkanam-therapy', label: 'Thokkanam Therapy', color: 'bg-teal-100 text-teal-800' },
+    { value: 'panchakarma', label: 'Panchakarma / Detox Therapy', color: 'bg-indigo-100 text-indigo-800' },
+    { value: 'herbal-consultation', label: 'Herbal Medicine Consultation', color: 'bg-emerald-100 text-emerald-800' },
+    { value: 'chronic-disease', label: 'Chronic Disease Treatment', color: 'bg-red-100 text-red-800' },
+    { value: 'diet-lifestyle', label: 'Diet & Lifestyle Consultation', color: 'bg-yellow-100 text-yellow-800' },
+    { value: 'special-therapy', label: 'Special Therapy Appointment', color: 'bg-pink-100 text-pink-800' }
   ];
 
   const statuses = [
@@ -137,8 +140,7 @@ const AppointmentManagement = () => {
       doctorSpecialization: appointment.doctorSpecialization,
       date: appointment.date,
       time: appointment.time,
-      duration: appointment.duration || '30 mins',
-      type: appointment.type || 'regular',
+      type: appointment.type || 'general-consultation',
       reason: appointment.reason || '',
       notes: appointment.notes || '',
       contact: appointment.contact,
@@ -390,8 +392,7 @@ const AppointmentManagement = () => {
                 doctorSpecialization: '',
                 date: format(new Date(), 'yyyy-MM-dd'),
                 time: '',
-                duration: '30 mins',
-                type: 'regular',
+                type: 'general-consultation',
                 reason: '',
                 notes: '',
                 contact: '',
@@ -727,25 +728,6 @@ const AppointmentManagement = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Duration
-                    </label>
-                    <select
-                      name="duration"
-                      value={formData.duration}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="15 mins">15 mins</option>
-                      <option value="30 mins">30 mins</option>
-                      <option value="45 mins">45 mins</option>
-                      <option value="60 mins">60 mins</option>
-                      <option value="90 mins">90 mins</option>
-                      <option value="120 mins">120 mins</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Room
                     </label>
                     <input
@@ -881,10 +863,6 @@ const AppointmentManagement = () => {
                       </div>
                     </div>
                     <div>
-                      <div className="text-sm text-gray-500">Duration</div>
-                      <div className="font-medium">{viewingAppointment.duration}</div>
-                    </div>
-                    <div>
                       <div className="text-sm text-gray-500">Room</div>
                       <div className="font-medium">{viewingAppointment.room}</div>
                     </div>
@@ -1001,7 +979,7 @@ const AppointmentManagement = () => {
                     </div>
                     <div className="flex items-center text-gray-600">
                       <FaClock className="mr-2 text-sm" />
-                      <span className="text-sm">{appointment.time} • {appointment.duration}</span>
+                      <span className="text-sm">{appointment.time}</span>
                     </div>
                     <div className="flex items-center text-gray-600">
                       <FaStethoscope className="mr-2 text-sm" />
@@ -1081,7 +1059,7 @@ const AppointmentManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{appointment.date}</div>
-                      <div className="text-sm text-gray-500">{appointment.time} • {appointment.duration}</div>
+                      <div className="text-sm text-gray-500">{appointment.time}</div>
                       <div className="text-xs text-gray-500">{appointment.room}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -1174,7 +1152,7 @@ const AppointmentManagement = () => {
                 setEditingAppointment(null);
                 setFormData({
                   ...formData,
-                  type: 'emergency',
+                  type: 'chronic-disease',
                   doctorName: 'Dr. Sarah Wilson',
                   doctorId: 'D001'
                 });
@@ -1183,7 +1161,7 @@ const AppointmentManagement = () => {
               className="p-4 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition text-center"
             >
               <FaCalendarPlus className="text-2xl mx-auto mb-2" />
-              <div className="font-medium">Emergency Appointment</div>
+              <div className="font-medium">Chronic Disease</div>
             </button>
             <button
               onClick={() => {

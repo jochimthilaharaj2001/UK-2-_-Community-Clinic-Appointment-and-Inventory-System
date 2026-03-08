@@ -51,14 +51,6 @@ const Sidebar = () => {
     { path: '/admin/reports', label: 'Reports', icon: <FaChartBar /> },
   ];
 
-  // 🔹 PHARMACIST MENU
-  const pharmacistMenu = [
-    { path: '/pharmacist/dashboard', label: 'Dashboard', icon: <FaHome /> },
-    { path: '/pharmacist/inventory', label: 'Inventory Management', icon: <FaBoxes /> },
-    { path: '/pharmacist/dispense', label: 'Dispense Medicine', icon: <FaPills /> },
-    { path: '/pharmacist/reports', label: 'Reports', icon: <FaChartBar /> },
-  ];
-
   // 🔹 DOCTOR MENU
   const doctorMenu = [
     { path: '/doctor/dashboard', label: 'Dashboard', icon: <FaHome /> },
@@ -72,8 +64,10 @@ const Sidebar = () => {
   const receptionistMenu = [
     { path: '/receptionist/dashboard', label: 'Dashboard', icon: <FaHome /> },
     { path: '/receptionist/patient-search', label: 'Search Patients', icon: <FaSearch /> },
+    { path: '/receptionist/doctors', label: 'Doctor List', icon: <FaUserMd /> },
     { path: '/receptionist/patient-registration', label: 'New Patient', icon: <FaUserPlus /> },
     { path: '/receptionist/book-appointment', label: 'Book Appointment', icon: <FaCalendarCheck /> },
+    { path: '/receptionist/appointments', label: 'Manage Appointments', icon: <FaClipboardList /> },
     { path: '/receptionist/appointments-calendar', label: 'Appointments Calendar', icon: <FaCalendarAlt /> },
     { path: '/receptionist/billing', label: 'Billing & Payments', icon: <FaFileInvoiceDollar /> },
   ];
@@ -86,14 +80,22 @@ const Sidebar = () => {
     { path: '/patient/profile', label: 'My Profile', icon: <FaUserCircle /> },
   ];
 
+  // 🔹 PHARMACIST MENU
+  const pharmacistMenu = [
+    { path: '/pharmacist/dashboard', label: 'Dashboard', icon: <FaHome /> },
+    { path: '/pharmacist/dispense', label: 'Dispense Medicine', icon: <FaClipboardList /> },
+    { path: '/pharmacist/inventory', label: 'Inventory Management', icon: <FaPills /> },
+    { path: '/pharmacist/reports', label: 'Reports', icon: <FaChartBar /> },
+  ];
+
   // Get menu based on role
   const getMenuItems = () => {
     switch (role) {
       case 'admin': return adminMenu;
-      case 'pharmacist': return pharmacistMenu;
       case 'doctor': return doctorMenu;
       case 'receptionist': return receptionistMenu;
       case 'patient': return patientMenu;
+      case 'pharmacist': return pharmacistMenu;
       default: return [];
     }
   };
@@ -104,10 +106,10 @@ const Sidebar = () => {
   const getPortalName = () => {
     switch (role) {
       case 'admin': return 'Admin Portal';
-      case 'pharmacist': return 'Pharmacy Portal';
       case 'doctor': return 'Doctor Portal';
       case 'receptionist': return 'Reception Desk';
       case 'patient': return 'Patient Portal';
+      case 'pharmacist': return 'Pharmacy Portal';
       default: return 'Portal';
     }
   };
@@ -119,8 +121,6 @@ const Sidebar = () => {
     switch (role) {
       case 'admin':
         return `Welcome, ${user.name || 'Admin'}`;
-      case 'pharmacist':
-        return `Welcome, ${user.name || 'Pharmacist'}`;
       case 'doctor':
         return `Welcome, ${user.name || 'Doctor'}`;
       case 'receptionist':
@@ -128,6 +128,8 @@ const Sidebar = () => {
       case 'patient':
         const displayName = user.firstName ? `${user.firstName} ${user.lastName}` : (user.name || 'Patient');
         return `Welcome, ${displayName}`;
+      case 'pharmacist':
+        return `Welcome, ${user.name || 'Pharmacist'}`;
       default:
         return 'Welcome';
     }
@@ -137,10 +139,10 @@ const Sidebar = () => {
   const getIconColor = () => {
     switch (role) {
       case 'admin': return 'from-blue-500 to-blue-600';
-      case 'pharmacist': return 'from-purple-500 to-purple-600';
       case 'doctor': return 'from-green-500 to-green-600';
       case 'receptionist': return 'from-teal-500 to-teal-600';
       case 'patient': return 'from-blue-500 to-blue-600';
+      case 'pharmacist': return 'from-green-600 to-green-700';
       default: return 'from-blue-500 to-blue-600';
     }
   };
@@ -149,10 +151,10 @@ const Sidebar = () => {
   const getActiveGradient = () => {
     switch (role) {
       case 'admin': return 'from-blue-600 to-blue-500';
-      case 'pharmacist': return 'from-purple-600 to-purple-500';
       case 'doctor': return 'from-green-600 to-green-500';
       case 'receptionist': return 'from-teal-600 to-teal-500';
       case 'patient': return 'from-blue-600 to-blue-500';
+      case 'pharmacist': return 'from-green-700 to-green-600';
       default: return 'from-blue-600 to-blue-500';
     }
   };

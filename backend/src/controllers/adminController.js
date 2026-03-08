@@ -53,24 +53,24 @@ export const getAllUsers = async (req, res) => {
             // Get all users from all tables
             const [admins] = await db.query('SELECT id, email, name, department, status, created_at as joinDate, "" as phone, "admin" as role FROM admins');
             const [doctors] = await db.query('SELECT id, email, name, department, status, created_at as joinDate, phone, "doctor" as role FROM doctors');
+            const [pharmacists] = await db.query('SELECT id, email, name, department, status, created_at as joinDate, phone, "pharmacist" as role FROM pharmacists');
             const [receptionists] = await db.query('SELECT id, email, name, department, status, created_at as joinDate, phone, "receptionist" as role FROM receptionists');
-            const [pharmacists] = await db.query('SELECT id, email, name, department, status, created_at as joinDate, "" as phone, "pharmacist" as role FROM pharmacists');
             const [patients] = await db.query('SELECT id, email, CONCAT(firstName, " ", lastName) as name, "" as department, status, created_at as joinDate, phone, "patient" as role FROM patients');
 
-            users = [...admins, ...doctors, ...receptionists, ...pharmacists, ...patients];
+            users = [...admins, ...doctors, ...pharmacists, ...receptionists, ...patients];
         } else {
             // Get users from specific role table
             const tableName = role === 'admin' ? 'admins' :
                 role === 'doctor' ? 'doctors' :
-                    role === 'receptionist' ? 'receptionists' :
-                        role === 'pharmacist' ? 'pharmacists' :
+                    role === 'pharmacist' ? 'pharmacists' :
+                        role === 'receptionist' ? 'receptionists' :
                             role === 'patient' ? 'patients' : null;
 
             if (tableName) {
                 let query = '';
                 if (role === 'patient') {
                     query = `SELECT id, email, CONCAT(firstName, " ", lastName) as name, "" as department, phone, status, created_at as joinDate FROM ${tableName}`;
-                } else if (role === 'admin' || role === 'pharmacist') {
+                } else if (role === 'admin') {
                     query = `SELECT id, email, name, department, "" as phone, status, created_at as joinDate FROM ${tableName}`;
                 } else {
                     query = `SELECT id, email, name, department, phone, status, created_at as joinDate FROM ${tableName}`;
@@ -103,8 +103,8 @@ export const createUser = async (req, res) => {
 
         const tableName = role === 'admin' ? 'admins' :
             role === 'doctor' ? 'doctors' :
-                role === 'receptionist' ? 'receptionists' :
-                    role === 'pharmacist' ? 'pharmacists' :
+                role === 'pharmacist' ? 'pharmacists' :
+                    role === 'receptionist' ? 'receptionists' :
                         role === 'patient' ? 'patients' : null;
 
         if (!tableName) {
@@ -120,13 +120,13 @@ export const createUser = async (req, res) => {
         } else if (role === 'receptionist') {
             query = `INSERT INTO ${tableName} (email, password, name, department, location, phone, status) VALUES (?, ?, ?, ?, ?, ?, ?)`;
             values = [email, hashedPassword, name, department, location || '', phone || '', 'active'];
-        } else if (role === 'pharmacist') {
-            query = `INSERT INTO ${tableName} (email, password, name, department, licenseNumber, status) VALUES (?, ?, ?, ?, ?, ?)`;
-            values = [email, hashedPassword, name, department, actualLicense || '', 'active'];
         } else if (role === 'patient') {
             const { firstName, lastName, address } = req.body;
             query = `INSERT INTO ${tableName} (email, password, firstName, lastName, phone, address, status) VALUES (?, ?, ?, ?, ?, ?, ?)`;
             values = [email, hashedPassword, firstName || name.split(' ')[0], lastName || name.split(' ').slice(1).join(' '), phone || '', address || '', 'active'];
+        } else if (role === 'pharmacist') {
+            query = `INSERT INTO ${tableName} (email, password, name, department, phone, status) VALUES (?, ?, ?, ?, ?, ?)`;
+            values = [email, hashedPassword, name, department, phone || '', 'active'];
         } else {
             query = `INSERT INTO ${tableName} (email, password, name, department, status) VALUES (?, ?, ?, ?, ?)`;
             values = [email, hashedPassword, name, department, 'active'];
@@ -155,8 +155,8 @@ export const updateUser = async (req, res) => {
 
         const tableName = role === 'admin' ? 'admins' :
             role === 'doctor' ? 'doctors' :
-                role === 'receptionist' ? 'receptionists' :
-                    role === 'pharmacist' ? 'pharmacists' :
+                role === 'pharmacist' ? 'pharmacists' :
+                    role === 'receptionist' ? 'receptionists' :
                         role === 'patient' ? 'patients' : null;
 
         if (!tableName) {
@@ -168,12 +168,12 @@ export const updateUser = async (req, res) => {
         if (role === 'doctor') {
             query = `UPDATE ${tableName} SET name = ?, department = ?, specialization = ?, status = ?, phone = ? WHERE id = ?`;
             values = [name, department, specialization, status || 'active', phone, id];
+        } else if (role === 'pharmacist') {
+            query = `UPDATE ${tableName} SET name = ?, department = ?, status = ?, phone = ? WHERE id = ?`;
+            values = [name, department, status || 'active', phone, id];
         } else if (role === 'receptionist') {
             query = `UPDATE ${tableName} SET name = ?, department = ?, location = ?, status = ?, phone = ? WHERE id = ?`;
             values = [name, department, location || '', status || 'active', phone, id];
-        } else if (role === 'pharmacist') {
-            query = `UPDATE ${tableName} SET name = ?, department = ?, licenseNumber = ?, status = ? WHERE id = ?`;
-            values = [name, department, licenseNumber, status || 'active', id];
         } else if (role === 'patient') {
             const { firstName, lastName, address } = req.body;
             query = `UPDATE ${tableName} SET firstName = ?, lastName = ?, email = ?, phone = ?, address = ?, status = ? WHERE id = ?`;
@@ -226,8 +226,7 @@ export const updateUserStatus = async (req, res) => {
         const tableName = role === 'admin' ? 'admins' :
             role === 'doctor' ? 'doctors' :
                 role === 'receptionist' ? 'receptionists' :
-                    role === 'pharmacist' ? 'pharmacists' :
-                        role === 'patient' ? 'patients' : null;
+                    role === 'patient' ? 'patients' : null;
 
         if (!tableName) {
             return res.status(400).json({ message: 'Invalid role' });
@@ -263,8 +262,8 @@ export const bulkImportUsers = async (req, res) => {
 
                 const tableName = role === 'admin' ? 'admins' :
                     role === 'doctor' ? 'doctors' :
-                        role === 'staff' || role === 'receptionist' ? 'receptionists' :
-                            role === 'pharmacist' ? 'pharmacists' : null;
+                        role === 'pharmacist' ? 'pharmacists' :
+                            role === 'staff' || role === 'receptionist' ? 'receptionists' : null;
 
                 if (!tableName) {
                     errors.push({ email, error: 'Invalid role' });
@@ -278,9 +277,6 @@ export const bulkImportUsers = async (req, res) => {
                 } else if (role === 'receptionist') {
                     query = `INSERT INTO ${tableName} (email, password, name, department, location) VALUES (?, ?, ?, ?, ?)`;
                     values = [email, defaultPassword, name, department, location];
-                } else if (role === 'pharmacist') {
-                    query = `INSERT INTO ${tableName} (email, password, name, department, licenseNumber) VALUES (?, ?, ?, ?, ?)`;
-                    values = [email, defaultPassword, name, department, licenseNumber];
                 } else if (role === 'patient') {
                     query = `INSERT INTO ${tableName} (email, password, firstName, lastName, phone) VALUES (?, ?, ?, ?, ?)`;
                     values = [email, defaultPassword, user.firstName || name.split(' ')[0], user.lastName || name.split(' ').slice(1).join(' '), user.phone || ''];

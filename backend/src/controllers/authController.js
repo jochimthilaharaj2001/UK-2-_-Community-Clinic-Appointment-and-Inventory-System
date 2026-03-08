@@ -14,9 +14,9 @@ export const login = async (req, res) => {
     switch (role) {
         case 'admin': tableName = 'admins'; break;
         case 'doctor': tableName = 'doctors'; break;
+        case 'pharmacist': tableName = 'pharmacists'; break;
         case 'patient': tableName = 'patients'; break;
         case 'receptionist': tableName = 'receptionists'; break;
-        case 'pharmacist': tableName = 'pharmacists'; break;
         default: return res.status(400).json({ message: 'Invalid role' });
     }
 

@@ -34,13 +34,6 @@ const Login = () => {
       redirectPath: '/admin',
       description: 'Sign in to clinic admin portal'
     },
-    pharmacist: {
-      title: 'Pharmacist Login',
-      demoEmail: 'pharmacist@clinic.com',
-      demoPassword: 'pharma123',
-      redirectPath: '/pharmacist/dashboard',
-      description: 'Sign in to pharmacy management portal'
-    },
     doctor: {
       title: 'Doctor Login',
       demoEmail: 'doctor@clinic.com',
@@ -54,6 +47,13 @@ const Login = () => {
       demoPassword: 'reception123',
       redirectPath: '/receptionist/dashboard',
       description: 'Sign in to reception desk portal'
+    },
+    pharmacist: {
+      title: 'Pharmacist Login',
+      demoEmail: 'pharmacist@clinic.com',
+      demoPassword: 'pharma123',
+      redirectPath: '/pharmacist/dashboard',
+      description: 'Sign in to pharmacy management portal'
     },
     patient: {
       title: 'Patient Login',
@@ -149,13 +149,13 @@ const Login = () => {
         {/* Role Selector Grid - Exactly as image */}
         <div className="w-full flex flex-col items-center gap-2 mb-10">
           <div className="flex flex-wrap justify-center gap-2">
-            {['admin', 'pharmacist', 'doctor', 'receptionist'].map((roleKey) => (
+            {['admin', 'doctor', 'pharmacist', 'receptionist'].map((roleKey) => (
               <button
                 key={roleKey}
                 onClick={() => switchRole(roleKey)}
                 className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${currentRole === roleKey
-                    ? 'bg-[#4F46E5] text-white shadow-lg'
-                    : 'bg-[#E5E7EB] text-gray-600 hover:bg-gray-300'
+                  ? 'bg-[#4F46E5] text-white shadow-lg'
+                  : 'bg-[#E5E7EB] text-gray-600 hover:bg-gray-300'
                   }`}
               >
                 {roleKey.charAt(0).toUpperCase() + roleKey.slice(1)}
@@ -165,8 +165,8 @@ const Login = () => {
           <button
             onClick={() => switchRole('patient')}
             className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${currentRole === 'patient'
-                ? 'bg-[#4F46E5] text-white shadow-lg'
-                : 'bg-[#E5E7EB] text-gray-600 hover:bg-gray-300'
+              ? 'bg-[#4F46E5] text-white shadow-lg'
+              : 'bg-[#E5E7EB] text-gray-600 hover:bg-gray-300'
               }`}
           >
             Patient
@@ -255,8 +255,8 @@ const Login = () => {
             <p className="text-gray-400 text-xs font-bold mb-6 tracking-tight">Need to access a different portal?</p>
             <div className="flex flex-wrap justify-center gap-2">
               <button onClick={() => switchRole('admin')} className="px-4 py-2 bg-blue-50 text-[#3B82F6] rounded-xl text-[10px] font-black hover:bg-blue-100 transition-colors uppercase tracking-tight">Admin Portal</button>
-              <button onClick={() => switchRole('pharmacist')} className="px-4 py-2 bg-purple-50 text-[#8B5CF6] rounded-xl text-[10px] font-black hover:bg-purple-100 transition-colors uppercase tracking-tight">Pharmacy Portal</button>
               <button onClick={() => switchRole('doctor')} className="px-4 py-2 bg-emerald-50 text-[#10B981] rounded-xl text-[10px] font-black hover:bg-emerald-100 transition-colors uppercase tracking-tight">Doctor Portal</button>
+              <button onClick={() => switchRole('pharmacist')} className="px-4 py-2 bg-green-50 text-[#059669] rounded-xl text-[10px] font-black hover:bg-green-100 transition-colors uppercase tracking-tight">Pharmacy Portal</button>
               <button onClick={() => switchRole('receptionist')} className="px-4 py-2 bg-orange-50 text-[#F59E0B] rounded-xl text-[10px] font-black hover:bg-orange-100 transition-colors uppercase tracking-tight">Receptionist Portal</button>
               <button onClick={() => switchRole('patient')} className="px-4 py-2 bg-indigo-50 text-[#6366F1] rounded-xl text-[10px] font-black hover:bg-indigo-100 transition-colors uppercase tracking-tight">Patient Portal</button>
             </div>

@@ -14,7 +14,8 @@ import {
 
 const ReceptionistDashboard = () => {
   const navigate = useNavigate();
-  const [todayDate, setTodayDate] = useState('');
+  const [todayDate, setTodayDate] = useState(new Date().toLocaleDateString('en-CA'));
+  const [todayDisplayDate, setTodayDisplayDate] = useState('');
   const [currentTime, setCurrentTime] = useState('');
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [quickStats, setQuickStats] = useState({
@@ -27,7 +28,7 @@ const ReceptionistDashboard = () => {
   useEffect(() => {
     // Set current date and time
     const now = new Date();
-    setTodayDate(now.toLocaleDateString('en-US', {
+    setTodayDisplayDate(now.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -57,12 +58,12 @@ const ReceptionistDashboard = () => {
           pendingPayments: statsRes.data.pendingPayments
         });
 
-        const appointmentsRes = await api.get('/receptionist/appointments?date=' + new Date().toISOString().split('T')[0]);
+        const appointmentsRes = await api.get('/receptionist/appointments?date=' + new Date().toLocaleDateString('en-CA'));
         setUpcomingAppointments(appointmentsRes.data.map(app => ({
           id: app.id,
           patientName: app.patient_name,
           patientPhone: app.patient_phone,
-          time: app.appointment_time,
+          time: app.appointment_time.slice(0, 5),
           doctor: app.doctor_name,
           status: app.status
         })));
@@ -83,12 +84,12 @@ const ReceptionistDashboard = () => {
       });
       alert('Patient checked in successfully!');
       // Refresh appointments
-      const appointmentsRes = await api.get('/receptionist/appointments?date=' + new Date().toISOString().split('T')[0]);
+      const appointmentsRes = await api.get('/receptionist/appointments?date=' + new Date().toLocaleDateString('en-CA'));
       setUpcomingAppointments(appointmentsRes.data.map(app => ({
         id: app.id,
         patientName: app.patient_name,
         patientPhone: app.patient_phone,
-        time: app.appointment_time,
+        time: app.appointment_time.slice(0, 5),
         doctor: app.doctor_name,
         status: app.status
       })));

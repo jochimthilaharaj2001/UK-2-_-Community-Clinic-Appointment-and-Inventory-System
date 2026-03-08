@@ -1,12 +1,13 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     FaUserShield,
     FaUserMd,
-    FaPills,
     FaUserTie,
     FaUserInjured,
-    FaClinicMedical
+    FaClinicMedical,
+    FaPills
 } from 'react-icons/fa';
 
 const PortalAccess = () => {
@@ -32,15 +33,6 @@ const PortalAccess = () => {
             path: '/login?role=doctor'
         },
         {
-            id: 'pharmacist',
-            title: 'Pharmacy Portal',
-            description: 'Manage medicine inventory and dispense prescriptions.',
-            icon: <FaPills className="text-4xl" />,
-            color: 'bg-purple-600',
-            hoverColor: 'hover:bg-purple-700',
-            path: '/login?role=pharmacist'
-        },
-        {
             id: 'receptionist',
             title: 'Reception Portal',
             description: 'Handle patient registration and appointment scheduling.',
@@ -48,6 +40,15 @@ const PortalAccess = () => {
             color: 'bg-teal-600',
             hoverColor: 'hover:bg-teal-700',
             path: '/login?role=receptionist'
+        },
+        {
+            id: 'pharmacist',
+            title: 'Pharmacy Portal',
+            description: 'Manage medicine inventory and dispense prescriptions.',
+            icon: <FaPills className="text-4xl" />,
+            color: 'bg-green-700',
+            hoverColor: 'hover:bg-green-800',
+            path: '/pharmacist/login'
         },
         {
             id: 'admin',
@@ -75,7 +76,7 @@ const PortalAccess = () => {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                     {portals.map((portal) => (
                         <div
                             key={portal.id}

@@ -461,7 +461,7 @@ export const deleteInvoice = async (req, res) => {
 export const getAvailableDoctors = async (req, res) => {
     try {
         const [doctors] = await db.query(
-            'SELECT id, name, email, department, specialization, phone FROM doctors ORDER BY name'
+            'SELECT id, name, email, department, specialization, phone, experience, education FROM doctors ORDER BY name'
         );
 
         res.json(doctors);

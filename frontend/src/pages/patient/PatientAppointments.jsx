@@ -8,6 +8,7 @@ const PatientAppointments = () => {
     const [appointments, setAppointments] = useState([]);
     const [doctors, setDoctors] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [searchTermAppointments, setSearchTermAppointments] = useState('');
     const [filterSpecialization, setFilterSpecialization] = useState('All');
     const [loading, setLoading] = useState(true);
     const [bookingLoading, setBookingLoading] = useState(false);
@@ -85,13 +86,24 @@ const PatientAppointments = () => {
         }
     };
 
-    const filteredDoctors = doctors.filter(doc =>
-        (doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            doc.specialization.toLowerCase().includes(searchTerm.toLowerCase())) &&
-        (filterSpecialization === 'All' || doc.specialization === filterSpecialization)
-    );
+    const filteredDoctors = doctors.filter(doc => {
+        const name = doc.name ? doc.name.toLowerCase() : '';
+        const specialty = doc.specialization ? doc.specialization.toLowerCase() : '';
+        const search = searchTerm.toLowerCase();
 
-    const specializations = ['All', ...new Set(doctors.map(d => d.specialization))];
+        return (name.includes(search) || specialty.includes(search)) &&
+            (filterSpecialization === 'All' || doc.specialization === filterSpecialization);
+    });
+
+    const filteredAppointments = appointments.filter(app => {
+        const docName = app.doctorName ? app.doctorName.toLowerCase() : '';
+        const specialty = app.specialization ? app.specialization.toLowerCase() : '';
+        const search = searchTermAppointments.toLowerCase();
+
+        return docName.includes(search) || specialty.includes(search);
+    });
+
+    const specializations = ['All', ...new Set(doctors.map(d => d.specialization).filter(s => s))];
 
     return (
         <div className="flex min-h-screen bg-gray-50">
@@ -149,11 +161,30 @@ const PatientAppointments = () => {
                             </div>
                         ))}
                     </div>
+                    {filteredDoctors.length === 0 && !loading && (
+                        <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 mt-6">
+                            <FaUserMd size={48} className="mx-auto mb-4 text-gray-300" />
+                            <p className="font-bold text-gray-800 mb-1">No doctors found</p>
+                            <p className="text-sm">Try searching for a different name or specialization.</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* My Appointments List */}
                 <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
-                    <h2 className="text-xl font-bold text-gray-800 mb-6">My Appointments</h2>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <h2 className="text-xl font-bold text-gray-800">My Appointments</h2>
+                        <div className="relative">
+                            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search by doctor..."
+                                className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                value={searchTermAppointments}
+                                onChange={(e) => setSearchTermAppointments(e.target.value)}
+                            />
+                        </div>
+                    </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>
@@ -165,7 +196,7 @@ const PatientAppointments = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {appointments.map(app => (
+                                {filteredAppointments.map(app => (
                                     <tr key={app.id} className="hover:bg-gray-50 transition">
                                         <td className="py-4">
                                             <div>
@@ -202,11 +233,15 @@ const PatientAppointments = () => {
                                 ))}
                             </tbody>
                         </table>
-                        {appointments.length === 0 && (
+                        {appointments.length === 0 ? (
                             <div className="text-center py-10 text-gray-500">
                                 You have no appointments scheduled.
                             </div>
-                        )}
+                        ) : filteredAppointments.length === 0 ? (
+                            <div className="text-center py-10 text-gray-500">
+                                No appointments found matching "{searchTermAppointments}".
+                            </div>
+                        ) : null}
                     </div>
                 </div>
             </div>

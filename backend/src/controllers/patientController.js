@@ -345,7 +345,7 @@ export const getAvailableDoctors = async (req, res) => {
     try {
         const { specialization, department } = req.query;
 
-        let query = 'SELECT id, name, email, department, specialization, phone FROM doctors WHERE 1=1';
+        let query = 'SELECT id, name, email, department, specialization, phone, experience, education FROM doctors WHERE 1=1';
         const params = [];
 
         if (specialization) {

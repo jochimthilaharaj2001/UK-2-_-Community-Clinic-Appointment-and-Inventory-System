@@ -1,3 +1,4 @@
+
 import express from 'express';
 import cors from 'cors';
 
@@ -10,7 +11,6 @@ import adminRoutes from './routes/adminRoutes.js';
 import doctorRoutes from './routes/doctorRoutes.js';
 import patientRoutes from './routes/patientRoutes.js';
 import receptionistRoutes from './routes/receptionistRoutes.js';
-import pharmacistRoutes from './routes/pharmacistRoutes.js';
 import inventoryRoutes from './routes/inventoryRoutes.js';
 import prescriptionRoutes from './routes/prescriptionRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
@@ -28,7 +28,6 @@ app.use('/api/admin', authenticateToken, authorizeRole('admin'), adminRoutes);
 app.use('/api/doctor', authenticateToken, authorizeRole('doctor'), doctorRoutes);
 app.use('/api/patient', patientRoutes); // Patient login is public, other routes will be protected
 app.use('/api/receptionist', authenticateToken, authorizeRole('receptionist'), receptionistRoutes);
-app.use('/api/pharmacist', authenticateToken, authorizeRole('pharmacist'), pharmacistRoutes);
 app.use('/api/inventory', authenticateToken, inventoryRoutes);
 app.use('/api/prescriptions', authenticateToken, prescriptionRoutes);
 app.use('/api/reports', authenticateToken, reportRoutes);

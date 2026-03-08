@@ -23,9 +23,8 @@ const BookAppointment = () => {
     date: new Date().toISOString().split('T')[0],
     time: '09:00',
     doctor: '',
-    appointmentType: 'consultation',
+    appointmentType: 'general-consultation',
     notes: '',
-    duration: '30',
     urgency: 'routine'
   });
 
@@ -50,14 +49,16 @@ const BookAppointment = () => {
   }, []);
 
   const appointmentTypes = [
-    'Consultation',
-    'Follow-up',
-    'Check-up',
-    'Emergency',
-    'Lab Test',
-    'Procedure',
-    'Vaccination',
-    'Physical Exam'
+    'General Consultation',
+    'Follow-Up Appointment',
+    'Naadi Pariksha (Pulse Diagnosis)',
+    'Varmam Therapy Appointment',
+    'Thokkanam Therapy',
+    'Panchakarma / Detox Therapy',
+    'Herbal Medicine Consultation',
+    'Chronic Disease Treatment',
+    'Diet & Lifestyle Consultation',
+    'Special Therapy Appointment'
   ];
 
   const timeSlots = [
@@ -181,7 +182,7 @@ const BookAppointment = () => {
                       <option value="">Select a patient</option>
                       {patients.map(patient => (
                         <option key={patient.id} value={patient.id}>
-                          {patient.name} - {patient.phone}
+                          {patient.name}
                         </option>
                       ))}
                     </select>
@@ -242,21 +243,12 @@ const BookAppointment = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     <div className="flex items-center gap-2">
                       <FaStethoscope className="text-gray-400" />
-                      Duration
+                      Special Instructions
                     </div>
                   </label>
-                  <select
-                    name="duration"
-                    value={formData.duration}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="15">15 minutes</option>
-                    <option value="30">30 minutes</option>
-                    <option value="45">45 minutes</option>
-                    <option value="60">60 minutes</option>
-                    <option value="90">90 minutes</option>
-                  </select>
+                  <div className="p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
+                    Please ensure patient is informed about any preparation needed for the selected therapy.
+                  </div>
                 </div>
               </div>
 

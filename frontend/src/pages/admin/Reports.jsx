@@ -49,10 +49,10 @@ const Reports = () => {
   ];
 
   const appointmentData = [
-    { name: 'Consultation', value: 45 },
-    { name: 'Follow-up', value: 30 },
-    { name: 'Emergency', value: 15 },
-    { name: 'Regular Checkup', value: 10 },
+    { name: 'General Consultation', value: 45 },
+    { name: 'Follow-Up', value: 30 },
+    { name: 'Naadi Pariksha', value: 15 },
+    { name: 'Varmam Therapy', value: 10 },
   ];
 
   const departmentRevenue = [

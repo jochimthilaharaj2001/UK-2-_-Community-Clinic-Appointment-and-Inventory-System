@@ -298,7 +298,7 @@ const UserManagement = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-            <p className="text-gray-600">Manage patients, doctors, staff, and administrators</p>
+            <p className="text-gray-600">Manage patients, doctors, receptionists, and administrators</p>
           </div>
           <button
             onClick={() => {
@@ -324,7 +324,7 @@ const UserManagement = () => {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {roles.map((role) => (
             <div key={role.value} className="bg-white rounded-xl shadow p-4">
               <div className="flex items-center justify-between">
@@ -527,7 +527,7 @@ const UserManagement = () => {
                     </div>
                   )}
 
-                  {formData.role === 'doctor' || formData.role === 'pharmacist' || formData.role === 'receptionist' ? (
+                  {formData.role === 'doctor' || formData.role === 'receptionist' ? (
                     <>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">

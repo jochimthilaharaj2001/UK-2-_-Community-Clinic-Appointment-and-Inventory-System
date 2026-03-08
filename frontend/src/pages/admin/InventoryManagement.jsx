@@ -369,12 +369,8 @@ const InventoryManagement = () => {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">Select Unit</option>
-                      <option value="tablets">Tablets</option>
-                      <option value="capsules">Capsules</option>
-                      <option value="pieces">Pieces</option>
-                      <option value="units">Units</option>
-                      <option value="kits">Kits</option>
-                      <option value="bottles">Bottles</option>
+                      <option value="bottle">bottle</option>
+                      <option value="grams">grams</option>
                     </select>
                   </div>
 

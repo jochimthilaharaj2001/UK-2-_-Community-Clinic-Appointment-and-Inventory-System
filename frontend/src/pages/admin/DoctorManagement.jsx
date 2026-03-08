@@ -41,28 +41,14 @@ const DoctorManagement = () => {
   const [editingDoctor, setEditingDoctor] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    specialization: '',
     email: '',
     phone: '',
-    department: '',
     experience: '',
     schedule: '',
     license: '',
-    education: '',
-    office: '',
-    bio: ''
+    bio: '',
+    password: ''
   });
-
-  const specializations = [
-    'Cardiology', 'Pediatrics', 'Dermatology', 'Orthopedics', 'Neurology',
-    'General Medicine', 'Gynecology', 'Oncology', 'Psychiatry', 'Urology',
-    'ENT', 'Ophthalmology', 'Dentistry', 'Physiotherapy'
-  ];
-
-  const departments = [
-    'Cardiology', 'Pediatrics', 'Dermatology', 'Orthopedics', 'Neurology',
-    'Emergency', 'ICU', 'Radiology', 'Pathology', 'Pharmacy', 'Administration'
-  ];
 
   const fetchDoctors = async () => {
     try {
@@ -93,15 +79,11 @@ const DoctorManagement = () => {
     if (editingDoctor) {
       setFormData({
         name: editingDoctor.name,
-        specialization: editingDoctor.specialization,
         email: editingDoctor.email,
         phone: editingDoctor.phone || '',
-        department: editingDoctor.department,
         experience: editingDoctor.experience,
         schedule: editingDoctor.schedule,
         license: editingDoctor.license,
-        education: editingDoctor.education || '',
-        office: editingDoctor.office || '',
         bio: editingDoctor.bio || '',
         password: ''
       });
@@ -113,28 +95,15 @@ const DoctorManagement = () => {
     .filter(doctor => {
       const matchesSearch = doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         doctor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doctor.specialization.toLowerCase().includes(searchTerm.toLowerCase()) ||
         doctor.license.includes(searchTerm);
-      const matchesSpecialization = specializationFilter === 'all' || doctor.specialization === specializationFilter;
       const matchesStatus = statusFilter === 'all' || doctor.status === statusFilter;
-      const matchesDepartment = departmentFilter === 'all' || doctor.department === departmentFilter;
-      return matchesSearch && matchesSpecialization && matchesStatus && matchesDepartment;
+      return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
       if (sortBy === 'name') {
         return sortOrder === 'asc'
           ? a.name.localeCompare(b.name)
           : b.name.localeCompare(a.name);
-      }
-      if (sortBy === 'rating') {
-        return sortOrder === 'asc'
-          ? a.rating - b.rating
-          : b.rating - a.rating;
-      }
-      if (sortBy === 'appointments') {
-        return sortOrder === 'asc'
-          ? a.appointments - b.appointments
-          : b.appointments - a.appointments;
       }
       if (sortBy === 'experience') {
         const expA = parseInt(a.experience);
@@ -151,20 +120,6 @@ const DoctorManagement = () => {
       case 'inactive': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
-  };
-
-  const getSpecializationColor = (spec) => {
-    const colors = {
-      'Cardiology': 'bg-red-100 text-red-800',
-      'Pediatrics': 'bg-blue-100 text-blue-800',
-      'Dermatology': 'bg-purple-100 text-purple-800',
-      'Orthopedics': 'bg-green-100 text-green-800',
-      'Neurology': 'bg-indigo-100 text-indigo-800',
-      'General Medicine': 'bg-teal-100 text-teal-800',
-      'Gynecology': 'bg-pink-100 text-pink-800',
-      'Oncology': 'bg-orange-100 text-orange-800'
-    };
-    return colors[spec] || 'bg-gray-100 text-gray-800';
   };
 
   const getAvailabilityColor = (available) => {
@@ -220,9 +175,9 @@ const DoctorManagement = () => {
       setShowForm(false);
       setEditingDoctor(null);
       setFormData({
-        name: '', specialization: '', email: '', phone: '',
-        department: '', experience: '', schedule: '', license: '',
-        education: '', office: '', bio: '', password: ''
+        name: '', email: '', phone: '',
+        experience: '', schedule: '', license: '',
+        bio: '', password: ''
       });
       fetchDoctors();
     } catch (err) {
@@ -275,10 +230,8 @@ const DoctorManagement = () => {
     const total = doctors.length;
     const active = doctors.filter(d => d.status === 'active').length;
     const onLeave = doctors.filter(d => d.status === 'on-leave').length;
-    const totalAppointments = doctors.reduce((sum, doc) => sum + doc.appointments, 0);
-    const avgRating = (doctors.reduce((sum, doc) => sum + doc.rating, 0) / total).toFixed(1);
 
-    return { total, active, onLeave, totalAppointments, avgRating };
+    return { total, active, onLeave };
   };
 
   const stats = getStats();
@@ -300,15 +253,11 @@ const DoctorManagement = () => {
               setEditingDoctor(null);
               setFormData({
                 name: '',
-                specialization: '',
                 email: '',
                 phone: '',
-                department: '',
                 experience: '',
                 schedule: '',
                 license: '',
-                education: '',
-                office: '',
                 bio: ''
               });
               setShowForm(true);
@@ -321,7 +270,7 @@ const DoctorManagement = () => {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
             <h3 className="text-lg font-bold text-blue-900 mb-2">Total Doctors</h3>
             <p className="text-3xl font-bold text-blue-700">{stats.total}</p>
@@ -330,28 +279,10 @@ const DoctorManagement = () => {
             </p>
           </div>
 
-          <div className="bg-green-50 border border-green-200 rounded-xl p-6">
-            <h3 className="text-lg font-bold text-green-900 mb-2">Avg. Rating</h3>
-            <p className="text-3xl font-bold text-green-700">{stats.avgRating}</p>
-            <p className="text-sm text-green-600 mt-2">Average doctor rating</p>
-          </div>
-
-          <div className="bg-purple-50 border border-purple-200 rounded-xl p-6">
-            <h3 className="text-lg font-bold text-purple-900 mb-2">Total Appointments</h3>
-            <p className="text-3xl font-bold text-purple-700">{stats.totalAppointments}</p>
-            <p className="text-sm text-purple-600 mt-2">This month</p>
-          </div>
-
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
             <h3 className="text-lg font-bold text-yellow-900 mb-2">On Leave</h3>
             <p className="text-3xl font-bold text-yellow-700">{stats.onLeave}</p>
             <p className="text-sm text-yellow-600 mt-2">Currently unavailable</p>
-          </div>
-
-          <div className="bg-teal-50 border border-teal-200 rounded-xl p-6">
-            <h3 className="text-lg font-bold text-teal-900 mb-2">Specializations</h3>
-            <p className="text-3xl font-bold text-teal-700">{specializations.length}</p>
-            <p className="text-sm text-teal-600 mt-2">Available specializations</p>
           </div>
         </div>
 
@@ -363,7 +294,7 @@ const DoctorManagement = () => {
                 <FaSearch className="absolute left-3 top-3 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search doctors by name, specialization, email, or license..."
+                  placeholder="Search doctors by name, email, or license..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -374,16 +305,6 @@ const DoctorManagement = () => {
             <div className="flex flex-col md:flex-row gap-2">
               <div className="flex items-center gap-2">
                 <FaFilter className="text-gray-400" />
-                <select
-                  value={specializationFilter}
-                  onChange={(e) => setSpecializationFilter(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="all">All Specializations</option>
-                  {specializations.map(spec => (
-                    <option key={spec} value={spec}>{spec}</option>
-                  ))}
-                </select>
               </div>
 
               <select
@@ -395,17 +316,6 @@ const DoctorManagement = () => {
                 <option value="active">Active</option>
                 <option value="on-leave">On Leave</option>
                 <option value="inactive">Inactive</option>
-              </select>
-
-              <select
-                value={departmentFilter}
-                onChange={(e) => setDepartmentFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All Departments</option>
-                {departments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
               </select>
             </div>
           </div>
@@ -449,24 +359,6 @@ const DoctorManagement = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Specialization *
-                    </label>
-                    <select
-                      name="specialization"
-                      value={formData.specialization}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">Select Specialization</option>
-                      {specializations.map(spec => (
-                        <option key={spec} value={spec}>{spec}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Email Address *
                     </label>
                     <input
@@ -496,24 +388,6 @@ const DoctorManagement = () => {
                     <p className="mt-1 text-xs text-gray-500">
                       Format: +94 77 123 4567 or 07X XXX XXXX
                     </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Department *
-                    </label>
-                    <select
-                      name="department"
-                      value={formData.department}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">Select Department</option>
-                      {departments.map(dept => (
-                        <option key={dept} value={dept}>{dept}</option>
-                      ))}
-                    </select>
                   </div>
 
                   <div>
@@ -572,34 +446,6 @@ const DoctorManagement = () => {
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Education
-                    </label>
-                    <input
-                      type="text"
-                      name="education"
-                      value={formData.education}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="e.g., MD, Cardiology, Harvard Medical School"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Office Location
-                    </label>
-                    <input
-                      type="text"
-                      name="office"
-                      value={formData.office}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="e.g., Room 201, Cardiology Wing"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Biography
                     </label>
                     <textarea
@@ -649,9 +495,6 @@ const DoctorManagement = () => {
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900">{viewingDoctor.name}</h2>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className={`px-2 py-1 text-sm font-medium rounded-full ${getSpecializationColor(viewingDoctor.specialization)}`}>
-                        {viewingDoctor.specialization}
-                      </span>
                       <span className={`px-2 py-1 text-sm font-medium rounded-full ${getStatusColor(viewingDoctor.status)}`}>
                         {viewingDoctor.status}
                       </span>
@@ -687,8 +530,7 @@ const DoctorManagement = () => {
                     <div className="flex items-center">
                       <FaMapMarkerAlt className="text-gray-400 mr-3" />
                       <div>
-                        <div className="text-sm text-gray-500">Office</div>
-                        <div className="font-medium">{viewingDoctor.office}</div>
+
                       </div>
                     </div>
                   </div>
@@ -700,8 +542,7 @@ const DoctorManagement = () => {
                     <div className="flex items-center">
                       <FaBriefcaseMedical className="text-gray-400 mr-3" />
                       <div>
-                        <div className="text-sm text-gray-500">Department</div>
-                        <div className="font-medium">{viewingDoctor.department}</div>
+
                       </div>
                     </div>
                     <div className="flex items-center">
@@ -723,15 +564,7 @@ const DoctorManagement = () => {
 
                 <div className="md:col-span-2">
                   <h3 className="font-medium text-gray-900 mb-3">Performance Metrics</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-700">{viewingDoctor.rating}</div>
-                      <div className="text-sm text-blue-600">Rating</div>
-                    </div>
-                    <div className="bg-green-50 p-4 rounded-lg">
-                      <div className="text-2xl font-bold text-green-700">{viewingDoctor.appointments}</div>
-                      <div className="text-sm text-green-600">Appointments</div>
-                    </div>
+                  <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
                     <div className="bg-purple-50 p-4 rounded-lg">
                       <div className="text-2xl font-bold text-purple-700">{viewingDoctor.license}</div>
                       <div className="text-sm text-purple-600">License</div>
@@ -744,13 +577,6 @@ const DoctorManagement = () => {
                     </div>
                   </div>
                 </div>
-
-                {viewingDoctor.education && (
-                  <div className="md:col-span-2">
-                    <h3 className="font-medium text-gray-900 mb-3">Education</h3>
-                    <p className="text-gray-700">{viewingDoctor.education}</p>
-                  </div>
-                )}
 
                 {viewingDoctor.bio && (
                   <div className="md:col-span-2">
@@ -798,7 +624,7 @@ const DoctorManagement = () => {
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">{doctor.name}</h3>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getSpecializationColor(doctor.specialization)}`}>
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
                       {doctor.specialization}
                     </span>
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(doctor.status)}`}>
@@ -900,7 +726,7 @@ const DoctorManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col gap-1">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getSpecializationColor(doctor.specialization)}`}>
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
                           {doctor.specialization}
                         </span>
                         <span className="text-xs text-gray-500">{doctor.experience}</span>
@@ -996,45 +822,39 @@ const DoctorManagement = () => {
                 setEditingDoctor(null);
                 setFormData({
                   ...formData,
-                  specialization: 'Cardiology',
-                  department: 'Cardiology'
                 });
                 setShowForm(true);
               }}
               className="p-4 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition text-center"
             >
               <FaUserMd className="text-2xl mx-auto mb-2" />
-              <div className="font-medium">Add Cardiologist</div>
+              <div className="font-medium">Add Doctor</div>
             </button>
             <button
               onClick={() => {
                 setEditingDoctor(null);
                 setFormData({
                   ...formData,
-                  specialization: 'Pediatrics',
-                  department: 'Pediatrics'
                 });
                 setShowForm(true);
               }}
               className="p-4 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition text-center"
             >
               <FaUserMd className="text-2xl mx-auto mb-2" />
-              <div className="font-medium">Add Pediatrician</div>
+              <div className="font-medium">Add Specialist</div>
             </button>
             <button
               onClick={() => {
                 setEditingDoctor(null);
                 setFormData({
                   ...formData,
-                  specialization: 'General Medicine',
-                  department: 'Emergency'
                 });
                 setShowForm(true);
               }}
               className="p-4 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg transition text-center"
             >
               <FaUserMd className="text-2xl mx-auto mb-2" />
-              <div className="font-medium">Add General Physician</div>
+              <div className="font-medium">Add Physician</div>
             </button>
             <button
               onClick={() => navigate('/admin/appointments')}
@@ -1046,32 +866,7 @@ const DoctorManagement = () => {
           </div>
         </div>
 
-        {/* Specialization Distribution */}
-        <div className="mt-8 bg-white rounded-xl shadow p-6">
-          <h3 className="font-bold text-gray-900 mb-4">Specialization Distribution</h3>
-          <div className="space-y-3">
-            {specializations.map(spec => {
-              const count = doctors.filter(d => d.specialization === spec).length;
-              if (count === 0) return null;
 
-              const percentage = (count / doctors.length) * 100;
-              return (
-                <div key={spec} className="space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-sm font-medium">{spec}</span>
-                    <span className="text-sm text-gray-500">{count} doctors ({percentage.toFixed(1)}%)</span>
-                  </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500"
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
       </div>
     </div>
   );

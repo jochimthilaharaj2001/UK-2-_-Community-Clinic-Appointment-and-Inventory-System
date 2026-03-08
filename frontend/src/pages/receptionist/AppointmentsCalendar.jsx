@@ -1,6 +1,5 @@
-// pages/receptionist/AppointmentsCalendar.jsx
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../services/api';
 import {
   FaCalendarAlt,
@@ -23,10 +22,19 @@ const AppointmentsCalendar = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [doctorsList, setDoctorsList] = useState([]);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingAppointment, setEditingAppointment] = useState(null);
+  const [doctorsRaw, setDoctorsRaw] = useState([]); // Full doctor objects
+  const location = useLocation();
 
   useEffect(() => {
     fetchDoctors();
-  }, []);
+    const params = new URLSearchParams(location.search);
+    const docParam = params.get('doctor');
+    if (docParam) {
+      setFilterDoctor(docParam);
+    }
+  }, [location]);
 
   useEffect(() => {
     fetchAppointments();
@@ -35,6 +43,7 @@ const AppointmentsCalendar = () => {
   const fetchDoctors = async () => {
     try {
       const res = await api.get('/receptionist/doctors');
+      setDoctorsRaw(res.data);
       setDoctorsList(['All Doctors', ...res.data.map(d => d.name)]);
     } catch (error) {
       console.error('Error fetching doctors:', error);
@@ -52,11 +61,14 @@ const AppointmentsCalendar = () => {
       setAppointments(res.data.map(app => ({
         id: app.id,
         patientName: app.patient_name,
-        time: app.appointment_time,
+        time: app.appointment_time.slice(0, 5), // '09:00:00' -> '09:00'
+        doctorId: app.doctor_id,
         doctor: app.doctor_name,
         type: app.reason,
-        status: app.status.charAt(0).toUpperCase() + app.status.slice(1),
-        room: 'Room ' + (Math.floor(Math.random() * 10) + 101) // Dummy room for now
+        status: app.status.split(/[- ]/).map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(app.status.includes('-') ? '-' : ' '),
+        room: 'Room ' + (Math.floor(Math.random() * 10) + 101), // Dummy room for now
+        date: app.appointment_date.split('T')[0],
+        notes: app.notes
       })));
     } catch (error) {
       console.error('Error fetching appointments:', error);
@@ -79,14 +91,14 @@ const AppointmentsCalendar = () => {
 
   const timeSlots = [
     '09:00', '09:30', '10:00', '10:30',
-    '11:00', '11:30', '01:00', '01:30',
-    '02:00', '02:30', '03:00', '03:30',
-    '04:00', '04:30'
+    '11:00', '11:30', '13:00', '13:30',
+    '14:00', '14:30', '15:00', '15:30',
+    '16:00', '16:30'
   ];
 
   const filteredAppointments = appointments.filter(app => {
     const matchesDoctor = filterDoctor === 'all' || app.doctor === filterDoctor;
-    const matchesStatus = filterStatus === 'all' || app.status === filterStatus;
+    const matchesStatus = filterStatus === 'all' || app.status.toLowerCase() === filterStatus.toLowerCase();
     return matchesDoctor && matchesStatus;
   });
 
@@ -112,6 +124,62 @@ const AppointmentsCalendar = () => {
     } catch (error) {
       console.error('Error checking in:', error);
       alert('Failed to check in');
+    }
+  };
+
+  const handleCancel = async (appointmentId) => {
+    if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
+    try {
+      await api.put(`/receptionist/appointments/${appointmentId}`, {
+        status: 'cancelled'
+      });
+      alert('Appointment cancelled successfully!');
+      fetchAppointments();
+    } catch (error) {
+      console.error('Error cancelling appointment:', error);
+      alert('Failed to cancel appointment');
+    }
+  };
+
+  const handleDelete = async (appointmentId) => {
+    if (!window.confirm('Are you sure you want to PERMANENTLY DELETE this appointment?')) return;
+    try {
+      await api.delete(`/receptionist/appointments/${appointmentId}`);
+      alert('Appointment deleted successfully!');
+      fetchAppointments();
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
+      alert('Failed to delete appointment');
+    }
+  };
+
+  const handleEdit = (appointment) => {
+    setEditingAppointment({
+      ...appointment,
+      appointment_date: appointment.date,
+      appointment_time: appointment.time,
+      doctor_id: appointment.doctorId,
+      reason: appointment.type
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      await api.put(`/receptionist/appointments/${editingAppointment.id}`, {
+        appointment_date: editingAppointment.appointment_date,
+        appointment_time: editingAppointment.appointment_time,
+        doctor_id: editingAppointment.doctor_id,
+        reason: editingAppointment.reason,
+        notes: editingAppointment.notes
+      });
+      alert('Appointment updated successfully!');
+      setShowEditModal(false);
+      fetchAppointments();
+    } catch (error) {
+      console.error('Error updating appointment:', error);
+      alert('Failed to update appointment');
     }
   };
 
@@ -404,14 +472,35 @@ const AppointmentsCalendar = () => {
                                 {appointmentForSlot.status}
                               </span>
                               <div className="flex gap-2">
+                                {appointmentForSlot.status !== 'Cancelled' && appointmentForSlot.status !== 'Completed' && (
+                                  <>
+                                    {appointmentForSlot.status !== 'Checked-in' && (
+                                      <button
+                                        onClick={() => handleCheckIn(appointmentForSlot.id)}
+                                        className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded hover:bg-green-200"
+                                      >
+                                        Check-in
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={() => handleCancel(appointmentForSlot.id)}
+                                      className="px-3 py-1 bg-red-100 text-red-700 text-sm rounded hover:bg-red-200"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </>
+                                )}
                                 <button
-                                  onClick={() => handleCheckIn(appointmentForSlot.id)}
+                                  onClick={() => handleEdit(appointmentForSlot)}
                                   className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded hover:bg-blue-200"
                                 >
-                                  Check-in
+                                  Edit
                                 </button>
-                                <button className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded hover:bg-gray-200">
-                                  Call
+                                <button
+                                  onClick={() => handleDelete(appointmentForSlot.id)}
+                                  className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded hover:bg-gray-200"
+                                >
+                                  Delete
                                 </button>
                               </div>
                             </div>
@@ -478,14 +567,31 @@ const AppointmentsCalendar = () => {
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex gap-2">
+                          {appointment.status !== 'Cancelled' && (
+                            <button
+                              onClick={() => handleCheckIn(appointment.id)}
+                              className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded hover:bg-green-200"
+                            >
+                              Check-in
+                            </button>
+                          )}
                           <button
-                            onClick={() => handleCheckIn(appointment.id)}
+                            onClick={() => handleCancel(appointment.id)}
+                            className="px-3 py-1 bg-red-100 text-red-700 text-sm rounded hover:bg-red-200"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleEdit(appointment)}
                             className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded hover:bg-blue-200"
                           >
-                            Check-in
+                            Edit
                           </button>
-                          <button className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded hover:bg-gray-200">
-                            <FaPhone />
+                          <button
+                            onClick={() => handleDelete(appointment.id)}
+                            className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded hover:bg-gray-200"
+                          >
+                            Delete
                           </button>
                         </div>
                       </td>
@@ -536,6 +642,101 @@ const AppointmentsCalendar = () => {
           >
             Book New Appointment
           </button>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && editingAppointment && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] shadow-2xl border border-gray-100 p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-start mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Edit Appointment</h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdate} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Patient</label>
+                  <input type="text" value={editingAppointment.patientName} disabled className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Doctor</label>
+                  <select
+                    value={editingAppointment.doctor_id}
+                    onChange={(e) => setEditingAppointment({ ...editingAppointment, doctor_id: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  >
+                    {doctorsRaw.map(doc => (
+                      <option key={doc.id} value={doc.id}>{doc.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                  <input
+                    type="date"
+                    value={editingAppointment.appointment_date}
+                    onChange={(e) => setEditingAppointment({ ...editingAppointment, appointment_date: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
+                  <select
+                    value={editingAppointment.appointment_time}
+                    onChange={(e) => setEditingAppointment({ ...editingAppointment, appointment_time: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  >
+                    {timeSlots.map(time => (
+                      <option key={time} value={time}>{time}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Reason/Type</label>
+                <input
+                  type="text"
+                  value={editingAppointment.reason}
+                  onChange={(e) => setEditingAppointment({ ...editingAppointment, reason: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                <textarea
+                  value={editingAppointment.notes || ''}
+                  onChange={(e) => setEditingAppointment({ ...editingAppointment, notes: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  rows="3"
+                ></textarea>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button type="submit" className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg">
+                  Update Appointment
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
